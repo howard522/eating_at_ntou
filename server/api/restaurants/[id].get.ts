@@ -1,4 +1,3 @@
-//取得特定餐廳資訊
 import Restaurant from '../../models/restaurant.model'
 import connectDB from "../../utils/db";
 

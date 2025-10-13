@@ -10,8 +10,8 @@ export default defineEventHandler(async (event) => {
     const restaurants = await Restaurant.find({
         $or: [
             { name: { $regex: keyword, $options: 'i' } },
-            { description: { $regex: keyword, $options: 'i' } },
-            { location: { $regex: keyword, $options: 'i' } },
+            { info: { $regex: keyword, $options: 'i' } },
+            { address: { $regex: keyword, $options: 'i' } },
             { 'menu.name': { $regex: keyword, $options: 'i' } }
         ]
     });// Case-insensitive search
