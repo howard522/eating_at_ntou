@@ -14,6 +14,7 @@ const restaurantSchema = new mongoose.Schema({
     phone: String,
     image: String,
     info: String,
+    tags: [String],
     menu: [menuItemSchema]
 })
 

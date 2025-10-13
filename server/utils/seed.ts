@@ -1,6 +1,9 @@
+// server/utils/seed.ts
+// usage: npx tsx server/utils/seed.ts
 import mongoose from "mongoose";
 import Restaurant from "../models/restaurant.model";
 import dotenv from "dotenv";
+
 
 dotenv.config();
 
@@ -17,6 +20,7 @@ const dummyRestaurants = [
         phone: '02-2462-2192',
         image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5',
         info: '這是一家提供美味便當的餐廳',
+        tags: ['便當', '美食', '海大'],
         menu: [
             {
                 name: '炸雞便當',
@@ -38,6 +42,7 @@ const dummyRestaurants = [
         phone: '02-2425-3456',
         image: 'https://images.unsplash.com/photo-1625944529022-04e15bdfcc93',
         info: '這是一家提供咖哩飯的餐廳',
+        tags: ['咖哩', '美食', '日式'],
         menu: [
             {
                 name: '海鮮咖哩',
@@ -59,6 +64,7 @@ const dummyRestaurants = [
         phone: '02-2456-7777',
         image: 'https://images.unsplash.com/photo-1550547660-d9450f859349',
         info: '這是一家提供美味漢堡的餐廳',
+        tags: ['漢堡', '美食', '速食'],
         menu: [
             {
                 name: '起司牛肉堡',
