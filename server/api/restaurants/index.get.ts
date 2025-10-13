@@ -12,7 +12,7 @@ import connectDB from "../../utils/db";
  *         name: search
  *         schema:
  *           type: string
- *         description: 搜尋關鍵字
+ *         description: 搜尋關鍵字(無則回傳所有餐廳)
  *     responses:
  *       200:
  *         description: 成功回傳餐廳清單
