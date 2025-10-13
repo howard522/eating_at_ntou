@@ -1,5 +1,5 @@
 <template>
-  <v-card hover rounded="lg">
+  <v-card hover rounded="lg" color="#DCFAFF" :to="`/customer/stores/${id}`">
     <v-img
         :src="image"
         height="150px"
@@ -17,19 +17,31 @@
       </template>
     </v-img>
 
-    <v-card-title class="text-center font-weight-bold">
+    <v-card-title class="font-weight-bold">
       {{ name }}
     </v-card-title>
+
+    <v-card-subtitle class="">
+      {{ info }}
+    </v-card-subtitle>
   </v-card>
 </template>
 
 <script setup lang="ts">
 defineProps({
+  id: {
+    type: String,
+    required: true,
+  },
   name: {
     type: String,
     required: true,
   },
   image: {
+    type: String,
+    default: '',
+  },
+  info: {
     type: String,
     default: '',
   },

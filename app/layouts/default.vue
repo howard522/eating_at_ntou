@@ -4,7 +4,7 @@
       <v-btn
           to="/"
           variant="tonal"
-          color="blue-darken-4"
+          color="#27187E"
           class="font-weight-bold ml-2"
           rounded="xl"
           size="large"
@@ -35,7 +35,7 @@
       </v-btn>
     </v-app-bar>
 
-    <v-main style="background-color: #f9f9f9;">
+    <v-main style="background-color: #f1f2f6;">
       <slot />
     </v-main>
   </v-app>

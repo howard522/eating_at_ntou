@@ -5,7 +5,7 @@
         <div class="d-flex flex-column mb-4">
           <span class="text-grey-darken-1 mb-1">外送至</span>
           <div v-if="!isEditingAddress" class="d-flex align-center cursor-pointer" @click="startEditingAddress">
-            <span class="text-h6 font-weight-bold">{{ deliveryAddress }}</span>
+            <span class="text-h6 font-weight-bold text-blue-darken-2">{{ deliveryAddress }}</span>
             <v-icon color="primary">mdi-chevron-down</v-icon>
           </div>
           <v-text-field v-else v-model="deliveryAddress" variant="solo" autofocus hide-details density="compact" prepend-inner-icon="mdi-map-marker-outline" append-inner-icon="mdi-check" @click:append-inner="saveAddress" @keydown.enter="saveAddress" style="max-width: 450px;"></v-text-field>
@@ -19,19 +19,17 @@
             label="搜尋餐廳、美食"
             variant="solo"
             prepend-inner-icon="mdi-magnify"
-            clearable
             rounded
-            hide-details
         ></v-text-field>
       </v-col>
     </v-row>
 
     <v-row>
       <v-col cols="12">
-        <v-chip-group v-if="tags.length > 0" v-model="selectedTag" selected-class="text-primary" mandatory>
-          <v-chip value="全部">全部</v-chip>
+        <v-chip-group v-if="tags.length > 0" v-model="selectedTag" multiple>
           <v-chip
               v-for="tag in tags"
+              filter
               :key="tag"
               :value="tag"
           >
@@ -56,7 +54,7 @@
           md="4"
           lg="3"
       >
-        <StoreCard :name="store.name" :image="store.image" />
+        <StoreCard :id="store._id" :name="store.name" :image="store.image" :info="store.info" />
       </v-col>
     </v-row>
 
@@ -73,13 +71,16 @@
 
 interface menuItem { _id: string; name: string; price: number; image: string; info: string; }
 interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; tags: string[]; menu: menuItem[]; }
+interface apiResponse { success: boolean; data: store[]; count: number; }
 
+const searchTerm = ref('');
+const selectedTag = ref<string>('全部');
 const isEditingAddress = ref(false);
-const deliveryAddress = ref('海洋大學工學大樓');
+const deliveryAddress = ref('海洋大學電資學院大樓');
 const startEditingAddress = () => { isEditingAddress.value = true; };
 const saveAddress = () => { isEditingAddress.value = false; };
 
-const { data: apiResponse, error } = await useFetch('/api/restaurants');
+const { data: apiResponse, pending, error } = await useFetch<apiResponse>('/api/restaurants');
 
 const stores = computed(() => apiResponse.value?.data || []);
 
@@ -90,7 +91,6 @@ const tags = computed<string[]>(() => {
   const allTags = new Set(apiResponse.value.data.flatMap(restaurant => restaurant.tags || []));
   return [...allTags];
 });
-
 </script>
 
 <style scoped>
