@@ -121,7 +121,7 @@ const dummyRestaurants = [
         name: '便當老王',
         address: '基隆市信一路200號',
         phone: '02-2422-2020',
-        image: 'https://images.unsplash.com/photo-1523986371872-9d3ba2e2f642',
+        image: 'https://memeprod.sgp1.digitaloceanspaces.com/user-wtf/1755479553047.jpg',
         info: '平價便當、份量十足',
         tags: ['便當', '學生'],
         menu: [
