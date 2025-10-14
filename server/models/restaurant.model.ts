@@ -24,4 +24,15 @@ const restaurantSchema = new mongoose.Schema({
     }
 })
 
+// GeoJSON location for geospatial queries. Keep separate to avoid breaking existing code.
+restaurantSchema.add({
+    locationGeo: {
+        type: { type: String, enum: ['Point'], default: 'Point' },
+        coordinates: { type: [Number], default: undefined } // [lon, lat]
+    }
+});
+
+// 2dsphere index for geospatial queries
+restaurantSchema.index({ locationGeo: '2dsphere' });
+
 export default mongoose.models.Restaurant || mongoose.model('Restaurant', restaurantSchema);
