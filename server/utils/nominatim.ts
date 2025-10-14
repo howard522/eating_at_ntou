@@ -66,10 +66,10 @@ export function sleep(ms: number) {
 }
 //for testing
 //npx tsx server/utils/nominatim.ts
-(async () => {
-    // 目前遇到的最幹的地址：108台北市萬華區西園路二段240號
-    // 因為原本的normalize送, 會跑到中國, 為了這個字串新增了更多normalize規則, fuck
-    const addr = '108台北市萬華區西園路二段240號';
-    const coords = await geocodeAddress(addr);
-    console.log(addr, coords);
-})();
+// (async () => {
+//     // 目前遇到的最幹的地址：108台北市萬華區西園路二段240號
+//     // 因為原本的normalize送, 會跑到中國, 為了這個字串新增了更多normalize規則, fuck
+//     const addr = '108台北市萬華區西園路二段240號';
+//     const coords = await geocodeAddress(addr);
+//     console.log(addr, coords);
+// })();
