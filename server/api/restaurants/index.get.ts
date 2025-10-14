@@ -97,11 +97,15 @@ export default defineEventHandler(async (event) => {
     // 若帶 ?geocode=true，嘗試把沒有座標的餐廳更新到 DB（測試用）
     if (query.geocode === 'true') {
         for (const r of restaurants) {
-            if (r.address && (!r.location || r.location.lat == null || r.location.lon == null)) {
+            // 檢查 locationGeo 是否存在或含 coordinates
+            const hasGeo = r.locationGeo && Array.isArray(r.locationGeo.coordinates) && r.locationGeo.coordinates.length === 2;
+            if (r.address && !hasGeo) {
                 try {
                     const coords = await geocodeAddress(r.address);
                     if (coords) {
-                        await Restaurant.findByIdAndUpdate(r._id, { $set: { location: coords } });
+                        const lon = coords.lon;
+                        const lat = coords.lat;
+                        await Restaurant.findByIdAndUpdate(r._id, { $set: { locationGeo: { type: 'Point', coordinates: [lon, lat] } } });
                     }
                 } catch (e) {
                     // ignore individual errors,繼續下個

@@ -97,10 +97,10 @@ export default defineEventHandler(async (event) => {
             try {
                 const coords = await geocodeAddress(r.address);
                 if (coords) {
-                    // update both location and locationGeo
+                    // update locationGeo only
                     const lonv = coords.lon;
                     const latv = coords.lat;
-                    await Restaurant.findByIdAndUpdate(r._id, { $set: { location: coords, locationGeo: { type: 'Point', coordinates: [lonv, latv] } } });
+                    await Restaurant.findByIdAndUpdate(r._id, { $set: { locationGeo: { type: 'Point', coordinates: [lonv, latv] } } });
                 }
             } catch (e) {
                 // ignore

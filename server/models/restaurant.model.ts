@@ -15,20 +15,14 @@ const restaurantSchema = new mongoose.Schema({
     image: String,
     info: String,
     tags: [String],
-    menu: [menuItemSchema],
-    // optional location field to store geocoded coordinates
-    // 使用簡單的 lat/lon 結構以利測試與查詢
-    location: {
-        lat: Number,
-        lon: Number
-    }
+    menu: [menuItemSchema]
 })
 
 // GeoJSON location for geospatial queries. Keep separate to avoid breaking existing code.
 restaurantSchema.add({
     locationGeo: {
-        type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], default: undefined } // [lon, lat]
+        type: { type: String, enum: ['Point'] },
+        coordinates: { type: [Number] } // [lon, lat]
     }
 });
 

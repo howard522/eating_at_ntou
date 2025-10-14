@@ -3,6 +3,7 @@
 import mongoose from "mongoose";
 import Restaurant from "../models/restaurant.model";
 import dotenv from "dotenv";
+import { geocodeAddress, sleep } from './nominatim';
 
 
 dotenv.config();
@@ -194,6 +195,26 @@ async function seed() {
     try {
         await mongoose.connect(MONGO_URI);
         await Restaurant.deleteMany({});
+
+        // 嘗試對每筆資料做 geocode（best-effort），並在物件上加入 locationGeo
+        for (const r of dummyRestaurants) {
+            if (r.address) {
+                try {
+                    const coords = await geocodeAddress(r.address);
+                    if (coords) {
+                        const lon = coords.lon;
+                        const lat = coords.lat;
+                        // GeoJSON [lon, lat]
+                        (r as any).locationGeo = { type: 'Point', coordinates: [lon, lat] };
+                    }
+                } catch (e) {
+                    console.warn('geocode failed for', r.address, e);
+                }
+                // 節流：遵守 Nominatim 建議，每秒不超過 1 次，這裡等待 1.1 秒
+                await sleep(1100);
+            }
+        }
+
         await Restaurant.insertMany(dummyRestaurants);
         console.log('Database seeded successfully!');
 
