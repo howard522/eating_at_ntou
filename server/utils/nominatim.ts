@@ -36,6 +36,13 @@ export function normalizeAddress(addr: string): string {
     return s;
 }
 
+// 關於地址正規化：
+// 目前的規則可以應付大部分常見情況，但有可能還有我沒想到/測到的格式，
+// 個人目前認為最好的正規化解法是嘗試申請 台灣圖霸地址服務的 API 金鑰來使用，因為他真的很屌
+// 矛盾的點是，如果要用最好的解法，不如用google map api，笑死。
+// 現在用nominatim是因為免費，也不用api key，雖然奇怪的地址會神經神經的，但我已經盡量讓地址能被nominatim接受了，
+// 但還是有可能會有例外，畢竟地址本來就沒有標準格式這種東西，隨便啦。
+
 export async function geocodeAddress(address: string) {
     if (!address) return null;
     const q = normalizeAddress(address);
@@ -43,8 +50,8 @@ export async function geocodeAddress(address: string) {
     const res = await fetch(url, {
         headers: {
             // Nominatim 要求必須提供有效的 User-Agent 與 Referer
-            'User-Agent': 'eating_at_ntou/1.0 (https://github.com/howard522/eating_at_ntou)',
-            'Referer': 'http://localhost'
+            'User-Agent': 'eating_at_ntou/1.0',
+            'Referer': 'https://github.com/howard522/eating_at_ntou'
         }
     });
     if (!res.ok) return null;
