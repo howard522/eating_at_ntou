@@ -3,6 +3,7 @@
 import mongoose from "mongoose";
 import Restaurant from "../models/restaurant.model";
 import dotenv from "dotenv";
+import { geocodeAddress, sleep } from './nominatim';
 
 
 dotenv.config();
@@ -117,39 +118,15 @@ const dummyRestaurants = [
         ]
     },
     {
-        name: '豆花甜品屋',
-        address: '基隆市仁愛區仁一路5弄3號',
-        phone: '02-2470-5566',
-        image: 'https://images.unsplash.com/photo-1543779508-63f9a7b9b3b2',
-        info: '傳統甜品與創新口味豆花',
-        tags: ['甜點', '豆花'],
-        menu: [
-            { name: '黑糖豆花', price: 60, image: '', info: '手工豆花配黑糖漿' },
-            { name: '芋頭豆花', price: 75, image: '', info: '綿密芋頭泥' }
-        ]
-    },
-    {
         name: '便當老王',
         address: '基隆市信一路200號',
         phone: '02-2422-2020',
-        image: 'https://images.unsplash.com/photo-1523986371872-9d3ba2e2f642',
-        info: '平價便當、份量十足',
-        tags: ['便當', '學生'],
+        image: 'https://memeprod.sgp1.digitaloceanspaces.com/user-wtf/1755479553047.jpg',
+        info: '昏睡レイプ!野獣と化した先輩',
+        tags: ['便當', '先輩'],
         menu: [
-            { name: '滷肉飯', price: 65, image: '', info: '古早味滷肉' },
-            { name: '雞腿便當', price: 95, image: '', info: '大雞腿配菜' }
-        ]
-    },
-    {
-        name: '義大利坊',
-        address: '基隆市中正區仁二路66號',
-        phone: '02-2468-3344',
-        image: 'https://images.unsplash.com/photo-1529042410759-befb1204b468',
-        info: '手工義大利麵與窯烤披薩',
-        tags: ['義大利', '披薩', '義麵'],
-        menu: [
-            { name: '海鮮義大利麵', price: 240, image: '', info: '海鮮與特調醬汁' },
-            { name: '瑪格麗特披薩', price: 280, image: '', info: '經典番茄與莫札瑞拉' }
+            { name: '24歲，是個學生', price: 114514, image: '', info: '古早味滷肉' },
+            { name: '雞腿便當', price: 1919810, image: '', info: '大雞腿配菜' }
         ]
     },
     {
@@ -187,13 +164,34 @@ const dummyRestaurants = [
             { name: '三杯雞', price: 220, image: '', info: '經典三杯' },
             { name: '鹽酥蝦', price: 200, image: '', info: '酥脆下酒' }
         ]
-    }
+    },
+    // 一些可能在前端不好呈現的餐廳(超長名字, 價格異常高, 等等)
 ]
 
 async function seed() {
     try {
         await mongoose.connect(MONGO_URI);
         await Restaurant.deleteMany({});
+
+        // 嘗試對每筆資料做 geocode（best-effort），並在物件上加入 locationGeo
+        for (const r of dummyRestaurants) {
+            if (r.address) {
+                try {
+                    const coords = await geocodeAddress(r.address);
+                    if (coords) {
+                        const lon = coords.lon;
+                        const lat = coords.lat;
+                        // GeoJSON [lon, lat]
+                        (r as any).locationGeo = { type: 'Point', coordinates: [lon, lat] };
+                    }
+                } catch (e) {
+                    console.warn('geocode failed for', r.address, e);
+                }
+                // 節流：遵守 Nominatim 建議，每秒不超過 1 次，這裡等待 1.1 秒
+                await sleep(1100);
+            }
+        }
+
         await Restaurant.insertMany(dummyRestaurants);
         console.log('Database seeded successfully!');
 

@@ -22,6 +22,14 @@ export const components = {
                     info: { type: 'string' },
                     tags: { type: 'array', items: { type: 'string' } },
                     menu: { type: 'array', items: { $ref: '#/components/schemas/MenuItem' } }
+                    ,
+                    location: {
+                        type: 'object',
+                        properties: {
+                            lat: { type: 'number' },
+                            lon: { type: 'number' }
+                        }
+                    }
                 }
             }
         }
