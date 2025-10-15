@@ -125,8 +125,8 @@ const dummyRestaurants = [
         info: '平價便當、份量十足',
         tags: ['便當', '學生'],
         menu: [
-            { name: '滷肉飯', price: 65, image: '', info: '古早味滷肉' },
-            { name: '雞腿便當', price: 95, image: '', info: '大雞腿配菜' }
+            { name: '滷肉飯', price: 114514, image: '', info: '古早味滷肉' },
+            { name: '雞腿便當', price: 1919810, image: '', info: '大雞腿配菜' }
         ]
     },
     {
