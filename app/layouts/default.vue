@@ -6,19 +6,30 @@
           variant="tonal"
           color="#27187E"
           class="font-weight-bold ml-2"
-          rounded="xl"
+          rounded="lg"
           size="large"
       >
         海大
       </v-btn>
 
       <div class="ml-4">
-        <v-btn-toggle v-model="activeNav" mandatory group>
+        <v-btn-toggle
+          v-model="activeNav"
+          mandatory
+          group
+          class="custom-btn-toggle"
+          density="comfortable"
+          rounded="lg"
+          color="primary"
+        >
           <v-btn
-              v-for="link in links"
-              :key="link.value"
-              :to="link.to"
-              :value="link.value">
+            v-for="link in links"
+            :key="link.value"
+            :to="link.to"
+            :value="link.value"
+            class="custom-btn"
+            variant="text"
+          >
             {{ link.title }}
           </v-btn>
         </v-btn-toggle>
@@ -80,7 +91,7 @@ const links = computed<link[]>(() => {
 watch(links, (newLinks) => {
   if (newLinks.length > 0)
   {
-    activeNav.value = newLinks[0].value;
+    activeNav.value = newLinks[0]?.value || '';
   } else
   {
     activeNav.value = '';
@@ -89,5 +100,21 @@ watch(links, (newLinks) => {
 </script>
 
 <style scoped>
+.custom-btn-toggle {
+  background: transparent;
+}
 
+.custom-btn {
+  font-weight: 500;
+  padding: 0 20px;
+  min-width: 100px;
+}
+
+.custom-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.v-btn--active {
+  background-color: #e0e0e0 !important;
+}
 </style>

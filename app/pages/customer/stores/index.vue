@@ -12,16 +12,18 @@
         </div>
       </v-col>
     </v-row>
-    <v-row class="mt-n4">
-      <v-col cols="12">
+
+    <v-row class="mt-n4" justify="center">
+      <div style="width: 1200px; height: 60px;">
         <v-text-field
-            v-model="searchTerm"
-            label="搜尋餐廳、美食"
-            variant="solo"
-            prepend-inner-icon="mdi-magnify"
-            rounded
+          v-model="searchTerm"
+          label="搜尋餐廳、美食"
+          variant="solo"
+          prepend-inner-icon="mdi-magnify"
+          rounded
+          density="comfortable"
         ></v-text-field>
-      </v-col>
+      </div>
     </v-row>
 
     <v-row>

@@ -38,6 +38,15 @@ yarn dev
 bun run dev
 ```
 
+## API Documentation (Swagger)
+
+This project exposes OpenAPI (swagger) documentation generated at runtime using `swagger-jsdoc`.
+
+- Swagger JSON: http://localhost:3000/api/swagger.json
+- Swagger UI:  http://localhost:3000/api/docs
+
+Start the dev server and open the Swagger UI URL above.
+
 ## Production
 
 Build the application for production:
