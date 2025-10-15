@@ -122,10 +122,10 @@ const dummyRestaurants = [
         address: '基隆市信一路200號',
         phone: '02-2422-2020',
         image: 'https://memeprod.sgp1.digitaloceanspaces.com/user-wtf/1755479553047.jpg',
-        info: '平價便當、份量十足',
-        tags: ['便當', '學生'],
+        info: '昏睡レイプ!野獣と化した先輩',
+        tags: ['便當', '先輩'],
         menu: [
-            { name: '滷肉飯', price: 114514, image: '', info: '古早味滷肉' },
+            { name: '24歲，是個學生', price: 114514, image: '', info: '古早味滷肉' },
             { name: '雞腿便當', price: 1919810, image: '', info: '大雞腿配菜' }
         ]
     },
@@ -164,7 +164,8 @@ const dummyRestaurants = [
             { name: '三杯雞', price: 220, image: '', info: '經典三杯' },
             { name: '鹽酥蝦', price: 200, image: '', info: '酥脆下酒' }
         ]
-    }
+    },
+    // 一些可能在前端不好呈現的餐廳(超長名字, 價格異常高, 等等)
 ]
 
 async function seed() {
