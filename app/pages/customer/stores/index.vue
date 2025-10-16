@@ -4,16 +4,23 @@
       <v-col cols="12">
         <div class="d-flex flex-column mb-4">
           <span class="text-grey-darken-1 mb-1">外送至</span>
-          <div v-if="!isEditingAddress" class="d-flex align-center cursor-pointer" @click="startEditingAddress">
-            <span class="text-h6 font-weight-bold text-blue-darken-2">{{ deliveryAddress }}</span>
-            <v-icon color="primary">mdi-chevron-down</v-icon>
-          </div>
-          <v-text-field v-else v-model="deliveryAddress" variant="solo" autofocus hide-details density="compact" prepend-inner-icon="mdi-map-marker-outline" append-inner-icon="mdi-check" @click:append-inner="saveAddress" @keydown.enter="saveAddress" style="max-width: 450px;"></v-text-field>
+          <v-combobox
+              v-model="addressInput"
+              :items="presetLocations"
+              item-title="title"
+              item-value="title"
+              :rules="addressRule"
+              label="輸入地址或選擇預設地點"
+              variant="solo"
+              prepend-inner-icon="mdi-map-marker-outline"
+              clearable
+              style="max-width: 450px;"
+          ></v-combobox>
         </div>
       </v-col>
     </v-row>
 
-    <v-row class="mt-n4" justify="center">
+    <v-row class="mt-n4">
       <div style="width: 1200px; height: 60px;">
         <v-text-field
           v-model="searchTerm"
@@ -28,7 +35,7 @@
 
     <v-row>
       <v-col cols="12">
-        <v-chip-group v-if="tags.length > 0" v-model="selectedTag" multiple>
+        <v-chip-group v-if="tags.length > 0" v-model="selectedTags" multiple>
           <v-chip
               v-for="tag in tags"
               filter
@@ -70,33 +77,90 @@
 </template>
 
 <script setup lang="ts">
+import debounce from 'lodash-es/debounce';
 
 interface menuItem { _id: string; name: string; price: number; image: string; info: string; }
-interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; tags: string[]; menu: menuItem[]; }
+interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; menu: menuItem[]; }
 interface apiResponse { success: boolean; data: store[]; count: number; }
+interface PresetLocation { title: string; value: string; }
+
+const presetLocations = [
+  { title: '電資暨綜合教學大樓', value: '202基隆市中正區北寧路2號' },
+  { title: '資工及電機二館', value: '202基隆市中正區北寧路67號' },
+  { title: '男一宿舍', value: '202基隆市中正區北寧路2號' },
+  { title: '男二宿舍', value: '202基隆市中正區北寧路2號' },
+  { title: '女一宿舍', value: '202基隆市中正區北寧路2號' },
+  { title: '男三女二宿舍', value: '202基隆市中正區北寧路2號' },
+];
+const tags = ref<string[]>(['咖哩', '中式', '日式', '義式', '美式', '甜點', '飲料', '速食', '火鍋', '燒烤', '素食', '燒肉', '漢堡', '海鮮', '涼麵', '小吃', '手搖', '下午茶']);
 
 const searchTerm = ref('');
-const selectedTag = ref<string>('全部');
-const isEditingAddress = ref(false);
-const deliveryAddress = ref('海洋大學電資學院大樓');
-const startEditingAddress = () => { isEditingAddress.value = true; };
-const saveAddress = () => { isEditingAddress.value = false; };
+const debouncedSearchTerm = ref('');
+const selectedTags = ref<string[]>([]);
+const addressInput = ref<PresetLocation | string>('電資暨綜合教學大樓');
+const debouncedAddressInput = ref<PresetLocation | string>(addressInput.value);
 
-const { data: apiResponse, pending, error } = await useFetch<apiResponse>('/api/restaurants');
+const deliveryAddress = computed(() => {
+  const input = debouncedAddressInput.value;
+  if (typeof input === 'object' && input !== null && 'value' in input) {
+    return input.value;
+  }
+  const foundLocation = presetLocations.find(loc => loc.title === input);
+  return foundLocation ? foundLocation.value : input;
+});
+
+const validateAddress = (value: PresetLocation | string): boolean | string => {
+  if (!value) return '必須輸入地址';
+  if (typeof value === 'object') {
+    return true;
+  }
+  if (presetLocations.some(loc => loc.title === value)) {
+    return true;
+  }
+  const regex = /(?<zipcode>(^\d{5}|^\d{3})?)(?<city>\D+[縣市])(?<district>\D+?(市區|鎮區|鎮市|[鄉鎮市區]))(?<others>.+)/;
+  return regex.test(value) || '輸入地址格式錯誤';
+}
+//判斷地址格式
+const addressRule = [ validateAddress ];
+
+//停止輸入1s後才更新輸入地址
+watch(addressInput, debounce((newValue: PresetLocation | string) => {
+  debouncedAddressInput.value = newValue;
+}, 1000));
+
+//停止輸入800ms後才更新搜尋內容
+watch(searchTerm, debounce((newValue: string) => {
+  debouncedSearchTerm.value = newValue;
+}, 800));
+
+const selectedTagsString = computed(() => selectedTags.value.join(' '));
+const searchQuery = computed(() => [debouncedSearchTerm.value, selectedTagsString.value].join(' ').trim());
+
+const { data: apiResponse, pending, error, execute } = useFetch<apiResponse>('/api/restaurants/near', {
+  query: {
+    address: deliveryAddress,
+    search: searchQuery,
+  },
+  immediate: false,
+  watch: false,
+  default: () => ({ success: true, count: 0, data: [] }),
+});
+watch(
+    [deliveryAddress, searchQuery],
+    () => {
+      const validationResult = validateAddress(debouncedAddressInput.value);
+      if (validationResult === true) {
+        execute();
+      }
+    },
+    {
+      immediate: true,
+    }
+);
 
 const stores = computed(() => apiResponse.value?.data || []);
-
-const tags = computed<string[]>(() => {
-  if (!apiResponse.value || !apiResponse.value.data) {
-    return [];
-  }
-  const allTags = new Set(apiResponse.value.data.flatMap(restaurant => restaurant.tags || []));
-  return [...allTags];
-});
 </script>
 
 <style scoped>
-.cursor-pointer {
-  cursor: pointer;
-}
+
 </style>
