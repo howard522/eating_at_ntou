@@ -4,6 +4,9 @@ export default defineNuxtConfig({
   pages: true,
   ssr: false,
   devtools: { enabled: true },
+  modules: [
+    '@pinia/nuxt',
+  ],
   css: [
     'vuetify/styles',
     '@mdi/font/css/materialdesignicons.min.css',

@@ -81,4 +81,10 @@ const confirmAddToCart = () => {
   emit('addToCart', { item: props.item, quantity: quantity.value });
   closeDialog();
 };
+
+watch(() => props.item, (newItem) => {
+  if (newItem) {
+    quantity.value = 1;
+  }
+});
 </script>

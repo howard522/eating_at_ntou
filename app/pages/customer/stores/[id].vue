@@ -68,6 +68,8 @@
 </template>
 
 <script setup lang="ts">
+import { useCartStore, type CartMenuItem } from '../../../../stores/cart';
+
 interface MenuItem {
   _id: string
   name: string
@@ -93,10 +95,11 @@ interface ApiResponse {
 const route = useRoute();
 const storeId = route.params.id as string;
 
-const { data: apiResponse, pending, error } = await useFetch<ApiResponse>(
+const { data: apiResponse, pending, error } = useFetch<ApiResponse>(
   `/api/restaurants/${storeId}`
 )
 const store = computed(() => apiResponse.value?.data);
+const cartStore = useCartStore();
 const isDialogOpen = ref(false);
 const selectedItem = ref<MenuItem | null>(null);
 const openDialog = (item: MenuItem) => {
@@ -105,10 +108,16 @@ const openDialog = (item: MenuItem) => {
 };
 
 const handleAddToCart = (payload: { item: MenuItem, quantity: number }) => {
-  console.log('成功加入購物車:', payload);
-  // 之後會改用store存
-  // cartStore.addItem(payload.item, payload.quantity);
+  cartStore.addItem(
+      payload.item,
+      payload.quantity,
+      { id: store.value._id, name: store.value.name }
+  );
 };
+
+useHead({
+  title: () => store.value?.name || '餐廳資訊'
+});
 </script>
 
 <style scoped>
