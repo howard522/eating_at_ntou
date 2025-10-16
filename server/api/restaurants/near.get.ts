@@ -12,6 +12,8 @@ import { geocodeAddress } from '../../utils/nominatim';
  *       以給定的座標為中心，回傳依距離排序的餐廳清單。若資料中某些餐廳缺少地理座標，
  *       此 endpoint 會對最多 20 筆缺少座標的餐廳嘗試一次 Nominatim geocode（best-effort），並將結果寫回 DB。
  *       注意：此寫回為有副作用的操作，請在測試時小心使用。
+ *     tags:
+ *       - Restaurants
  *     parameters:
  *       - in: query
  *         name: address
