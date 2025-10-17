@@ -24,7 +24,9 @@ export default defineEventHandler(async (event) => {
             './server/api/restaurants/*.post.ts',
             './server/api/restaurants/*.put.ts',
             './server/api/restaurants/*.delete.ts',
-            './server/api/auth/*.post.ts'
+            './server/api/auth/*.post.ts',
+            './server/api/cart/*.get.ts',
+            './server/api/cart/*.post.ts',
         ]
     }
 
