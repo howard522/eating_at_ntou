@@ -4,8 +4,11 @@ import connectDB from "../../utils/db";
 /**
  * @openapi
  * /api/restaurants/{id}:
+ *      
  *   get:
  *     summary: 取得單一餐廳
+ *     tags:
+ *       - Restaurants
  *     parameters:
  *       - in: path
  *         name: id

@@ -23,7 +23,8 @@ export default defineEventHandler(async (event) => {
             './server/api/restaurants/*.get.ts',
             './server/api/restaurants/*.post.ts',
             './server/api/restaurants/*.put.ts',
-            './server/api/restaurants/*.delete.ts'
+            './server/api/restaurants/*.delete.ts',
+            './server/api/auth/*.post.ts'
         ]
     }
 

@@ -8,6 +8,8 @@ import { geocodeAddress, sleep } from '../../utils/nominatim';
  * /api/restaurants:
  *   get:
  *     summary: 搜尋餐廳
+ *     tags:
+ *       - Restaurants
  *     description: |
  *       根據關鍵字（name / info / address / menu.name）進行不區分大小寫的搜尋。
  *       多個關鍵字可用空白分隔；若未提供則回傳符合分頁條件的全部餐廳。
