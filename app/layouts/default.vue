@@ -37,8 +37,15 @@
 
       <v-spacer></v-spacer>
 
-      <v-btn icon to="/cart">
-        <v-icon>mdi-cart-outline</v-icon>
+      <v-btn icon to="/customer/cart">
+        <v-badge
+            :content="cartStore.totalItemsCount"
+            :model-value="cartStore.totalItemsCount > 0"
+            color="red"
+            floating
+        >
+          <v-icon>mdi-cart-outline</v-icon>
+        </v-badge>
       </v-btn>
 
       <v-btn icon to="/profile" class="mr-2">
@@ -53,12 +60,15 @@
 </template>
 
 <script setup lang="ts">
+import { useCartStore } from '../../stores/cart';
+
 interface link {
   title: string;
   to: string;
   value: string;
 }
 
+const cartStore = useCartStore();
 // 未來會改用store判斷
 const role = ref<string>('customer');
 const activeNav = ref<string>('');

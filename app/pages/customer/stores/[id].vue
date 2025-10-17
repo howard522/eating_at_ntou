@@ -44,35 +44,32 @@
     <v-container class="menu-info pt-0 mt-n10">
       <h2 class="text-h4 font-weight-bold mb-4">菜單</h2>
 
-      <v-list lines="two" bg-color="transparent">
-        <v-list-item
-          v-for="item in store?.menu"
-          :key="item._id"
-          class="mb-2"
+      <v-row>
+        <v-col
+            v-for="item in store?.menu"
+            :key="item._id"
+            cols="12"
+            md="6"
         >
-          <template #prepend>
-            <v-avatar size="64" rounded="lg">
-              <v-img :src="item.image" cover></v-img>
-            </v-avatar>
-          </template>
-
-          <v-list-item-title class="font-weight-bold">
-            {{ item.name }}
-          </v-list-item-title>
-          <v-list-item-subtitle>{{ item.info }}</v-list-item-subtitle>
-
-          <template #append>
-            <span class="text-h6 font-weight-bold text-green-darken-1">
-              ${{ item.price }}
-            </span>
-          </template>
-        </v-list-item>
-      </v-list>
+          <MenuItemCard
+              :item="item"
+              @open-add-dialog="openDialog"
+          />
+        </v-col>
+      </v-row>
     </v-container>
+
+    <AddToCartDialog
+        v-model="isDialogOpen"
+        :item="selectedItem"
+        @add-to-cart="handleAddToCart"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { useCartStore, type CartMenuItem } from '../../../../stores/cart';
+
 interface MenuItem {
   _id: string
   name: string
@@ -95,14 +92,32 @@ interface ApiResponse {
   data: Store
 }
 
-const route = useRoute()
-const storeId = route.params.id as string
+const route = useRoute();
+const storeId = route.params.id as string;
 
-const { data: apiResponse, pending, error } = await useFetch<ApiResponse>(
+const { data: apiResponse, pending, error } = useFetch<ApiResponse>(
   `/api/restaurants/${storeId}`
 )
+const store = computed(() => apiResponse.value?.data);
+const cartStore = useCartStore();
+const isDialogOpen = ref(false);
+const selectedItem = ref<MenuItem | null>(null);
+const openDialog = (item: MenuItem) => {
+  selectedItem.value = item;
+  isDialogOpen.value = true;
+};
 
-const store = computed(() => apiResponse.value?.data)
+const handleAddToCart = (payload: { item: MenuItem, quantity: number }) => {
+  cartStore.addItem(
+      payload.item,
+      payload.quantity,
+      { id: store.value._id, name: store.value.name }
+  );
+};
+
+useHead({
+  title: () => store.value?.name || '餐廳資訊'
+});
 </script>
 
 <style scoped>
