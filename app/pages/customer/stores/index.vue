@@ -184,7 +184,7 @@ const loadMore = async () => {
     });
     
     if (response.data && response.data.length > 0) {
-      allStores.value = [...allStores.value, ...response.data];
+      allStores.value.push(...response.data);
       offset.value = nextOffset;
       hasMore.value = response.data.length >= limit;
     } else {
