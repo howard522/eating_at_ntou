@@ -37,7 +37,7 @@
 
       <v-spacer></v-spacer>
 
-      <v-btn icon to="/customer/cart">
+      <v-btn icon to="/customer/cart" ref="cartIcon">
         <v-badge
             :content="cartStore.totalItemsCount"
             :model-value="cartStore.totalItemsCount > 0"
@@ -67,6 +67,10 @@ interface link {
   to: string;
   value: string;
 }
+
+const cartIcon = ref<HTMLElement | null>(null);
+const cartIconEl = computed(() => cartIcon.value?.$el || cartIcon.value);
+provide('cartIconEl', cartIconEl);
 
 const cartStore = useCartStore();
 // 未來會改用store判斷
@@ -126,5 +130,23 @@ watch(links, (newLinks) => {
 
 .v-btn--active {
   background-color: #e0e0e0 !important;
+}
+
+.cart-shake {
+  animation: cart-shake-anim 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes cart-shake-anim {
+  0%   { transform: rotate(0deg) translateX(0); }
+  10%  { transform: rotate(-5deg) translateX(-1px); }
+  20%  { transform: rotate(4deg) translateX(2px); }
+  30%  { transform: rotate(-4deg) translateX(-3px); }
+  40%  { transform: rotate(3deg) translateX(3px); }
+  50%  { transform: rotate(-3deg) translateX(-3px); }
+  60%  { transform: rotate(2deg) translateX(2px); }
+  70%  { transform: rotate(-2deg) translateX(-1px); }
+  80%  { transform: rotate(1deg) translateX(1px); }
+  90%  { transform: rotate(-1deg) translateX(-1px); }
+  100% { transform: rotate(0deg) translateX(0); }
 }
 </style>
