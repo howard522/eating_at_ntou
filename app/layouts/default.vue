@@ -37,14 +37,14 @@
 
       <v-spacer></v-spacer>
 
-      <v-btn icon to="/customer/cart" ref="cartIcon">
+      <v-btn icon to="/customer/cart" ref="fridgeIcon">
         <v-badge
             :content="cartStore.totalItemsCount"
             :model-value="cartStore.totalItemsCount > 0"
             color="red"
             floating
         >
-          <v-icon>mdi-cart-outline</v-icon>
+          <v-icon>mdi-fridge-outline</v-icon>
         </v-badge>
       </v-btn>
 
@@ -68,11 +68,11 @@ interface link {
   value: string;
 }
 
-const cartIcon = ref<HTMLElement | null>(null);
-const cartIconEl = computed(() => cartIcon.value?.$el || cartIcon.value);
-provide('cartIconEl', cartIconEl);
-
+const fridgeIcon = ref<HTMLElement | null>(null);
+const fridgeIconEl = computed(() => fridgeIcon.value?.$el || fridgeIcon.value);
+provide('cartIconEl', fridgeIconEl);
 const cartStore = useCartStore();
+
 // 未來會改用store判斷
 const role = ref<string>('customer');
 const activeNav = ref<string>('');

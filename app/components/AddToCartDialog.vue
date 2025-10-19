@@ -18,6 +18,15 @@
       </v-card-text>
 
       <v-divider></v-divider>
+      <v-alert
+        :type="isInCart ? 'success' : 'info'"
+        variant="tonal"
+        density="comfortable"
+        :icon="hintIcon"
+        class="mx-4 my-3"
+      >
+        {{ hintText }}
+      </v-alert>
 
       <v-card-actions class="pa-4">
         <v-btn
@@ -25,7 +34,7 @@
             variant="tonal"
             @click="closeDialog"
         >
-          取消
+          再想想
         </v-btn>
         <v-spacer></v-spacer>
         <v-btn
@@ -34,7 +43,7 @@
             variant="flat"
             @click="confirmAddToCart"
         >
-          加入購物車
+          馬上冰！
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -42,6 +51,8 @@
 </template>
 
 <script setup lang="ts">
+import { useCartStore } from '../../stores/cart';
+
 interface MenuItem {
   _id: string
   name: string
@@ -130,6 +141,15 @@ const emit = defineEmits<{
 }>();
 
 const quantity = ref(1);
+
+// 判斷是否已加入冰箱
+const cartStore = useCartStore();
+const isInCart = computed(() => {
+  if (!props.item) return false;
+  return cartStore.items?.some(i => i._id === props.item!._id) ?? false;
+});
+const hintText = computed(() => isInCart.value ? '冰箱內已有該餐點' : '此餐點還沒加入購物冰箱');
+const hintIcon = computed(() => isInCart.value ? 'mdi-check-circle-outline' : 'mdi-information-outline');
 
 const dialog = computed({
   get: () => props.modelValue,
