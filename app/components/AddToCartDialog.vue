@@ -15,18 +15,17 @@
           <span class="mx-6 text-h5 font-weight-bold">{{ quantity }}</span>
           <v-btn icon="mdi-plus" variant="tonal" color="grey" @click="increaseQuantity"></v-btn>
         </div>
-      </v-card-text>
 
-      <v-divider></v-divider>
-      <v-alert
-        :type="isInCart ? 'success' : 'info'"
-        variant="tonal"
-        density="comfortable"
-        :icon="hintIcon"
-        class="mx-4 my-3"
-      >
-        {{ hintText }}
-      </v-alert>
+        <v-alert
+          :type="isInCart ? 'success' : 'info'"
+          variant="tonal"
+          density="comfortable"
+          :icon="hintIcon"
+          class="mt-4"
+        >
+          {{ hintText }}
+        </v-alert>
+      </v-card-text>
 
       <v-card-actions class="pa-4">
         <v-btn
@@ -43,7 +42,7 @@
             variant="flat"
             @click="confirmAddToCart"
         >
-          馬上冰！
+          {{ isInCart ? '再來一份' : '馬上冰！' }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -130,6 +129,14 @@ const animateToCart = (imageSrc: string) => {
   preload.onerror = () => run(originRect.width, originRect.height);
 };
 
+const addToCartSuccess = ref(false);
+
+const playSound = (type: 'clap' | 'cry') => {
+  const audio = new Audio(`/sounds/${type}.mp3`);
+  audio.volume = 0.6;
+  audio.play();
+};
+
 const props = defineProps<{
   modelValue: boolean
   item: MenuItem | null
@@ -168,8 +175,20 @@ const confirmAddToCart = () => {
   if (!props.item) return;
   animateToCart(props.item.image);
   emit('addToCart', { item: props.item, quantity: quantity.value });
+  addToCartSuccess.value = true;
   closeDialog();
 };
+
+watch(dialog, (val, oldVal) => {
+  if (oldVal && !val) {
+    if (addToCartSuccess.value) {
+      playSound('clap');
+    } else {
+      playSound('cry');
+    }
+    addToCartSuccess.value = false;
+  }
+});
 
 watch(() => props.item, (newItem) => {
   if (newItem) {
