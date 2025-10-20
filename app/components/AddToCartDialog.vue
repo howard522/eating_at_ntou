@@ -60,6 +60,7 @@ interface MenuItem {
   info: string
 }
 
+// 動畫相關 ---
 const cartIconEl = inject('cartIconEl') as Ref<HTMLElement | null>;
 const itemImg = ref<any>(null);
 
@@ -129,6 +130,7 @@ const animateToCart = (imageSrc: string) => {
   preload.onerror = () => run(originRect.width, originRect.height);
 };
 
+// 監聽 dialog 關閉，決定播放音效 ---
 const addToCartSuccess = ref(false);
 
 const playSound = (type: 'clap' | 'cry') => {
@@ -155,7 +157,7 @@ const isInCart = computed(() => {
   if (!props.item) return false;
   return cartStore.items?.some(i => i._id === props.item!._id) ?? false;
 });
-const hintText = computed(() => isInCart.value ? '冰箱內已有該餐點' : '此餐點還沒加入購物冰箱');
+const hintText = computed(() => isInCart.value ? '冰箱內已有該餐點' : '此餐點還沒冰入購物冰箱');
 const hintIcon = computed(() => isInCart.value ? 'mdi-check-circle-outline' : 'mdi-information-outline');
 
 const dialog = computed({

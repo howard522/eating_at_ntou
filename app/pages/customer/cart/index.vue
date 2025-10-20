@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <h1 class="text-h4 font-weight-bold mb-6">您的購物冰箱</h1>
+    <h1 v-if="cartStore.items && cartStore.items.length > 0" class="text-h4 font-weight-bold mb-6">您的購物冰箱</h1>
 
     <v-row
         v-if="!cartStore.items || cartStore.items.length === 0"
@@ -10,8 +10,8 @@
     >
       <v-col cols="12" class="text-center">
         <v-icon size="80" color="grey-lighten-1">mdi-fridge-off</v-icon>
-        <p class="mt-6 text-h5 text-grey">您的購物冰箱是空的</p>
-        <v-btn to="/customer/stores" color="primary" size="large" class="mt-8">去逛逛</v-btn>
+        <p class="mt-6 text-h5 text-grey">您的購物冰箱空空如也</p>
+        <v-btn to="/customer/stores" color="primary" size="large" class="mt-8">塞滿它！</v-btn>
       </v-col>
     </v-row>
 

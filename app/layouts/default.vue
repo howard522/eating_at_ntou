@@ -68,6 +68,7 @@ interface link {
   value: string;
 }
 
+// 提供購物車圖示元素給 AddToCartDialog 使用 ---
 const fridgeIcon = ref<HTMLElement | null>(null);
 const fridgeIconEl = computed(() => fridgeIcon.value?.$el || fridgeIcon.value);
 provide('cartIconEl', fridgeIconEl);
