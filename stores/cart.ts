@@ -16,11 +16,17 @@ export interface CartItem extends CartMenuItem {
 
 interface CartState {
     items: CartItem[];
+    deliveryAddress: string;
+    phoneNumber: string;
+    deliveryFree: number;
 }
 
 export const useCartStore = defineStore('cart', {
     state: (): CartState => ({
         items: [],
+        deliveryAddress: '',
+        phoneNumber: '',
+        deliveryFree: 30,
     }),
     actions: {
         addItem(newItem: CartMenuItem, quantity: number, restaurant: { id: string, name: string }) {
@@ -35,6 +41,13 @@ export const useCartStore = defineStore('cart', {
                     restaurantName: restaurant.name,
                 });
             }
+        },
+        setDeliveryDetails(details: { address: string, phone: string }) {
+            this.deliveryAddress = details.address;
+            this.phoneNumber = details.phone;
+        },
+        setDeliveryFree(free: number) {
+            this.deliveryFree = free;
         },
         updateItemQuantity(itemId: string, newQuantity: number) {
             const item = this.items.find(item => item._id === itemId);

@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { useCartStore, type CartMenuItem } from '../../../../stores/cart';
+import { useCartStore } from '../../../../stores/cart';
 
 interface MenuItem {
   _id: string

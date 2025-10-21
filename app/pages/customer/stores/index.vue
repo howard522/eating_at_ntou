@@ -78,6 +78,8 @@
 
 <script setup lang="ts">
 import debounce from 'lodash-es/debounce';
+import { useCartStore } from "../../../../stores/cart";
+import { useUserStore } from "../../../../stores/user";
 
 interface menuItem { _id: string; name: string; price: number; image: string; info: string; }
 interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; menu: menuItem[]; }
@@ -99,6 +101,8 @@ const debouncedSearchTerm = ref('');
 const selectedTags = ref<string[]>([]);
 const addressInput = ref<PresetLocation | string>('電資暨綜合教學大樓');
 const debouncedAddressInput = ref<PresetLocation | string>(addressInput.value);
+const cartStore = useCartStore();
+const userStore = useUserStore();
 
 const deliveryAddress = computed(() => {
   const input = debouncedAddressInput.value;
@@ -107,6 +111,12 @@ const deliveryAddress = computed(() => {
   }
   const foundLocation = presetLocations.find(loc => loc.title === input);
   return foundLocation ? foundLocation.value : input;
+});
+
+// phone應該從userStore拿 -> userStore.info.phone
+cartStore.setDeliveryDetails({
+  address: deliveryAddress,
+  phone: '0123456789',
 });
 
 const validateAddress = (value: PresetLocation | string): boolean | string => {
@@ -159,6 +169,10 @@ watch(
 );
 
 const stores = computed(() => apiResponse.value?.data || []);
+
+useHead({
+  title: '瀏覽店家',
+});
 </script>
 
 <style scoped>
