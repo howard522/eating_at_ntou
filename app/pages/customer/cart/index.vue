@@ -90,7 +90,7 @@
           </v-card-text>
 
           <div class="pa-4">
-            <v-btn color="primary" block size="large" variant="flat">
+            <v-btn to="/customer/payment" color="primary" block size="large" variant="flat">
               前往結帳
             </v-btn>
           </div>
@@ -108,6 +108,7 @@ const cartStore = useCartStore();
 
 // 外送費計算方式可能要改
 const deliveryFee = ref(30);
+cartStore.setDeliveryFree(deliveryFee.value);
 
 const finalTotal = computed(() => cartStore.totalPrice + deliveryFee.value);
 
