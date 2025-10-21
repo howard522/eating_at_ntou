@@ -51,6 +51,7 @@
 
 <script setup lang="ts">
 import { useCartStore } from '../../stores/cart';
+import { createCartImageAnimator } from '../utils/cartAnimation';
 
 interface MenuItem {
   _id: string
@@ -60,77 +61,20 @@ interface MenuItem {
   info: string
 }
 
-// 動畫相關 ---
+// 動畫相關
 const cartIconEl = inject('cartIconEl') as Ref<HTMLElement | null>;
 const itemImg = ref<any>(null);
+const {
+  floatingImages,
+  createFloatingImage,
+  removeOneFloatingImage,
+  flyAllImagesToCart,
+  clearFloatingImages,
+  flyOneImageToCartFrom
+} = createCartImageAnimator(cartIconEl);
 
-const animateToCart = (imageSrc: string) => {
-  const originEl = itemImg.value?.$el || itemImg.value;
-  const cartEl = cartIconEl.value;
-  if (!originEl || !cartEl) return;
 
-  const originRect = originEl.getBoundingClientRect();
-  const cartRect = cartEl.getBoundingClientRect();
-
-  const layer = document.body;
-
-  const preload = new Image();
-  preload.src = imageSrc;
-
-  const run = (naturalW: number, naturalH: number) => {
-
-    const scale0 = Math.min(originRect.width / naturalW, originRect.height / naturalH);
-    const w0 = naturalW * scale0;
-    const h0 = naturalH * scale0;
-    const left0 = originRect.left + (originRect.width - w0) / 2;
-    const top0 = originRect.top + (originRect.height - h0) / 2;
-
-    const imgEl = document.createElement('img');
-    imgEl.src = imageSrc;
-    imgEl.style.position = 'fixed';
-    imgEl.style.left = `${left0}px`;
-    imgEl.style.top = `${top0}px`;
-    imgEl.style.width = `${w0}px`;
-    imgEl.style.height = `${h0}px`;
-
-    imgEl.style.objectFit = 'contain';
-    imgEl.style.objectPosition = 'center';
-    imgEl.style.borderRadius = '0';
-    imgEl.style.zIndex = '9999';
-    imgEl.style.pointerEvents = 'none';
-    imgEl.style.transform = 'translate3d(0,0,0) scale(1)';
-    imgEl.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease';
-    layer.appendChild(imgEl);
-
-    const imgCenterX = left0 + w0 / 2;
-    const imgCenterY = top0 + h0 / 2;
-    const cartCenterX = cartRect.left + cartRect.width / 2;
-    const cartCenterY = cartRect.top + cartRect.height / 2;
-
-    const translateX = cartCenterX - imgCenterX;
-    const translateY = cartCenterY - imgCenterY;
-
-    const finalScale = Math.max(20 / w0, 20 / h0);
-
-    requestAnimationFrame(() => {
-      imgEl.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(${finalScale}) rotate(360deg)`;
-      imgEl.style.opacity = '0.2';
-    });
-
-    setTimeout(() => {
-      imgEl.remove();
-      cartEl.classList.add('cart-shake');
-      setTimeout(() => {
-        cartEl.classList.remove('cart-shake');
-      }, 400);
-    }, 650);
-  };
-
-  preload.onload = () => run(preload.naturalWidth, preload.naturalHeight);
-  preload.onerror = () => run(originRect.width, originRect.height);
-};
-
-// 監聽 dialog 關閉，決定播放音效 ---
+// 監聽 dialog 關閉，決定播放音效
 const addToCartSuccess = ref(false);
 
 const playSound = (type: 'clap' | 'cry') => {
@@ -165,24 +109,44 @@ const dialog = computed({
   set: (value) => emit('update:modelValue', value),
 });
 
-const increaseQuantity = () => quantity.value++;
+// 調整餐點數量
+const increaseQuantity = () => {
+  quantity.value++;
+  if (props.item) {
+    createFloatingImage(props.item.image);
+  }
+};
 const decreaseQuantity = () => {
   if (quantity.value > 1) {
     quantity.value--;
+    removeOneFloatingImage();
   }
 };
 const closeDialog = () => dialog.value = false;
 
 const confirmAddToCart = () => {
   if (!props.item) return;
-  animateToCart(props.item.image);
+  if (floatingImages.value.length === 0) {
+    const originEl = itemImg.value?.$el || itemImg.value;
+    if (originEl) {
+      flyOneImageToCartFrom(props.item.image, originEl);
+    }
+  } else {
+    flyAllImagesToCart();
+  }
   emit('addToCart', { item: props.item, quantity: quantity.value });
   addToCartSuccess.value = true;
   closeDialog();
 };
 
 watch(dialog, (val, oldVal) => {
+  if (val && !oldVal) {
+    quantity.value = 1;
+  }
   if (oldVal && !val) {
+    if (!addToCartSuccess.value) {
+      clearFloatingImages();
+    }
     if (addToCartSuccess.value) {
       playSound('clap');
     } else {
@@ -195,6 +159,7 @@ watch(dialog, (val, oldVal) => {
 watch(() => props.item, (newItem) => {
   if (newItem) {
     quantity.value = 1;
+    clearFloatingImages();
   }
 });
 </script>

@@ -15,11 +15,22 @@
       </v-col>
     </v-row>
 
-    <v-row v-else>
+    <v-row v-else align="start">
       <v-col cols="12" md="8">
         <div>
           <div v-for="(group, restaurantName) in groupedCart" :key="restaurantName" class="mb-8">
-            <h2 class="text-h5 font-weight-bold mb-4">{{ restaurantName }}</h2>
+            <div class="d-flex align-center justify-space-between mb-4">
+              <h2 class="text-h5 font-weight-bold restaurant-name mb-0">{{ restaurantName }}</h2>
+              <v-btn
+                color="error"
+                variant="text"
+                density="comfortable"
+                prepend-icon="mdi-delete-outline"
+                @click="removeRestaurant(restaurantName as string)"
+              >
+                刪除此餐廳
+              </v-btn>
+            </div>
 
             <v-card variant="flat" class="border rounded-lg">
               <template v-for="(item, index) in group" :key="item._id">
@@ -64,11 +75,7 @@
             v-if="cartStore.items.length > 0"
             elevation="2"
             rounded="lg"
-            style="position: sticky; top: 80px;"
-        >
-          <v-card-title class="text-h6 font-weight-bold border-b pa-5">
-            訂單摘要
-          </v-card-title>
+            style="position: sticky; top: 0px; margin-top: 49px;">
 
           <v-card-text class="pa-5">
             <div class="d-flex justify-space-between mb-4">
@@ -122,7 +129,22 @@ const groupedCart = computed(() => {
   }, {} as Record<string, CartItem[]>);
 });
 
+//  刪除該餐廳所有商品
+const removeRestaurant = (restaurantName: string) => {
+  cartStore.$patch((state) => {
+    state.items = state.items.filter(item => item.restaurantName !== restaurantName);
+  });
+};
+
 useHead({
   title: '您的購物車'
 });
 </script>
+
+<style scoped>
+.restaurant-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>
