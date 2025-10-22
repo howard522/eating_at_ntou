@@ -67,6 +67,12 @@
       </v-col>
     </v-row>
 
+    <v-row v-if="loadingMore" class="mt-4">
+      <v-col v-for="n in 4" :key="n" cols="12" sm="6" md="4" lg="3">
+        <v-skeleton-loader type="image, article"></v-skeleton-loader>
+      </v-col>
+    </v-row>
+
     <v-row v-if="stores && stores.length === 0" class="mt-10">
       <v-col cols="12" class="text-center text-grey">
         <v-icon size="50">mdi-store-search-outline</v-icon>
@@ -101,6 +107,12 @@ const debouncedSearchTerm = ref('');
 const selectedTags = ref<string[]>([]);
 const addressInput = ref<PresetLocation | string>('電資暨綜合教學大樓');
 const debouncedAddressInput = ref<PresetLocation | string>(addressInput.value);
+const limit = 28;
+const offset = ref(0);
+const allStores = ref<store[]>([]);
+const loadingMore = ref(false);
+const hasMore = ref(true);
+  
 const cartStore = useCartStore();
 const userStore = useUserStore();
 
@@ -112,7 +124,7 @@ const deliveryAddress = computed(() => {
   const foundLocation = presetLocations.find(loc => loc.title === input);
   return foundLocation ? foundLocation.value : input;
 });
-
+  
 // phone應該從userStore拿 -> userStore.info.phone
 cartStore.setDeliveryDetails({
   address: deliveryAddress,
@@ -146,14 +158,72 @@ watch(searchTerm, debounce((newValue: string) => {
 const selectedTagsString = computed(() => selectedTags.value.join(' '));
 const searchQuery = computed(() => [debouncedSearchTerm.value, selectedTagsString.value].join(' ').trim());
 
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll);
+});
+
+const handleScroll = debounce(() => {
+  if (!hasMore.value || loadingMore.value) return;
+  
+  // 檢查是否滾動到底部
+  const bottom = Math.ceil(window.innerHeight + window.pageYOffset);
+  const height = document.documentElement.scrollHeight;
+  
+  if (bottom >= height - 100) {
+    loadMore();
+  }
+}, 200);
+
+// 載入更多資料
+const loadMore = async () => {
+  if (!hasMore.value || loadingMore.value) return;
+  
+  loadingMore.value = true;
+  const nextOffset = offset.value + limit;
+  
+  try {
+    const response = await $fetch<apiResponse>('/api/restaurants/near', {
+      query: {
+        address: deliveryAddress.value,
+        search: searchQuery.value,
+        limit: limit,
+        skip: nextOffset,
+      },
+    });
+    
+    if (response.data && response.data.length > 0) {
+      allStores.value.push(...response.data);
+      offset.value = nextOffset;
+      hasMore.value = response.data.length >= limit;
+    } else {
+      hasMore.value = false;
+    }
+  } catch (error) {
+    console.error('載入更多資料失敗:', error);
+  } finally {
+    loadingMore.value = false;
+  }
+};
+
 const { data: apiResponse, pending, error, execute } = useFetch<apiResponse>('/api/restaurants/near', {
   query: {
     address: deliveryAddress,
     search: searchQuery,
+    limit: limit,
   },
   immediate: false,
   watch: false,
   default: () => ({ success: true, count: 0, data: [] }),
+  transform: (response) => {
+    offset.value = 0;
+    allStores.value = response.data;
+    hasMore.value = response.data.length >= limit;
+    return response;
+  },
 });
 watch(
     [deliveryAddress, searchQuery],
@@ -173,6 +243,21 @@ const stores = computed(() => apiResponse.value?.data || []);
 useHead({
   title: '瀏覽店家',
 });
+
+const stores = computed(() => allStores.value);
+
+watch(
+    [deliveryAddress, searchQuery],
+    () => {
+      const validationResult = validateAddress(debouncedAddressInput.value);
+      if (validationResult === true) {
+        execute();
+      }
+    },
+    {
+      immediate: true,
+    }
+);
 </script>
 
 <style scoped>
