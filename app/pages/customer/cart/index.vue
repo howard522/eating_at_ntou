@@ -138,7 +138,7 @@ const removeRestaurant = (restaurantName: string) => {
 };
 
 useHead({
-  title: '您的購物冰箱
+  title: '您的購物冰箱',
 });
 </script>
 

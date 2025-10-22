@@ -244,8 +244,6 @@ useHead({
   title: '瀏覽店家',
 });
 
-const stores = computed(() => allStores.value);
-
 watch(
     [deliveryAddress, searchQuery],
     () => {
