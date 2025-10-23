@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <h1 class="text-h4 font-weight-bold mb-6">您的購物車</h1>
+    <h1 v-if="cartStore.items && cartStore.items.length > 0" class="text-h4 font-weight-bold mb-6">您的購物冰箱</h1>
 
     <v-row
         v-if="!cartStore.items || cartStore.items.length === 0"
@@ -9,17 +9,28 @@
         style="min-height: 60vh;"
     >
       <v-col cols="12" class="text-center">
-        <v-icon size="80" color="grey-lighten-1">mdi-cart-off</v-icon>
-        <p class="mt-6 text-h5 text-grey">您的購物車是空的</p>
-        <v-btn to="/customer/stores" color="primary" size="large" class="mt-8">去逛逛</v-btn>
+        <v-icon size="80" color="grey-lighten-1">mdi-fridge-off</v-icon>
+        <p class="mt-6 text-h5 text-grey">您的購物冰箱空空如也</p>
+        <v-btn to="/customer/stores" color="primary" size="large" class="mt-8">塞滿它！</v-btn>
       </v-col>
     </v-row>
 
-    <v-row v-else>
+    <v-row v-else align="start">
       <v-col cols="12" md="8">
         <div>
           <div v-for="(group, restaurantName) in groupedCart" :key="restaurantName" class="mb-8">
-            <h2 class="text-h5 font-weight-bold mb-4">{{ restaurantName }}</h2>
+            <div class="d-flex align-center justify-space-between mb-4">
+              <h2 class="text-h5 font-weight-bold restaurant-name mb-0">{{ restaurantName }}</h2>
+              <v-btn
+                color="error"
+                variant="text"
+                density="comfortable"
+                prepend-icon="mdi-delete-outline"
+                @click="removeRestaurant(restaurantName as string)"
+              >
+                刪除此餐廳
+              </v-btn>
+            </div>
 
             <v-card variant="flat" class="border rounded-lg">
               <template v-for="(item, index) in group" :key="item._id">
@@ -64,11 +75,7 @@
             v-if="cartStore.items.length > 0"
             elevation="2"
             rounded="lg"
-            style="position: sticky; top: 80px;"
-        >
-          <v-card-title class="text-h6 font-weight-bold border-b pa-5">
-            訂單摘要
-          </v-card-title>
+            style="position: sticky; top: 0px; margin-top: 49px;">
 
           <v-card-text class="pa-5">
             <div class="d-flex justify-space-between mb-4">
@@ -90,7 +97,7 @@
           </v-card-text>
 
           <div class="pa-4">
-            <v-btn color="primary" block size="large" variant="flat">
+            <v-btn to="/customer/payment" color="primary" block size="large" variant="flat">
               前往結帳
             </v-btn>
           </div>
@@ -108,6 +115,7 @@ const cartStore = useCartStore();
 
 // 外送費計算方式可能要改
 const deliveryFee = ref(30);
+cartStore.setDeliveryFree(deliveryFee.value);
 
 const finalTotal = computed(() => cartStore.totalPrice + deliveryFee.value);
 
@@ -122,7 +130,22 @@ const groupedCart = computed(() => {
   }, {} as Record<string, CartItem[]>);
 });
 
+//  刪除該餐廳所有商品
+const removeRestaurant = (restaurantName: string) => {
+  cartStore.$patch((state) => {
+    state.items = state.items.filter(item => item.restaurantName !== restaurantName);
+  });
+};
+
 useHead({
-  title: '您的購物車'
+  title: '您的購物冰箱',
 });
 </script>
+
+<style scoped>
+.restaurant-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>

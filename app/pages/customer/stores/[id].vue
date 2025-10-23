@@ -3,7 +3,7 @@
     <!--圖片區-->
     <v-img
       :src="store?.image"
-      height="350px"
+      height="400px"
       cover
       class="w-100 position-relative"
     >
@@ -23,10 +23,10 @@
     <v-container class="px-4">
       <v-card
         class="info-card mx-auto px-6 py-5"
-        max-width="900"
+        max-width="950"
         elevation="8"
       >
-        <h1 class="text-h4 font-weight-bold mb-2">{{ store?.name }}</h1>
+        <h1 class="text-h4 font-weight-bold mb-2 store-name">{{ store?.name }}</h1>
         <p class="text-body-1 mb-4">{{ store?.info }}</p>
 
         <div class="d-flex align-center mb-2">
@@ -49,7 +49,10 @@
             v-for="item in store?.menu"
             :key="item._id"
             cols="12"
-            md="6"
+            sm="6"
+            md="4"
+            lg="4"
+            class = "pa-2"
         >
           <MenuItemCard
               :item="item"
@@ -123,13 +126,15 @@ useHead({
 <style scoped>
 .position-relative {
   position: relative;
+  
 }
 
 .info-card {
   position: relative;
-  top: -100px;
+  top: -110px;
   border-radius: 20px;
   background-color: white;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
   z-index: 2;
 }
 
@@ -137,14 +142,10 @@ useHead({
   width: 100%;
 }
 
-
-.info-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  z-index: -1;
+.store-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .menu-info {
