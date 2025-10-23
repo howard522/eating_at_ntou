@@ -24,6 +24,17 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *                 type: array
  *                 items:
  *                   $ref: '#/components/schemas/CartItem'
+ *           examples:
+ *             singleItem:
+ *               summary: 範例 - 單一商品加入購物車
+ *               value:
+ *                 items:
+ *                   - restaurantId: "64f1a3b2c4d5e6f7890abca1"
+ *                     menuItemId: "64f1a3b2c4d5e6f7890abcb2"
+ *                     name: "炸雞腿"
+ *                     price: 120
+ *                     quantity: 1
+ *                     options: { "辣度": "小辣" }
  *     responses:
  *       200:
  *         description: 更新成功並回傳最新購物車
@@ -36,6 +47,23 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *                   type: boolean
  *                 data:
  *                   $ref: '#/components/schemas/Cart'
+ *             examples:
+ *               successWithCart:
+ *                 summary: 回傳包含剛加入項目的購物車
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     _id: "64f1a3b2c4d5e6f7890abcc3"
+ *                     user: "64f1a3b2c4d5e6f7890abcc4"
+ *                     items:
+ *                       - restaurantId: "64f1a3b2c4d5e6f7890abca1"
+ *                         menuItemId: "64f1a3b2c4d5e6f7890abcb2"
+ *                         name: "炸雞腿"
+ *                         price: 120
+ *                         quantity: 1
+ *                         options: { "辣度": "小辣" }
+ *                     currency: "TWD"
+ *                     total: 120
  */
 export default defineEventHandler(async (event) => {
     await connectDB()

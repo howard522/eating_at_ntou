@@ -24,6 +24,23 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *                   type: boolean
  *                 data:
  *                   $ref: '#/components/schemas/Cart'
+ *             examples:
+ *               cartExample:
+ *                 summary: 範例回傳，購物車內有一筆商品
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     _id: "64f1a3b2c4d5e6f7890abcc3"
+ *                     user: "64f1a3b2c4d5e6f7890abcc4"
+ *                     items:
+ *                       - restaurantId: "64f1a3b2c4d5e6f7890abca1"
+ *                         menuItemId: "64f1a3b2c4d5e6f7890abcb2"
+ *                         name: "炸雞腿"
+ *                         price: 120
+ *                         quantity: 1
+ *                         options: { "辣度": "小辣" }
+ *                     currency: "TWD"
+ *                     total: 120
  */
 export default defineEventHandler(async (event) => {
     await connectDB()
