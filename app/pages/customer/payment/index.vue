@@ -16,10 +16,19 @@
                   @blur="updateDetailsInStore"
               ></v-text-field>
             </div>
-            <div>
+            <div class="mb-4">
               <p class="text-caption text-medium-emphasis">聯絡電話</p>
               <v-text-field
                   v-model="localPhoneNumber"
+                  hide-details
+                  class="mt-1"
+                  @blur="updateDetailsInStore"
+              ></v-text-field>
+            </div>
+            <div class="mb-4">
+              <p class="text-caption text-medium-emphasis">聯絡人暱稱</p>
+              <v-text-field
+                  v-model="localReceiveName"
                   hide-details
                   class="mt-1"
                   @blur="updateDetailsInStore"
@@ -124,6 +133,7 @@ import { useCartStore } from '../../../../stores/cart';
 const cartStore = useCartStore();
 const localDeliveryAddress = ref(cartStore.deliveryAddress);
 const localPhoneNumber = ref(cartStore.phoneNumber);
+const localReceiveName = ref(cartStore.receiveName);
 const items = computed(() => cartStore.items);
 const totalPrice = computed(() => cartStore.totalPrice);
 const deliveryFree = computed(() => cartStore.deliveryFree);
@@ -135,6 +145,7 @@ function updateDetailsInStore() {
   cartStore.setDeliveryDetails({
     address: localDeliveryAddress.value,
     phone: localPhoneNumber.value,
+    receiveName: localReceiveName.value,
   });
 }
 
