@@ -37,20 +37,29 @@
 
       <v-spacer></v-spacer>
 
-      <v-btn icon to="/customer/cart" ref="fridgeIcon">
-        <v-badge
-            :content="cartStore.totalItemsCount"
-            :model-value="cartStore.totalItemsCount > 0"
-            color="red"
-            floating
-        >
-          <v-icon>mdi-fridge-outline</v-icon>
-        </v-badge>
-      </v-btn>
+      <v-tooltip text="購物冰箱" location="bottom">
+        <template #activator="{ props }">
+          <v-btn icon to="/customer/cart" ref="fridgeIcon" v-bind="props">
+            <v-badge
+                :content="cartStore.totalItemsCount"
+                :model-value="cartStore.totalItemsCount > 0"
+                color="red"
+                floating
+            >
+              <v-icon>mdi-fridge-outline</v-icon>
+            </v-badge>
+          </v-btn>
+        </template>
+      </v-tooltip>
 
-      <v-btn icon to="/profile" class="mr-2">
-        <v-icon>mdi-account-outline</v-icon>
-      </v-btn>
+      <v-tooltip text="帳戶資訊" location="bottom">
+        <template #activator="{ props }">
+          <v-btn icon to="/profile" v-bind="props" class="md-4 mr-8">
+            <v-icon>mdi-account-outline</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
+
     </v-app-bar>
 
     <v-main style="background-color: #f1f2f6;">
