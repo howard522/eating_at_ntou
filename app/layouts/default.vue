@@ -38,8 +38,12 @@
       <v-spacer></v-spacer>
 
       <v-tooltip text="購物冰箱" location="bottom">
-        <template #activator="{ props }">
-          <v-btn icon to="/customer/cart" ref="fridgeIcon" v-bind="props">
+        <template #activator="{ props: act }">
+          <v-btn
+            icon
+            to="/customer/cart"
+            v-bind="{ ...act, ref: setFridgeIcon }"
+          >
             <v-badge
                 :content="cartStore.totalItemsCount"
                 :model-value="cartStore.totalItemsCount > 0"
@@ -79,6 +83,11 @@ interface link {
 
 // 提供購物車圖示元素給 AddToCartDialog 使用 ---
 const fridgeIcon = ref<HTMLElement | null>(null);
+const setFridgeIcon = (el: any) => {
+  // 合併 v-tooltip 的 activator ref 與本地 ref，取得實際 DOM
+  // el 可能是 Vuetify 元件實例或原生 HTMLElement
+  fridgeIcon.value = el?.$el || el || null;
+};
 const fridgeIconEl = computed(() => fridgeIcon.value?.$el || fridgeIcon.value);
 provide('cartIconEl', fridgeIconEl);
 const cartStore = useCartStore();
