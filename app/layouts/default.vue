@@ -52,7 +52,7 @@
         </template>
       </v-tooltip>
 
-      <v-tooltip text="帳戶資訊" location="bottom">
+      <v-tooltip text="我的帳戶" location="bottom">
         <template #activator="{ props }">
           <v-btn icon to="/profile" v-bind="props" class="md-4 mr-8">
             <v-icon>mdi-account-outline</v-icon>
