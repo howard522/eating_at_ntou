@@ -120,6 +120,7 @@
   </v-container>
 </template>
 
+// 需要添加驗證變更合法性的邏輯
 <script setup lang="ts">
 import { useRouter } from "nuxt/app";
 const router = useRouter();
