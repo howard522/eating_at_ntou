@@ -160,7 +160,7 @@ const dummyRestaurants = [
     address: "基隆市中正區新豐街482號2樓",
     phone: "02-2462-2192",
     image:
-      "https://static.wikia.nocookie.net/newkomica-kari/images/c/c6/%E6%9D%B0%E5%93%A5.png/revision/latest?cb=20240623171543&path-prefix=zh-tw",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQU39c4jPB0WcphRQDuMQjjzuuLHCLwmIJxxfGUzgbF8zV-POo98S4R8zYEi-ONFIhe_8k&usqp=CAU",
     info: "適合多人",
     tags: ["熱炒", "合菜"],
     menu: [
@@ -185,7 +185,7 @@ const dummyRestaurants = [
     address: "基隆市中正區新豐街482號2樓",
     phone: "",
     image:
-      "https://static.wikia.nocookie.net/newkomica-kari/images/c/c6/%E6%9D%B0%E5%93%A5.png/revision/latest?cb=20240623171543&path-prefix=zh-tw",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQU39c4jPB0WcphRQDuMQjjzuuLHCLwmIJxxfGUzgbF8zV-POo98S4R8zYEi-ONFIhe_8k&usqp=CAU",
     info: "平價熱炒，適合多人聚餐",
     tags: ["熱炒", "合菜"],
     menu: [
@@ -204,7 +204,7 @@ const dummyRestaurants = [
     address: "基隆市中正區新豐街482號2樓",
     phone: "02-2462-2192",
     image:
-      "https://static.wikia.nocookie.net/newkomica-kari/images/c/c6/%E6%9D%B0%E5%93%A5.png/revision/latest?cb=20240623171543&path-prefix=zh-tw",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQU39c4jPB0WcphRQDuMQjjzuuLHCLwmIJxxfGUzgbF8zV-POo98S4R8zYEi-ONFIhe_8k&usqp=CAU",
     info: "平價熱炒，適合多人聚餐",
     tags: ["熱炒", "合菜"],
     menu: [
@@ -223,7 +223,7 @@ const dummyRestaurants = [
     address: "基隆市中正區新豐街482號2樓",
     phone: "02-2462-2192",
     image:
-      "https://static.wikia.nocookie.net/newkomica-kari/images/c/c6/%E6%9D%B0%E5%93%A5.png/revision/latest?cb=20240623171543&path-prefix=zh-tw",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQU39c4jPB0WcphRQDuMQjjzuuLHCLwmIJxxfGUzgbF8zV-POo98S4R8zYEi-ONFIhe_8k&usqp=CAU",
     info: "平價熱炒，適合多人聚餐",
     tags: ["熱炒", "合菜"],
     menu: [
@@ -242,7 +242,7 @@ const dummyRestaurants = [
     address: "基隆市中正區新豐街482號2樓",
     phone: "02-2462-2192",
     image:
-      "https://static.wikia.nocookie.net/newkomica-kari/images/c/c6/%E6%9D%B0%E5%93%A5.png/revision/latest?cb=20240623171543&path-prefix=zh-tw",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQU39c4jPB0WcphRQDuMQjjzuuLHCLwmIJxxfGUzgbF8zV-POo98S4R8zYEi-ONFIhe_8k&usqp=CAU",
     info: "適合多人",
     tags: ["熱炒", "合菜"],
     menu: [
@@ -291,7 +291,7 @@ const dummyRestaurants = [
     address: "基隆市中正區新豐街482號2樓",
     phone: "02-2462-2192",
     image:
-      "https://static.wikia.nocookie.net/newkomica-kari/images/c/c6/%E6%9D%B0%E5%93%A5.png/revision/latest?cb=20240623171543&path-prefix=zh-tw",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQU39c4jPB0WcphRQDuMQjjzuuLHCLwmIJxxfGUzgbF8zV-POo98S4R8zYEi-ONFIhe_8k&usqp=CAU",
     info: "適合超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超超多人",
     tags: ["熱炒", "合菜"],
     menu: [
@@ -310,7 +310,7 @@ const dummyRestaurants = [
     address: "基隆市中正區新豐街482號2樓",
     phone: "02-2462-2192",
     image:
-      "https://static.wikia.nocookie.net/newkomica-kari/images/c/c6/%E6%9D%B0%E5%93%A5.png/revision/latest?cb=20240623171543&path-prefix=zh-tw",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQU39c4jPB0WcphRQDuMQjjzuuLHCLwmIJxxfGUzgbF8zV-POo98S4R8zYEi-ONFIhe_8k&usqp=CAU",
     info: "平價熱炒，適合多人聚餐",
     tags: ["熱炒", "合菜"],
     menu: [
@@ -334,7 +334,7 @@ const dummyRestaurants = [
         address: "基隆市中正區新豐街482號2樓",
         phone: "02-2462-2192",
         image:
-          "https://static.wikia.nocookie.net/newkomica-kari/images/c/c6/%E6%9D%B0%E5%93%A5.png/revision/latest?cb=20240623171543&path-prefix=zh-tw",
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQU39c4jPB0WcphRQDuMQjjzuuLHCLwmIJxxfGUzgbF8zV-POo98S4R8zYEi-ONFIhe_8k&usqp=CAU",
         info: "平價熱炒，適合多人聚餐",
         tags: ["熱炒", "合菜"],
         menu: [

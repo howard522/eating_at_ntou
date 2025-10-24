@@ -45,6 +45,10 @@ export const components = {
                     name: { type: 'string' },
                     email: { type: 'string' },
                     role: { type: 'string', description: "'admin' or 'multi'" },
+                    img: { type: 'string' },
+                    address: { type: 'string' },
+                    phone: { type: 'string' },
+                    activeRole: { type: 'string', nullable: true, enum: ['customer', 'delivery'] },
                     createdAt: { type: 'string', format: 'date-time' },
                     updatedAt: { type: 'string', format: 'date-time' }
                 }

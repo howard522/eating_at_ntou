@@ -126,10 +126,13 @@ const deliveryAddress = computed(() => {
 });
   
 // phone應該從userStore拿 -> userStore.info.phone
-cartStore.setDeliveryDetails({
-  address: deliveryAddress,
-  phone: '0123456789',
-});
+watch(deliveryAddress, (newVal) => {
+  cartStore.setDeliveryDetails({
+    address: newVal,
+    phone: userStore.info?.phone || '0123456789',
+    receiveName: userStore.info?.name || '匿名用戶',
+  });
+}, { immediate: true });
 
 const validateAddress = (value: PresetLocation | string): boolean | string => {
   if (!value) return '必須輸入地址';
