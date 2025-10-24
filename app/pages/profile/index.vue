@@ -2,7 +2,6 @@
   <v-container>
     <v-row justify="center">
       <v-col cols="12" md="8" lg="6">
-        <h1 class="text-h4 font-weight-bold mb-6">我的帳戶</h1>
 
         <v-card flat border rounded="lg">
           <v-card-text class="pa-6">
@@ -77,6 +76,18 @@
                 ></v-text-field>
               </div>
 
+              <div class="mb-4">
+                <p class="text-caption text-medium-emphasis mb-n1">確認密碼</p>
+                <v-text-field
+                    v-model="formData.password"
+                    variant="plain"
+                    type="password"
+                    placeholder="留空表示不修改"
+                    hide-details
+                    class="font-weight-medium"
+                ></v-text-field>
+              </div>
+
               <v-btn
                   type="submit"
                   color="primary"
@@ -91,7 +102,6 @@
             <v-divider class="my-6"></v-divider>
 
             <div class="text-center">
-              <h3 class="text-h6 font-weight-bold mb-4">身分管理</h3>
               <v-btn
                   variant="outlined"
                   color="primary"
@@ -110,6 +120,7 @@
   </v-container>
 </template>
 
+// 需要添加驗證變更合法性的邏輯
 <script setup lang="ts">
 import { useRouter } from "nuxt/app";
 const router = useRouter();

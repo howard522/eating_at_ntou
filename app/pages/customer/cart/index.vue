@@ -19,7 +19,7 @@
       <v-col cols="12" md="8">
         <div>
           <div v-for="(group, restaurantName) in groupedCart" :key="restaurantName" class="mb-8">
-            <div class="d-flex align-center justify-space-between mb-4">
+            <div class="d-flex align-center justify-space-between mb-1">
               <h2 class="text-h5 font-weight-bold restaurant-name mb-0">{{ restaurantName }}</h2>
               <v-btn
                 color="error"
@@ -75,7 +75,7 @@
             v-if="cartStore.items.length > 0"
             elevation="2"
             rounded="lg"
-            style="position: sticky; top: 0px; margin-top: 49px;">
+            style="position: sticky; top: 0px; margin-top: 37px;">
 
           <v-card-text class="pa-5">
             <div class="d-flex justify-space-between mb-4">

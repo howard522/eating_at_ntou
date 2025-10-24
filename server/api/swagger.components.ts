@@ -45,6 +45,10 @@ export const components = {
                     name: { type: 'string' },
                     email: { type: 'string' },
                     role: { type: 'string', description: "'admin' or 'multi'" },
+                    img: { type: 'string' },
+                    address: { type: 'string' },
+                    phone: { type: 'string' },
+                    activeRole: { type: 'string', nullable: true, enum: ['customer', 'delivery'] },
                     createdAt: { type: 'string', format: 'date-time' },
                     updatedAt: { type: 'string', format: 'date-time' }
                 }
@@ -73,6 +77,39 @@ export const components = {
                     email: { type: 'string', format: 'email' },
                     password: { type: 'string' }
                 }
+            }
+            ,
+            CartItem: {
+                type: 'object',
+                properties: {
+                    restaurantId: { type: 'string' },
+                    menuItemId: { type: 'string' },
+                    name: { type: 'string' },
+                    price: { type: 'number', description: 'price snapshot in cents' },
+                    quantity: { type: 'integer' },
+                    options: { type: 'object', additionalProperties: true }
+                }
+            },
+            Cart: {
+                type: 'object',
+                properties: {
+                    _id: { type: 'string' },
+                    user: { type: 'string' },
+                    items: { type: 'array', items: { $ref: '#/components/schemas/CartItem' } },
+                    currency: { type: 'string' },
+                    total: { type: 'number' },
+                    status: { type: 'string' },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    updatedAt: { type: 'string', format: 'date-time' }
+                }
+            }
+        }
+        ,
+        securitySchemes: {
+            BearerAuth: {
+                type: 'http',
+                scheme: 'bearer',
+                bearerFormat: 'JWT'
             }
         }
     }
