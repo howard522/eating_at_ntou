@@ -1,13 +1,13 @@
-// FILE: server/api/users/me/password.patch.ts  (新增/更新)
+// FILE: server/api/auth/me/password.patch.ts  (新增/更新)
 // ============================================================================
 /**
  * @openapi
- * /api/users/me/password:
+ * /api/auth/me/password:
  *   patch:
  *     summary: 變更我的密碼
  *     tags: [Users]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -24,7 +24,7 @@
  *       401: { description: 密碼不正確 / 未授權 }
  */
 import { defineEventHandler, readBody, createError } from 'h3'
-import { getUserFromEvent } from '../../utils/auth'
+import { getUserFromEvent } from '../../../utils/auth'
 import bcrypt from 'bcryptjs'
 
 export default defineEventHandler(async (event) => {
