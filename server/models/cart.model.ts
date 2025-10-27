@@ -14,7 +14,14 @@ const cartSchema = new mongoose.Schema({
     items: { type: [cartItemSchema], default: [] },
     currency: { type: String, default: 'TWD' },
     total: { type: Number, default: 0 }, // total in cents
-    status: { type: String, enum: ['open', 'ordered', 'cancelled'], default: 'open' }
+    // status meanings:
+    // - 'open': 使用者正在編輯購物車 (仍可修改)
+    // - 'locked': 使用者已送出下單請求，購物車暫時鎖定（後續會有訂單流程把該購物車清空或轉為訂單）
+    status: {
+        type: String,
+        enum: ['open', 'locked'],
+        default: 'open'
+    }
 }, { timestamps: true })
 
 // calculate total before save if items changed
