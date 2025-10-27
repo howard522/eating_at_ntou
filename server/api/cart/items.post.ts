@@ -11,8 +11,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *   post:
  *     summary: 新增或替換使用者購物車項目
  *     description: 接受 body.items 陣列（每項符合 CartItem schema），會建立或更新使用者的購物車。
- *    tags:
- *    - Cart
+ *     tags:
+ *       - Cart
  *     security:
  *       - BearerAuth: []
  *     requestBody:
