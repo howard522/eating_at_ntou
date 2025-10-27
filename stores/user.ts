@@ -9,7 +9,12 @@ export const useUserStore = defineStore('user', {
             name: string
             email: string
             role: 'multi' | 'admin'
+            img?: string
+            address?: string
+            phone?: string
+            activeRole?: 'customer' | 'delivery' | null
         },
+        //sung說,前端可以根據currentRole指定user看到的畫面,阿admin就是看到管理後台這樣
 
         // 顧客 or 外送員
         currentRole: null as 'customer' | 'delivery' | null
@@ -52,6 +57,10 @@ export const useUserStore = defineStore('user', {
         loadFromStorage() {
             const data = localStorage.getItem('userStore')
             if (data) this.$patch(JSON.parse(data))
+        },
+
+        initialize() {
+            this.loadFromStorage()
         }
     },
 
