@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
+import { useUserStore } from "./user";
 
 export interface CartMenuItem {
-    _id: string;
+    menuItemId: string;
     name: string;
     price: number;
     image: string;
@@ -12,27 +13,81 @@ export interface CartItem extends CartMenuItem {
     quantity: number;
     restaurantId: string;
     restaurantName: string;
-    receiveName: string;
 }
 
 interface CartState {
     items: CartItem[];
     deliveryAddress: string;
     phoneNumber: string;
-    deliveryFree: number;
+    deliveryFee: number;
+    receiveName: string;
+    arriveTime: Date;
 }
 
 export const useCartStore = defineStore('cart', {
     state: (): CartState => ({
         items: [],
-        deliveryAddress: '',
-        phoneNumber: '',
-        receiveName: '',
-        deliveryFree: 30,
+        deliveryAddress: useUserStore().info?.address || '',
+        phoneNumber: useUserStore().info?.phone || '',
+        receiveName: useUserStore().info?.name || '',
+        deliveryFee: 30,
+        arriveTime: new Date(Date.now() + 30 * 60 * 1000),
     }),
     actions: {
+        async fetchCart() {
+            const userStore = useUserStore();
+            if (!userStore.token) {
+                console.log('User not logged in, skipping cart fetch.');
+                return;
+            }
+            try {
+                const { data } = await useFetch<{ success: boolean, data: { items: CartItem[] }}>('/api/cart', {
+                    headers: {
+                        'Authorization': `Bearer ${userStore.token}`,
+                        'Accept': 'application/json',
+                    },
+                });
+                if (data.value && data.value.data && data.value.data.items) {
+                    this.items = data.value.data.items;
+                }
+
+            } catch (err) {
+                console.error('Error fetching cart:', err);
+            }
+        },
+        async syncCartWithDB() {
+            const userStore = useUserStore();
+            if (!userStore.token) {
+                console.log('User not logged in, skipping cart sync.');
+                return;
+            }
+            const apiItems = this.items.map(item => ({
+                restaurantId: item.restaurantId,
+                restaurantName: item.restaurantName,
+                quantity: item.quantity,
+                menuItemId: item.menuItemId,
+                name: item.name,
+                price: item.price,
+                image: item.image,
+                info: item.info,
+            }));
+            try {
+                await useFetch('/api/cart/items', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${userStore.token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: {
+                        items: apiItems,
+                    },
+                });
+            } catch (err) {
+                console.error('Error syncing cart with DB:', err);
+            }
+        },
         addItem(newItem: CartMenuItem, quantity: number, restaurant: { id: string, name: string }) {
-            const existingItem = this.items.find(item => item._id === newItem._id);
+            const existingItem = this.items.find(item => item.menuItemId === newItem.menuItemId);
             if (existingItem) {
                 existingItem.quantity += quantity;
             } else {
@@ -43,35 +98,56 @@ export const useCartStore = defineStore('cart', {
                     restaurantName: restaurant.name,
                 });
             }
+            this.syncCartWithDB().then();
         },
         setDeliveryDetails(details: { address: string, phone: string, receiveName: string }) {
             this.deliveryAddress = details.address;
             this.phoneNumber = details.phone;
             this.receiveName = details.receiveName;
         },
-        setDeliveryFree(free: number) {
-            this.deliveryFree = free;
+        setDeliveryFee(fee: number) {
+            this.deliveryFee = fee;
         },
         updateItemQuantity(itemId: string, newQuantity: number) {
-            const item = this.items.find(item => item._id === itemId);
+            const item = this.items.find(item => item.menuItemId === itemId);
             if (item) {
                 if (newQuantity > 0) {
                     item.quantity = newQuantity;
                 } else {
                     // 如果數量小於等於 0，就移除該品項
-                    const itemIndex = this.items.findIndex(i => i._id === itemId);
+                    const itemIndex = this.items.findIndex(i => i.menuItemId === itemId);
                     if (itemIndex > -1) {
                         this.items.splice(itemIndex, 1);
                     }
                 }
+                this.syncCartWithDB().then();
+            }
+        },
+        removeRestaurantItems(restaurantName: string) {
+            const initialLength = this.items.length;
+            this.items = this.items.filter(item => item.restaurantName !== restaurantName);
+            if (this.items.length < initialLength) {
+                this.syncCartWithDB().then();
             }
         },
         removeItem(itemId: string) {
-            this.items = this.items.filter(item => item._id !== itemId);
+            const initialLength = this.items.length;
+            this.items = this.items.filter(item => item.menuItemId !== itemId);
+            if (this.items.length < initialLength) {
+                this.syncCartWithDB().then();
+            }
         },
         clearCart() {
-            this.items = [];
-            this.receiveName = '';
+            const userStore = useUserStore();
+            if (this.items.length > 0) {
+                this.items = [];
+                this.setDeliveryDetails({
+                    address: userStore.info?.address || '',
+                    phone: userStore.info?.phone || '',
+                    receiveName: userStore.info?.name || ''});
+                // 後端才做清DB
+                // this.syncCartWithDB().then();
+            }
         },
     },
     getters: {

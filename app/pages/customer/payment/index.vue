@@ -7,33 +7,38 @@
         <v-card flat border class="mb-6">
           <v-card-title class="text-h6">外送詳細資訊</v-card-title>
           <v-card-text>
-            <div class="mb-4">
-              <p class="text-caption text-medium-emphasis">外送地址</p>
-              <v-text-field
-                  v-model="localDeliveryAddress"
-                  hide-details
-                  class="mt-1"
-                  @blur="updateDetailsInStore"
-              ></v-text-field>
-            </div>
-            <div class="mb-4">
-              <p class="text-caption text-medium-emphasis">聯絡電話</p>
-              <v-text-field
-                  v-model="localPhoneNumber"
-                  hide-details
-                  class="mt-1"
-                  @blur="updateDetailsInStore"
-              ></v-text-field>
-            </div>
-            <div class="mb-4">
-              <p class="text-caption text-medium-emphasis">聯絡人暱稱</p>
-              <v-text-field
-                  v-model="localReceiveName"
-                  hide-details
-                  class="mt-1"
-                  @blur="updateDetailsInStore"
-              ></v-text-field>
-            </div>
+            <v-form v-model="isFormValid">
+              <div class="mb-4">
+                <p class="text-caption text-medium-emphasis">外送地址</p>
+                <v-text-field
+                    v-model="localDeliveryAddress"
+                    class="mt-1"
+                    :rules="addressRules"
+                    validate-on="blur"
+                    @blur="updateDetailsInStore"
+                ></v-text-field>
+              </div>
+              <div class="mb-4">
+                <p class="text-caption text-medium-emphasis">聯絡電話</p>
+                <v-text-field
+                    v-model="localPhoneNumber"
+                    class="mt-1"
+                    :rules="phoneRules"
+                    validate-on="blur"
+                    @blur="updateDetailsInStore"
+                ></v-text-field>
+              </div>
+              <div class="mb-4">
+                <p class="text-caption text-medium-emphasis">聯絡人暱稱</p>
+                <v-text-field
+                    v-model="localReceiveName"
+                    class="mt-1"
+                    :rules="[(value: string) => !!value || '聯絡人暱稱為必填。']"
+                    validate-on="blur"
+                    @blur="updateDetailsInStore"
+                ></v-text-field>
+              </div>
+            </v-form>
           </v-card-text>
         </v-card>
         <v-card flat border>
@@ -95,7 +100,7 @@
             </div>
             <div class="d-flex justify-space-between mt-2">
               <p class="text-body-1 text-medium-emphasis">外送費</p>
-              <p class="text-body-1 font-weight-medium">$ {{ deliveryFree }}</p>
+              <p class="text-body-1 font-weight-medium">$ {{ deliveryFee }}</p>
             </div>
 
             <v-divider class="my-4"></v-divider>
@@ -116,6 +121,7 @@
                 block
                 size="large"
                 class="mt-6"
+                :disabled="!isFormValid"
                 @click="submitOrder"
             >
               <span class="text-h6 font-weight-bold">確認送出訂單</span>
@@ -131,12 +137,15 @@
 import { useCartStore } from '../../../../stores/cart';
 
 const cartStore = useCartStore();
+const isFormValid = ref(false);
 const localDeliveryAddress = ref(cartStore.deliveryAddress);
 const localPhoneNumber = ref(cartStore.phoneNumber);
 const localReceiveName = ref(cartStore.receiveName);
 const items = computed(() => cartStore.items);
 const totalPrice = computed(() => cartStore.totalPrice);
-const deliveryFree = computed(() => cartStore.deliveryFree);
+const deliveryFee = computed(() => cartStore.deliveryFee);
+let timer: ReturnType<typeof setInterval> | null = null;
+
 // 目前只有現場付款
 const paymentMethod = ref('現場付款');
 const paymentOptions = ['現場付款'];
@@ -149,17 +158,38 @@ function updateDetailsInStore() {
   });
 }
 
-const getEstimatedTime = () => {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() + 30);
-  const hours = now.getHours().toString().padStart(2, '0');
-  const minutes = now.getMinutes().toString().padStart(2, '0');
+const addressRules = [
+  (value: string) => !!value || '外送地址為必填欄位。',
+  (value: string) => {
+    const regex = /(?<zipcode>(^\d{5}|^\d{3})?)(?<city>\D+[縣市])(?<district>\D+?(市區|鎮區|鎮市|[鄉鎮市區]))(?<others>.+)/;
+    return regex.test(value) || '地址格式不正確，請輸入完整地址。';
+  },
+];
+
+const phoneRules = [
+  (value: string) => !!value || '聯絡電話為必填欄位。',
+  (value: string) => {
+    const regex = /^09\d{8}$/;
+    return regex.test(value) || '請輸入有效的 10 位手機號碼 (格式為 09xxxxxxxx)。';
+  },
+];
+
+const estimatedDeliveryTime = computed(() => {
+  const date = cartStore.arriveTime;
+  if (!date) return '';
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
   return `${hours} : ${minutes}`;
+});
+
+const updateArriveTime = () => {
+  const futureDate = new Date();
+  futureDate.setMinutes(futureDate.getMinutes() + 30);
+  cartStore.arriveTime = futureDate;
 };
-const estimatedDeliveryTime = ref(getEstimatedTime());
 
 const total = computed(() => {
-  return totalPrice.value + deliveryFree.value;
+  return totalPrice.value + deliveryFee.value;
 });
 
 const submitOrder = () => {
@@ -170,6 +200,16 @@ const submitOrder = () => {
   const router = useRouter();
   router.push(`/customer/order-state/${id}`);
 };
+
+onMounted(() => {
+  updateArriveTime();
+  timer = setInterval(updateArriveTime, 60 * 1000);
+});
+onUnmounted(() => {
+  if (timer) {
+    clearInterval(timer);
+  }
+});
 
 useHead({
   title: '確認訂單',

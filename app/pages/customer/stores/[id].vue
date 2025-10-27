@@ -74,7 +74,7 @@
 import { useCartStore, type CartMenuItem } from '../../../../stores/cart';
 
 interface MenuItem {
-  _id: string
+  menuItemId: string
   name: string
   price: number
   image: string
