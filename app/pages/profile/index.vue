@@ -11,6 +11,7 @@
                 class="font-weight-bold"
                 style="position: absolute; top: 24px; right: 24px"
                 @click="userStore.logout()"
+                to="/login"
             >
               登出
             </v-btn>
@@ -18,16 +19,16 @@
             <div class="text-center mt-4 mb-10">
               <v-avatar color="primary" size="96">
                 <v-img
-                    :src="userStore.info.value.img"
+                    :src="userStore.info?.img"
                     cover
                 >
                 </v-img>
               </v-avatar>
               <h2 class="text-h5 font-weight-bold mt-4">
-                {{ userStore.info.value.name }}
+                {{ userStore.info?.name }}
               </h2>
               <p class="text-body-1 text-medium-emphasis">
-                {{ userStore.info.value.email }}
+                {{ userStore.info?.email }}
               </p>
             </div>
 
@@ -79,10 +80,10 @@
               <div class="mb-4">
                 <p class="text-caption text-medium-emphasis mb-n1">確認密碼</p>
                 <v-text-field
-                    v-model="formData.password"
+                    v-model="formData.passwordConfirm"
                     variant="plain"
                     type="password"
-                    placeholder="留空表示不修改"
+                    placeholder="請再次輸入新密碼"
                     hide-details
                     class="font-weight-medium"
                 ></v-text-field>
@@ -120,113 +121,80 @@
   </v-container>
 </template>
 
-// 需要添加驗證變更合法性的邏輯
 <script setup lang="ts">
-import { useRouter } from "nuxt/app";
-const router = useRouter();
-// 之後會從userStore拿資料
-// const userStore = useUserStore();
-const userStore = {
-  info: ref({
-    name: '王大明',
-    email: 'david_wang@email.com',
-    img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSF6jwre87YE2xVWsEpo-X0jVkGsQ5WbSF96Q&s",
-    address: '海洋大學資工系館',
-    phone: '0912345678',
-    role: 'customer',
-    activeRole: 'customer',
-  }),
-  updateProfile(data: any) {
-    userStore.info.value.name = data.name;
-    userStore.info.value.address = data.address;
-    userStore.info.value.phone = data.phone;
-    alert('變更已儲存！');
-  },
-  logout() {
-    // userStore.logout
-    router.push('/login');
-  },
-  applyForDelivery() {
-    alert('已成為外送員！');
-    // 更新db，加上外送員身分
-    userStore.info.value.role = 'both';
-  },
-  applyForCustomer() {
-    alert('已成為顧客！');
-    // 更新db，加上顧客身分
-    userStore.info.value.role = 'both';
-  },
-  switchRole() {
-    const newRole = userStore.info.value.activeRole === 'customer' ? 'deliverer' : 'customer';
-    userStore.info.value.activeRole = newRole;
-    alert(`身分已切換為 ${newRole === 'customer' ? '顧客' : '外送員'}`);
-    router.push(newRole === 'customer' ? '/customer/stores' : '/delivery/orders');
-  },
-};
+import { useUserStore } from '../../../stores/user'
+
+const userStore = useUserStore()
 
 const formData = ref({
-  name: userStore.info.value.name,
-  address: userStore.info.value.address,
-  phone: userStore.info.value.phone,
+  name: userStore.info?.name || '無法取得用戶暱稱',
+  address: userStore.info?.address || '無法取得用戶地址',
+  phone: userStore.info?.phone || '無法取得用戶電話',
   password: '',
-});
+  passwordConfirm: '',
+})
 
 function saveChanges() {
+  // 密碼一致性檢查
+  if (formData.value.password) {
+    if (formData.value.password !== formData.value.passwordConfirm) {
+      alert('兩次輸入的密碼不一致')
+      return
+    }
+  }
+
   const dataToUpdate: any = {
     name: formData.value.name,
     address: formData.value.address,
     phone: formData.value.phone,
-  };
-
-  if (formData.value.password) {
-    dataToUpdate.password = formData.value.password;
   }
 
-  // 將修改更新到資料庫中
-  userStore.updateProfile(dataToUpdate);
-  formData.value.password = '';
+  if (formData.value.password) {
+    dataToUpdate.password = formData.value.password
+  }
+
+  // 直接更新 store（之後改成呼叫 API，再在成功時更新 store）
+  userStore.$patch({
+    info: {
+      ...(userStore.info || {}),
+      ...dataToUpdate,
+    },
+  })
+  alert('變更已儲存！')
+  formData.value.password = ''
+  formData.value.passwordConfirm = ''
 }
 
 const roleButton = computed(() => {
-  const role = userStore.info.value.role;
-  const activeRole = userStore.info.value.activeRole;
+  const role = userStore.info?.role;
+  const currentRole = userStore.currentRole;
 
-  if (role === 'customer') {
-    return { text: '我想成為外送員', action: 'applyForDelivery', disabled: false };
+  if (!role || !currentRole) {
+    return { text: '載入中...', action: null, disabled: true };
   }
 
-  if (role === 'delivery') {
-    return { text: '我想成為顧客', action: 'applyForCustomer', disabled: false };
-  }
-
-  if (role === 'both') {
-    if (activeRole === 'customer') {
+  if (role === 'multi') {
+    if (currentRole === 'customer') {
       return { text: '切換為外送員', action: 'switch', disabled: false };
     } else {
       return { text: '切換為顧客', action: 'switch', disabled: false };
     }
   }
-  return { text: '身分管理', action: null, disabled: true };
+
+  return { text: '管理員', action: null, disabled: true };
 });
 
 function manageRole() {
-  const action = roleButton.value.action;
-  if (action === 'applyForCustomer')
-  {
-    userStore.applyForCustomer();
-  }
-  else if (action === 'applyForDelivery')
-  {
-    userStore.applyForDelivery();
-  }
-  else if (action === 'switch') {
-    userStore.switchRole();
+  const action = roleButton.value.action
+  if (action === 'switch') {
+    const current = userStore.currentRole
+    const newRole = current === 'customer' ? 'delivery' : 'customer'
+    userStore.setRole?.(newRole as 'customer' | 'delivery')
+    alert(`身分已切換為 ${newRole === 'customer' ? '顧客' : '外送員'}`)
   }
 }
 
-useHead({
-  title: '我的帳戶',
-});
+useHead({title: '我的帳戶',});
 </script>
 
 <style scoped>

@@ -161,7 +161,7 @@ watch(searchTerm, debounce((newValue: string) => {
 watch(deliveryAddress, (newVal) => {
   cartStore.setDeliveryDetails({
     address: newVal,
-    phone: userStore.info?.phone || '0988917943',
+    phone: userStore.info?.phone || '8787',
     receiveName: userStore.info?.name || '劉俊麟',
   });
 }, { immediate: true });

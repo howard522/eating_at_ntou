@@ -108,7 +108,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
 import { useCartStore, type CartItem } from '../../../../stores/cart';
 
 const cartStore = useCartStore();
