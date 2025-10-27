@@ -89,8 +89,13 @@ export default defineEventHandler(async (event) => {
     // Upsert cart for user
     let cart = await Cart.findOne({ user: userId })
     if (!cart) {
+        // create new cart
         cart = new Cart({ user: userId, items })
     } else {
+        // if cart is locked, disallow modifications
+        if (cart.status === 'locked') {
+            throw createError({ statusCode: 409, statusMessage: 'cart is locked and cannot be modified' })
+        }
         // naive merge: replace items with provided
         cart.items = items
     }
