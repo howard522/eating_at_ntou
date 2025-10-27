@@ -19,12 +19,13 @@ export default defineEventHandler(async (event) => {
             ...components
         },
         // files containing annotations as above
+        // Only include files whose names indicate HTTP methods (get/post/put/delete/patch)
         apis: [
-            './server/api/restaurants/*.get.ts',
-            './server/api/restaurants/*.post.ts',
-            './server/api/restaurants/*.put.ts',
-            './server/api/restaurants/*.delete.ts',
-            './server/api/auth/*.post.ts'
+            './server/api/**/*.get.ts',
+            './server/api/**/*.post.ts',
+            './server/api/**/*.put.ts',
+            './server/api/**/*.delete.ts',
+            './server/api/**/*.patch.ts'
         ]
     }
 

@@ -67,6 +67,12 @@
       </v-col>
     </v-row>
 
+    <v-row v-if="loadingMore" class="mt-4">
+      <v-col v-for="n in 4" :key="n" cols="12" sm="6" md="4" lg="3">
+        <v-skeleton-loader type="image, article"></v-skeleton-loader>
+      </v-col>
+    </v-row>
+
     <v-row v-if="stores && stores.length === 0" class="mt-10">
       <v-col cols="12" class="text-center text-grey">
         <v-icon size="50">mdi-store-search-outline</v-icon>
@@ -94,16 +100,28 @@ const presetLocations = [
   { title: '女一宿舍', value: '202基隆市中正區北寧路2號' },
   { title: '男三女二宿舍', value: '202基隆市中正區北寧路2號' },
 ];
+const limit = 28;
 const tags = ref<string[]>(['咖哩', '中式', '日式', '義式', '美式', '甜點', '飲料', '速食', '火鍋', '燒烤', '素食', '燒肉', '漢堡', '海鮮', '涼麵', '小吃', '手搖', '下午茶']);
 
-const searchTerm = ref('');
-const debouncedSearchTerm = ref('');
-const selectedTags = ref<string[]>([]);
-const addressInput = ref<PresetLocation | string>('電資暨綜合教學大樓');
-const debouncedAddressInput = ref<PresetLocation | string>(addressInput.value);
 const cartStore = useCartStore();
 const userStore = useUserStore();
 
+const searchTerm = ref('');               // 即時輸入
+const debouncedSearchTerm = ref('');      // 防抖後的搜尋詞
+const selectedTags = ref<string[]>([]);
+
+const addressInput = ref<PresetLocation | string>('電資暨綜合教學大樓');
+const debouncedAddressInput = ref<PresetLocation | string>(addressInput.value);
+
+const offset = ref(0); // 當前偏移量
+const allStores = ref<store[]>([]);
+const loadingMore = ref(false);
+const hasMore = ref(true);
+
+const pending = ref(false); // 初次載入的等待狀態
+const error = ref<unknown>(null); // 錯誤狀態儲存
+
+// 計算送貨地址
 const deliveryAddress = computed(() => {
   const input = debouncedAddressInput.value;
   if (typeof input === 'object' && input !== null && 'value' in input) {
@@ -112,13 +130,11 @@ const deliveryAddress = computed(() => {
   const foundLocation = presetLocations.find(loc => loc.title === input);
   return foundLocation ? foundLocation.value : input;
 });
+const selectedTagsString = computed(() => selectedTags.value.join(' '));
+const searchQuery = computed(() => [debouncedSearchTerm.value, selectedTagsString.value].join(' ').trim());
+const stores = computed(() => allStores.value);
 
-// phone應該從userStore拿 -> userStore.info.phone
-cartStore.setDeliveryDetails({
-  address: deliveryAddress,
-  phone: '0123456789',
-});
-
+// 驗證地址格式
 const validateAddress = (value: PresetLocation | string): boolean | string => {
   if (!value) return '必須輸入地址';
   if (typeof value === 'object') {
@@ -129,50 +145,105 @@ const validateAddress = (value: PresetLocation | string): boolean | string => {
   }
   const regex = /(?<zipcode>(^\d{5}|^\d{3})?)(?<city>\D+[縣市])(?<district>\D+?(市區|鎮區|鎮市|[鄉鎮市區]))(?<others>.+)/;
   return regex.test(value) || '輸入地址格式錯誤';
-}
-//判斷地址格式
+};
 const addressRule = [ validateAddress ];
 
-//停止輸入1s後才更新輸入地址
+// 輸入防抖 watchers
 watch(addressInput, debounce((newValue: PresetLocation | string) => {
   debouncedAddressInput.value = newValue;
 }, 1000));
 
-//停止輸入800ms後才更新搜尋內容
 watch(searchTerm, debounce((newValue: string) => {
   debouncedSearchTerm.value = newValue;
 }, 800));
 
-const selectedTagsString = computed(() => selectedTags.value.join(' '));
-const searchQuery = computed(() => [debouncedSearchTerm.value, selectedTagsString.value].join(' ').trim());
+// 同步配送資訊 watcher
+watch(deliveryAddress, (newVal) => {
+  cartStore.setDeliveryDetails({
+    address: newVal,
+    phone: userStore.info?.phone || '0988917943',
+    receiveName: userStore.info?.name || '劉俊麟',
+  });
+}, { immediate: true });
 
-const { data: apiResponse, pending, error, execute } = useFetch<apiResponse>('/api/restaurants/near', {
-  query: {
-    address: deliveryAddress,
-    search: searchQuery,
-  },
-  immediate: false,
-  watch: false,
-  default: () => ({ success: true, count: 0, data: [] }),
+// 查詢參數
+const buildQuery = (skip: number) => ({
+  address: deliveryAddress.value,
+  search: searchQuery.value,
+  limit,
+  skip,
 });
-watch(
-    [deliveryAddress, searchQuery],
-    () => {
-      const validationResult = validateAddress(debouncedAddressInput.value);
-      if (validationResult === true) {
-        execute();
-      }
-    },
-    {
-      immediate: true,
+
+// 統一載入函式（初次載入/條件變更重新載入/載入更多）
+const fetchStores = async (opts: { reset?: boolean } = {}) => {
+  const reset = !!opts.reset;
+  if (pending.value || loadingMore.value) return;
+
+  if (reset) {
+    hasMore.value = true;
+    offset.value = 0;
+    pending.value = true;
+  } else {
+    loadingMore.value = true;
+  }
+
+  error.value = null;
+
+  try {
+    const response = await $fetch<apiResponse>('/api/restaurants/near', {
+      query: buildQuery(reset ? 0 : offset.value + limit),
+    });
+
+    const items = response.data ?? [];
+
+    if (reset) {
+      allStores.value = items;
+      offset.value = 0;
+    } else {
+      allStores.value.push(...items);
+      offset.value += limit;
     }
+
+    hasMore.value = items.length >= limit;
+  } catch (e) {
+    console.error('取得店家資料失敗:', e);
+    error.value = e;
+  } finally {
+    pending.value = false;
+    loadingMore.value = false;
+  }
+};
+
+// 滾動載入
+const handleScroll = debounce(() => {
+  if (!hasMore.value || loadingMore.value) return;
+  const bottom = Math.ceil(window.innerHeight + window.pageYOffset);
+  const height = document.documentElement.scrollHeight;
+  if (bottom >= height - 100) {
+    fetchStores();
+  }
+}, 200);
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll);
+});
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll);
+});
+
+// 初次載入與條件變更
+watch(
+  [deliveryAddress, searchQuery],
+  () => {
+    const validationResult = validateAddress(debouncedAddressInput.value);
+    if (validationResult === true) {
+      fetchStores({ reset: true });
+    }
+  },
+  { immediate: true }
 );
 
-const stores = computed(() => apiResponse.value?.data || []);
-
-useHead({
-  title: '瀏覽店家',
-});
+useHead({ title: '瀏覽店家' });
 </script>
 
 <style scoped>

@@ -26,7 +26,7 @@
       {{ name }}
     </v-card-title>
 
-    <v-card-subtitle class="">
+    <v-card-subtitle class="mt-1 mb-1">
       {{ info }}
     </v-card-subtitle>
   </v-card>
