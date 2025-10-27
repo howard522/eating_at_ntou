@@ -110,9 +110,15 @@ const openDialog = (item: MenuItem) => {
   isDialogOpen.value = true;
 };
 
-const handleAddToCart = (payload: { item: MenuItem, quantity: number }) => {
+const handleAddToCart = (payload: { item, quantity: number }) => {
   cartStore.addItem(
-      payload.item,
+      {
+        menuItemId: payload.item._id,
+        name: payload.item.name,
+        price: payload.item.price,
+        image: payload.item.image,
+        info: payload.item.info
+      },
       payload.quantity,
       { id: store.value._id, name: store.value.name }
   );
