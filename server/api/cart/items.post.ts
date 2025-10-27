@@ -11,6 +11,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *   post:
  *     summary: 新增或替換使用者購物車項目
  *     description: 接受 body.items 陣列（每項符合 CartItem schema），會建立或更新使用者的購物車。
+ *     tags:
+ *       - Cart
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -24,17 +26,22 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *                 type: array
  *                 items:
  *                   $ref: '#/components/schemas/CartItem'
- *           examples:
- *             singleItem:
- *               summary: 範例 - 單一商品加入購物車
- *               value:
- *                 items:
- *                   - restaurantId: "64f1a3b2c4d5e6f7890abca1"
- *                     menuItemId: "64f1a3b2c4d5e6f7890abcb2"
- *                     name: "炸雞腿"
- *                     price: 120
- *                     quantity: 1
- *                     options: { "辣度": "小辣" }
+ *           example:
+ *             items:
+ *               - restaurantId: "68f2426335e9054c99b316a0"
+ *                 menuItemId: "68f2426335e9054c99b316a1"
+ *                 name: "三杯雞"
+ *                 price: 220
+ *                 quantity: 1
+ *                 options:
+ *                   辣度: "小辣"
+ *               - restaurantId: "68f2426335e9054c99b316a0"
+ *                 menuItemId: "68f2426335e9054c99b316a2"
+ *                 name: "讓我看看"
+ *                 price: 100
+ *                 quantity: 2
+ *                 options:
+ *                   辣度: "小辣"
  *     responses:
  *       200:
  *         description: 更新成功並回傳最新購物車
@@ -47,24 +54,30 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *                   type: boolean
  *                 data:
  *                   $ref: '#/components/schemas/Cart'
- *             examples:
- *               successWithCart:
- *                 summary: 回傳包含剛加入項目的購物車
- *                 value:
- *                   success: true
- *                   data:
- *                     _id: "64f1a3b2c4d5e6f7890abcc3"
- *                     user: "64f1a3b2c4d5e6f7890abcc4"
- *                     items:
- *                       - restaurantId: "64f1a3b2c4d5e6f7890abca1"
- *                         menuItemId: "64f1a3b2c4d5e6f7890abcb2"
- *                         name: "炸雞腿"
- *                         price: 120
- *                         quantity: 1
- *                         options: { "辣度": "小辣" }
- *                     currency: "TWD"
- *                     total: 120
+ *             example:
+ *               success: true
+ *               data:
+ *                 _id: "64f1a3b2c4d5e6f7890abcc3"
+ *                 user: "64f1a3b2c4d5e6f7890abcc4"
+ *                 items:
+ *                   - restaurantId: "68f2426335e9054c99b316a0"
+ *                     menuItemId: "68f2426335e9054c99b316a1"
+ *                     name: "三杯雞"
+ *                     price: 220
+ *                     quantity: 1
+ *                     options:
+ *                       辣度: "小辣"
+ *                   - restaurantId: "68f2426335e9054c99b316a0"
+ *                     menuItemId: "68f2426335e9054c99b316a2"
+ *                     name: "讓我看看"
+ *                     price: 100
+ *                     quantity: 2
+ *                     options:
+ *                       辣度: "小辣"
+ *                 currency: "TWD"
+ *                 total: 420
  */
+
 export default defineEventHandler(async (event) => {
     await connectDB()
     const body = await readBody(event)
@@ -89,8 +102,13 @@ export default defineEventHandler(async (event) => {
     // Upsert cart for user
     let cart = await Cart.findOne({ user: userId })
     if (!cart) {
+        // create new cart
         cart = new Cart({ user: userId, items })
     } else {
+        // if cart is locked, disallow modifications
+        if (cart.status === 'locked') {
+            throw createError({ statusCode: 409, statusMessage: 'cart is locked and cannot be modified' })
+        }
         // naive merge: replace items with provided
         cart.items = items
     }
