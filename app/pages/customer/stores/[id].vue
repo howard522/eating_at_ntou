@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { useCartStore, type CartMenuItem } from '../../../../stores/cart';
+import { useCartStore } from '../../../../stores/cart';
 
 interface MenuItem {
   menuItemId: string
@@ -87,7 +87,6 @@ interface Store {
   phone: string
   image: string
   info: string
-  tags: string[]
   menu: MenuItem[]
 }
 interface ApiResponse {
@@ -98,7 +97,7 @@ interface ApiResponse {
 const route = useRoute();
 const storeId = route.params.id as string;
 
-const { data: apiResponse, pending, error } = useFetch<ApiResponse>(
+const { data: apiResponse } = useFetch<ApiResponse>(
   `/api/restaurants/${storeId}`
 )
 const store = computed(() => apiResponse.value?.data);
