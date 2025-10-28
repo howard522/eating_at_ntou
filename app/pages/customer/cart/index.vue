@@ -33,7 +33,7 @@
             </div>
 
             <v-card variant="flat" class="border rounded-lg">
-              <template v-for="(item, index) in group" :key="item._id">
+              <template v-for="(item, index) in group" :key="item.menuItemId">
                 <div class="d-flex align-center pa-4">
                   <v-avatar size="64" rounded="lg" class="mr-4">
                     <v-img :src="item.image" cover>
@@ -51,9 +51,9 @@
                   </div>
 
                   <div class="d-flex align-center">
-                    <v-btn icon="mdi-minus" size="small" variant="text" @click="cartStore.updateItemQuantity(item._id, item.quantity - 1)"></v-btn>
+                    <v-btn icon="mdi-minus" size="small" variant="text" @click="cartStore.updateItemQuantity(item.menuItemId, item.quantity - 1)"></v-btn>
                     <span class="mx-3 font-weight-bold">{{ item.quantity }}</span>
-                    <v-btn icon="mdi-plus" size="small" variant="text" @click="cartStore.updateItemQuantity(item._id, item.quantity + 1)"></v-btn>
+                    <v-btn icon="mdi-plus" size="small" variant="text" @click="cartStore.updateItemQuantity(item.menuItemId, item.quantity + 1)"></v-btn>
                   </div>
                 </div>
 
@@ -114,7 +114,7 @@ const cartStore = useCartStore();
 
 // 外送費計算方式可能要改
 const deliveryFee = ref(30);
-cartStore.setDeliveryFree(deliveryFee.value);
+cartStore.setDeliveryFee(deliveryFee.value);
 
 const finalTotal = computed(() => cartStore.totalPrice + deliveryFee.value);
 
@@ -131,13 +131,17 @@ const groupedCart = computed(() => {
 
 //  刪除該餐廳所有商品
 const removeRestaurant = (restaurantName: string) => {
-  cartStore.$patch((state) => {
-    state.items = state.items.filter(item => item.restaurantName !== restaurantName);
-  });
+  cartStore.removeRestaurantItems(restaurantName);
 };
 
 useHead({
   title: '您的購物冰箱',
+});
+
+onMounted(() => {
+  if (cartStore.items.length === 0) {
+    cartStore.fetchCart();
+  }
 });
 </script>
 

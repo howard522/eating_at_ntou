@@ -71,10 +71,10 @@
 </template>
 
 <script setup lang="ts">
-import { useCartStore, type CartMenuItem } from '../../../../stores/cart';
+import { useCartStore } from '../../../../stores/cart';
 
 interface MenuItem {
-  _id: string
+  menuItemId: string
   name: string
   price: number
   image: string
@@ -87,7 +87,6 @@ interface Store {
   phone: string
   image: string
   info: string
-  tags: string[]
   menu: MenuItem[]
 }
 interface ApiResponse {
@@ -98,7 +97,7 @@ interface ApiResponse {
 const route = useRoute();
 const storeId = route.params.id as string;
 
-const { data: apiResponse, pending, error } = useFetch<ApiResponse>(
+const { data: apiResponse } = useFetch<ApiResponse>(
   `/api/restaurants/${storeId}`
 )
 const store = computed(() => apiResponse.value?.data);
@@ -110,9 +109,15 @@ const openDialog = (item: MenuItem) => {
   isDialogOpen.value = true;
 };
 
-const handleAddToCart = (payload: { item: MenuItem, quantity: number }) => {
+const handleAddToCart = (payload: { item, quantity: number }) => {
   cartStore.addItem(
-      payload.item,
+      {
+        menuItemId: payload.item._id,
+        name: payload.item.name,
+        price: payload.item.price,
+        image: payload.item.image,
+        info: payload.item.info
+      },
       payload.quantity,
       { id: store.value._id, name: store.value.name }
   );

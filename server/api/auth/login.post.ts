@@ -12,6 +12,12 @@
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/LoginRequest'
+ *           examples:
+ *             sampleRequest:
+ *               summary: 範例請求（Try it out 預填）
+ *               value:
+ *                 email: "test@example.com"
+ *                 password: "secret123"
  *     responses:
  *       200:
  *         description: 登入成功
