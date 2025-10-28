@@ -226,6 +226,9 @@ const handleScroll = debounce(() => {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll);
+  if (cartStore.items.length === 0) {
+    cartStore.fetchCart();
+  }
 });
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);

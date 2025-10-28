@@ -37,7 +37,7 @@
 
       <v-spacer></v-spacer>
 
-      <v-tooltip text="購物冰箱" location="bottom">
+      <v-tooltip v-if="role === 'customer'" text="購物冰箱" location="bottom">
         <template #activator="{ props: act }">
           <v-btn
             icon
@@ -56,10 +56,21 @@
         </template>
       </v-tooltip>
 
-      <v-tooltip text="我的帳戶" location="bottom">
+      <v-tooltip v-if="role !== 'admin'" text="我的帳戶" location="bottom">
         <template #activator="{ props }">
           <v-btn icon to="/profile" v-bind="props" class="md-4 mr-8">
             <v-icon>mdi-account-outline</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
+      <v-tooltip
+          v-else
+          text="登出"
+          location="bottom"
+      >
+        <template #activator="{ props }">
+          <v-btn icon v-bind="props" class="md-4 mr-8" @click="userStore.logout()" to="/login">
+            <v-icon>mdi-logout</v-icon>
           </v-btn>
         </template>
       </v-tooltip>
@@ -74,6 +85,7 @@
 
 <script setup lang="ts">
 import { useCartStore } from '../../stores/cart';
+import { useUserStore } from "../../stores/user";
 
 interface link {
   title: string;
@@ -90,9 +102,17 @@ const fridgeIconEl = computed(() => fridgeIcon.value?.$el || fridgeIcon.value);
 provide('cartIconEl', fridgeIconEl);
 
 const cartStore = useCartStore();
+const userStore = useUserStore();
 
-// 未來會改用store判斷
-const role = ref<string>('customer');
+const role = computed(() => {
+  if (userStore?.info?.role === 'admin') {
+    return 'admin';
+  }
+  if (userStore?.currentRole === 'delivery') {
+    return 'delivery';
+  }
+  return 'customer';
+});
 const activeNav = ref<string>('');
 const links = computed<link[]>(() => {
   if (role.value === 'customer')
