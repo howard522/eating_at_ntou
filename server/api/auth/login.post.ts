@@ -39,7 +39,6 @@
  *                     img: https://example.com/avatar.png
  *                     address: 海洋大學資工系館
  *                     phone: "0912345678"
- *                     activeRole: customer
  *       401:
  *         description: 帳號不存在或密碼錯誤
  *         content:
@@ -78,7 +77,6 @@ export default defineEventHandler(async (event) => {
       img: user.img || '',
       address: user.address || '',
       phone: user.phone || '',
-      activeRole: user.activeRole ?? null
     }
   }
 })
