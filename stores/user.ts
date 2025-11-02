@@ -12,7 +12,6 @@ export const useUserStore = defineStore('user', {
             img?: string
             address?: string
             phone?: string
-            activeRole?: 'customer' | 'delivery' | null
         },
         //sung說,前端可以根據currentRole指定user看到的畫面,阿admin就是看到管理後台這樣
 
@@ -25,14 +24,7 @@ export const useUserStore = defineStore('user', {
         login(token: string, user: any) {
             this.token = token
             this.info = user
-
-            // 預設 multi 使用者要選身份；admin 則不需
-            if (user.role === 'admin') {
-                this.currentRole = null // admin 沒有 customer/delivery 身分
-            } else if (user.role === 'multi') {
-                this.currentRole = null // 等使用者自己選
-            }
-
+            this.currentRole = null
             this.saveToStorage()
         },
 
