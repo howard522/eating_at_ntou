@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema(
     img: { type: String, default: "" },
     address: { type: String, default: "" },
     phone: { type: String, default: "" },
-    activeRole: { type: String, enum: ['customer', 'delivery', null], default: null }
+    //activeRole: { type: String, enum: ['customer', 'delivery', null], default: null }
   },
   { timestamps: true }
 );

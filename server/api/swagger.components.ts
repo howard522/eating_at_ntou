@@ -48,7 +48,7 @@ export const components = {
                     img: { type: 'string' },
                     address: { type: 'string' },
                     phone: { type: 'string' },
-                    activeRole: { type: 'string', nullable: true, enum: ['customer', 'delivery'] },
+                    //: { type: 'string', nullable: true, enum: ['customer', 'delivery'] },
                     createdAt: { type: 'string', format: 'date-time' },
                     updatedAt: { type: 'string', format: 'date-time' }
                 }
