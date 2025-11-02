@@ -40,7 +40,6 @@
  *                     img: ""
  *                     address: ""
  *                     phone: ""
- *                     activeRole: null
  *       400:
  *         description: 請求不正確或 email 已存在
  *         content:
@@ -103,7 +102,6 @@ export default defineEventHandler(async (event) => {
       img: u.img || "",
       address: u.address || "",
       phone: u.phone || "",
-      activeRole: u.activeRole ?? null,
     },
   };
 });
