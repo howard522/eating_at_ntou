@@ -102,9 +102,59 @@ export const components = {
                     createdAt: { type: 'string', format: 'date-time' },
                     updatedAt: { type: 'string', format: 'date-time' }
                 }
+            },
+            OrderItem: {
+                type: 'object',
+                properties: {
+                    menuItemId: { type: 'string' },
+                    name: { type: 'string' },
+                    image: { type: 'string' },
+                    info: { type: 'string' },
+                    price: { type: 'number' },
+                    quantity: { type: 'integer' },
+                    restaurant: {
+                        type: 'object',
+                        properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' }
+                        }
+                    }
+                }
+            },
+            Order: {
+                type: 'object',
+                properties: {
+                    _id: { type: 'string' },
+                    user: { type: 'string' },
+                    deliveryPerson: { type: 'string', nullable: true },
+                    items: { type: 'array', items: { $ref: '#/components/schemas/OrderItem' } },
+                    total: { type: 'number' },
+                    deliveryFee: { type: 'number' },
+                    currency: { type: 'string', example: 'TWD' },
+                    deliveryInfo: {
+                        type: 'object',
+                        properties: {
+                            address: { type: 'string' },
+                            contactName: { type: 'string' },
+                            contactPhone: { type: 'string' },
+                            note: { type: 'string' }
+                        }
+                    },
+                    customerStatus: {
+                        type: 'string',
+                        enum: ['preparing', 'on_the_way', 'received', 'completed']
+                    },
+                    deliveryStatus: {
+                        type: 'string',
+                        enum: ['preparing', 'on_the_way', 'delivered', 'completed']
+                    },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    updatedAt: { type: 'string', format: 'date-time' }
+                }
             }
-        }
-        ,
+
+        },
+
         securitySchemes: {
             BearerAuth: {
                 type: 'http',

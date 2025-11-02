@@ -1,0 +1,76 @@
+import { defineEventHandler, createError } from 'h3'
+import connectDB from '../../../utils/db'
+import Order from '../../../models/order.model'
+import jwt from 'jsonwebtoken'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
+
+/**
+ * 前端請注意：
+ * api不會檢查使用者是否為外送員，請自行在前端確認使用者角色後再呼叫此API。
+ */
+
+/**
+ * @openapi
+ * /api/orders/{id}/accept:
+ *   patch:
+ *     summary: 外送員接單
+ *     description: 外送員可接下尚未被接的訂單，並將外送狀態更新為 on_the_way。
+ *     tags:
+ *       - Order
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 訂單 ID
+ *     responses:
+ *       200:
+ *         description: 成功接單
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Order'
+ *             example:
+ *               success: true
+ *               data:
+ *                 _id: "671c0c2f5c3b5a001276a7ff"
+ *                 deliveryPerson: "670a15fa5c3b5a001279cc33"
+ *                 deliveryStatus: "on_the_way"
+ */
+
+export default defineEventHandler(async (event) => {
+    await connectDB()
+
+    const auth = event.node.req.headers['authorization']
+    if (!auth) throw createError({ statusCode: 401, statusMessage: 'missing authorization' })
+    const token = auth.split(' ')[1]
+    let payload: any
+    try {
+        payload = jwt.verify(token, JWT_SECRET)
+    } catch {
+        throw createError({ statusCode: 401, statusMessage: 'invalid token' })
+    }
+
+    const userId = payload.id
+    const orderId = event.context.params.id
+
+    const order = await Order.findById(orderId)
+    if (!order) throw createError({ statusCode: 404, statusMessage: 'Order not found' })
+    if (order.deliveryPerson)
+        throw createError({ statusCode: 409, statusMessage: 'Order already accepted' })
+
+    order.deliveryPerson = userId
+    order.deliveryStatus = 'on_the_way'
+    await order.save()
+
+    return { success: true, data: order }
+})
