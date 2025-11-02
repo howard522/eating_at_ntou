@@ -61,6 +61,17 @@
               class="mb-1"
             />
 
+            <!-- 身份選擇 -->
+            <v-radio-group
+              v-model="loginRole"
+              class="mb-1 login-role-group"
+            >
+              <div class="d-flex gap-4 justify-space-between">
+                <v-radio label="顧客" value="customer"></v-radio>
+                <v-radio label="外送員" value="delivery"></v-radio>
+              </div>
+            </v-radio-group>
+
             <div class="d-flex justify-end mb-4">
               <NuxtLink to="/forgot-password" class="text-caption">忘記密碼？</NuxtLink>
             </div>
@@ -98,6 +109,7 @@ const password = ref('')
 const showPassword = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
+const loginRole = ref<'customer' | 'delivery'>('customer')
 
 const userStore = useUserStore()
 
@@ -113,7 +125,12 @@ const onSubmit = async () => {
       body: { email: email.value, password: password.value },
     })
     userStore.login(res.token, res.user)
-    router.push('/customer/stores') // 先預設是顧客
+    if (userStore?.info?.role === 'admin')
+      router.push('/admin/stores')
+    else if (loginRole.value === 'delivery')
+      router.push('/delivery/orders')
+    else
+      router.push('/customer/stores')
   } catch (e: any) {
     errorMessage.value =
       e?.data?.message || e?.message || '登入失敗，請檢查帳號或密碼'
@@ -174,6 +191,14 @@ useHead({title: '登入', });
   margin-bottom: 2px;
   margin-left: 2px;
   display: inline-block;
+}
+
+.login-role-group {
+  width: 100%;
+}
+
+:deep(.login-role-group .v-radio) {
+  flex: 1;
 }
 
 :deep(.v-input--focused .v-field) {
