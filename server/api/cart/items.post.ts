@@ -2,6 +2,7 @@ import { defineEventHandler, readBody, createError } from 'h3'
 import connectDB from '../../utils/db'
 import Cart from '../../models/cart.model'
 import jwt from 'jsonwebtoken'
+import { clearUserCart } from '../../utils/cart'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
 
@@ -96,7 +97,10 @@ export default defineEventHandler(async (event) => {
     // Expect body.items: array of { name, price, quantity, restaurantId?, menuItemId?, options? }
     const items = Array.isArray(body.items) ? body.items : []
     if (!items.length) {
-        return { success: false, message: 'items array required' }
+        //return { success: false, message: 'items array required' }
+        //允許清空購物車 好耶(2025/11/02)
+        await clearUserCart(userId)
+        return { success: true, data: { items: [], total: 0, currency: 'TWD' } }
     }
 
     // Upsert cart for user
