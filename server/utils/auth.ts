@@ -36,7 +36,7 @@ export function toPublicUser(u: any) {
     img: u.img || '',
     address: u.address || '',
     phone: u.phone || '',
-    activeRole: u.activeRole ?? null,
+    //activeRole: u.activeRole ?? null,
     createdAt: u.createdAt,
     updatedAt: u.updatedAt
   }
