@@ -19,19 +19,21 @@ interface CartState {
     items: CartItem[];
     deliveryAddress: string;
     phoneNumber: string;
-    deliveryFee: number;
     receiveName: string;
+    note: string;
+    deliveryFee: number;
     arriveTime: Date;
 }
 
 export const useCartStore = defineStore('cart', {
     state: (): CartState => ({
         items: [],
-        deliveryAddress: useUserStore().info?.address || '',
-        phoneNumber: useUserStore().info?.phone || '',
-        receiveName: useUserStore().info?.name || '',
+        deliveryAddress: '',
+        phoneNumber: '',
+        receiveName: '',
         deliveryFee: 30,
         arriveTime: new Date(Date.now() + 30 * 60 * 1000),
+        note: '',
     }),
     actions: {
         async fetchCart() {
@@ -100,13 +102,16 @@ export const useCartStore = defineStore('cart', {
             }
             this.syncCartWithDB().then();
         },
-        setDeliveryDetails(details: { address: string, phone: string, receiveName: string }) {
+        setDeliveryDetails(details: { address: string, phone: string, receiveName: string, note: string }) {
             this.deliveryAddress = details.address;
             this.phoneNumber = details.phone;
             this.receiveName = details.receiveName;
+            this.note = details.note;
+            this.saveToStorage();
         },
         setDeliveryFee(fee: number) {
             this.deliveryFee = fee;
+            this.saveToStorage();
         },
         updateItemQuantity(itemId: string, newQuantity: number) {
             const item = this.items.find(item => item.menuItemId === itemId);
@@ -144,11 +149,29 @@ export const useCartStore = defineStore('cart', {
                 this.setDeliveryDetails({
                     address: userStore.info?.address || '',
                     phone: userStore.info?.phone || '',
-                    receiveName: userStore.info?.name || ''});
+                    receiveName: userStore.info?.name || '',
+                    note: '',});
                 // 後端才做清DB
                 // this.syncCartWithDB().then();
             }
         },
+        saveToStorage() {
+            const deliveryInfo = {
+                deliveryAddress: this.deliveryAddress,
+                phoneNumber: this.phoneNumber,
+                receiveName: this.receiveName,
+                note: this.note,
+                deliveryFee: this.deliveryFee,
+            };
+            localStorage.setItem('cartDeliveryInfo', JSON.stringify(deliveryInfo))
+        },
+        loadFromStorage() {
+            const data = localStorage.getItem('cartDeliveryInfo')
+            if (data) this.$patch(JSON.parse(data))
+        },
+        initialize() {
+            this.loadFromStorage()
+        }
     },
     getters: {
         // 商品總數量

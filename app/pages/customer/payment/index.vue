@@ -19,6 +19,16 @@
                 ></v-text-field>
               </div>
               <div class="mb-4">
+                <p class="text-caption text-medium-emphasis">聯絡人暱稱</p>
+                <v-text-field
+                    v-model="localReceiveName"
+                    class="mt-1"
+                    :rules="[(value: string) => !!value || '聯絡人暱稱為必填。']"
+                    validate-on="blur"
+                    @blur="updateDetailsInStore"
+                ></v-text-field>
+              </div>
+              <div class="mb-4">
                 <p class="text-caption text-medium-emphasis">聯絡電話</p>
                 <v-text-field
                     v-model="localPhoneNumber"
@@ -29,12 +39,10 @@
                 ></v-text-field>
               </div>
               <div class="mb-4">
-                <p class="text-caption text-medium-emphasis">聯絡人暱稱</p>
+                <p class="text-caption text-medium-emphasis">備註</p>
                 <v-text-field
-                    v-model="localReceiveName"
+                    v-model="localNote"
                     class="mt-1"
-                    :rules="[(value: string) => !!value || '聯絡人暱稱為必填。']"
-                    validate-on="blur"
                     @blur="updateDetailsInStore"
                 ></v-text-field>
               </div>
@@ -121,7 +129,7 @@
                 block
                 size="large"
                 class="mt-6"
-                :disabled="!isFormValid"
+                :disabled="!isFormValid || loading"
                 @click="submitOrder"
             >
               <span class="text-h6 font-weight-bold">確認送出訂單</span>
@@ -135,12 +143,16 @@
 
 <script setup lang="ts">
 import { useCartStore } from '../../../../stores/cart';
+import { useUserStore } from '../../../../stores/user';
 
 const cartStore = useCartStore();
+const userStore = useUserStore();
 const isFormValid = ref(false);
+const loading = ref(false);
 const localDeliveryAddress = ref(cartStore.deliveryAddress);
 const localPhoneNumber = ref(cartStore.phoneNumber);
 const localReceiveName = ref(cartStore.receiveName);
+const localNote = ref(cartStore.note);
 const items = computed(() => cartStore.items);
 const totalPrice = computed(() => cartStore.totalPrice);
 const deliveryFee = computed(() => cartStore.deliveryFee);
@@ -155,6 +167,7 @@ function updateDetailsInStore() {
     address: localDeliveryAddress.value,
     phone: localPhoneNumber.value,
     receiveName: localReceiveName.value,
+    note: localNote.value,
   });
 }
 
@@ -192,18 +205,52 @@ const total = computed(() => {
   return totalPrice.value + deliveryFee.value;
 });
 
-const submitOrder = () => {
+const submitOrder = async () => {
   updateDetailsInStore();
-  // 未來會將訂單存入資料庫，並拿到訂單編號
-  const id = "trg79s7w4df";
-  cartStore.clearCart();
-  const router = useRouter();
-  router.push(`/customer/order-state/${id}`);
+  loading.value = true;
+  try {
+    const response = await $fetch<{ success: boolean, data: { _id: string } }>('/api/orders', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${userStore.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: {
+        deliveryInfo: {
+          address: cartStore.deliveryAddress,
+          contactName: cartStore.receiveName,
+          contactPhone: cartStore.phoneNumber,
+          note: cartStore.note,
+          // arriveTime: cartStore.arriveTime,
+        },
+        deliveryFee: cartStore.deliveryFee,
+      },
+    });
+    if (response && response.data && response.data._id) {
+      const orderId = response.data._id;
+      alert('訂單已送出');
+      cartStore.clearCart();
+      const router = useRouter();
+      router.push(`/customer/order-state/${orderId}`);
+    }
+    else {
+      console.error('創建訂單異常：', response);
+    }
+  }
+  catch (e) {
+    console.error('創建訂單失敗:', e)
+  }
+  finally {
+    loading.value = false;
+  }
 };
 
 onMounted(() => {
   updateArriveTime();
   timer = setInterval(updateArriveTime, 60 * 1000);
+  if (cartStore.items.length === 0) {
+    cartStore.fetchCart();
+  }
 });
 onUnmounted(() => {
   if (timer) {

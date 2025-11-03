@@ -125,10 +125,11 @@ const onSubmit = async () => {
       body: { email: email.value, password: password.value },
     })
     userStore.login(res.token, res.user)
+    userStore.setRole(loginRole.value)
     if (userStore?.info?.role === 'admin')
       router.push('/admin/stores')
     else if (loginRole.value === 'delivery')
-      router.push('/delivery/orders')
+      router.push('/delivery/customer-orders')
     else
       router.push('/customer/stores')
   } catch (e: any) {
