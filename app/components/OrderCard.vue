@@ -1,30 +1,61 @@
 <template>
   <v-card flat border rounded="lg">
     <v-card-text class="pa-5">
-      <div class="d-flex justify-space-between align-start mb-2">
-        <h3 class="text-h6 font-weight-bold">{{ order.restaurantNames }}</h3>
-        <v-chip
-            :color="statusInfo.color"
-            variant="flat"
-            size="small"
-            class="font-weight-bold"
-        >
-          {{ statusInfo.text }}
-        </v-chip>
+
+      <div v-if="role === 'customer'">
+        <div class="d-flex justify-space-between align-start mb-2">
+          <h3 class="text-h6 font-weight-bold">{{ order.restaurantNames }}</h3>
+          <v-chip
+              :color="statusInfo.color"
+              variant="flat"
+              size="small"
+              class="font-weight-bold"
+          >
+            {{ statusInfo.text }}
+          </v-chip>
+        </div>
+
+        <div class="text-body-2 text-medium-emphasis mb-3">
+          {{ order.date }}
+        </div>
+
+        <div class="text-body-1 mb-2">{{ itemSummary }}</div>
+
+        <div class="text-h6 font-weight-bold">總金額: ${{ order.total }}</div>
       </div>
 
-      <div class="text-body-2 text-medium-emphasis mb-3">
-        {{ order.date }}
+      <div v-else-if="role === 'delivery'">
+        <div class="d-flex justify-space-between align-start mb-2">
+          <h3 class="text-h6 font-weight-bold" :class="deliveryTitle.color">
+            {{ deliveryTitle.text }}
+          </h3>
+          <v-chip
+              :color="statusInfo.color"
+              variant="flat"
+              size="small"
+              class="font-weight-bold"
+          >
+            {{ statusInfo.text }}
+          </v-chip>
+        </div>
+
+        <div class="text-body-1 mb-1">
+          取餐: <span class="text-medium-emphasis">{{ order.restaurantNames }}</span>
+        </div>
+        <div class="text-body-1 mb-3">
+          送餐至: <span class="text-medium-emphasis">{{ order.deliveryAddress }}</span>
+        </div>
+
+        <div class="text-right text-h6 font-weight-bold text-success">
+          報酬: {{ order.deliveryFee }} 元
+        </div>
       </div>
 
-      <div class="text-body-1 mb-2">{{ itemSummary }}</div>
-
-      <div class="text-h6 font-weight-bold">總金額: ${{ order.total }}</div>
     </v-card-text>
 
     <v-card-actions v-if="order.status !== 'completed'" class="pa-4 pt-0">
       <v-btn
-          :to="`/customer/order-state/${order.id}`"
+          :to="path"
           color="primary"
           block
           size="large"
@@ -41,37 +72,56 @@ interface OrderItem {
   name: string;
   quantity: number;
 }
-
-interface Order {
+interface DisplayOrder {
   id: string;
+  status: string;
   restaurantNames: string;
-  date: string;
-  items: OrderItem[];
-  total: number;
-  status: 'preparing' | 'delivering' | 'received' | 'completed';
+  date?: string;
+  items?: OrderItem[];
+  total?: number;
+  deliveryAddress?: string;
+  reward?: number;
 }
 
 const props = defineProps<{
-  order: Order;
+  order: DisplayOrder;
+  path: string;
+  role: 'customer' | 'delivery';
 }>();
 
 const itemSummary = computed(() => {
+  if (!props.order.items || props.order.items.length === 0) {
+    return '無資料';
+  }
   return props.order.items
       .map((item) => `${item.name} x ${item.quantity}`)
       .join(', ');
 });
 
+const shortId = computed(() => props.order.id.slice(-6));
+const deliveryTitle = computed(() => {
+  const isCompleted = props.order.status === 'completed';
+  return {
+    text: isCompleted ? `歷史 #${shortId.value}` : `任務 #${shortId.value}`,
+    color: isCompleted ? 'text-success' : 'text-primary'
+  };
+});
+
 const statusInfo = computed(() => {
-  if (props.order.status === 'preparing') {
+  const s = props.order.status;
+  if (s === 'on_the_way') {
+    return { text: '外送中', color: 'primary' };
+  }
+  if (s === 'delivered') {
+    return { text: '已送達', color: 'info' };
+  }
+  if (s === 'preparing') {
     return { text: '準備中', color: 'warning' };
   }
-  else if (props.order.status === 'delivering') {
-    return { text: '配送中', color: 'primary' };
-  }
-  else if (props.order.status === 'received') {
+  if (s === 'received') {
     return { text: '已接收', color: 'info' };
   }
-  else if (props.order.status === 'completed') {
+  if (s === 'completed') {
     return { text: '已完成', color: 'success' };
   }
   return { text: '未知', color: 'grey' };

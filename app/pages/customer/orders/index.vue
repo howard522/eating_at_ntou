@@ -15,7 +15,7 @@
               :key="order.id"
               cols="12"
           >
-            <OrderCard :order="order" />
+            <OrderCard role="customer" :order="order" :path="`/customer/order-state/${order.id}`"/>
           </v-col>
           <v-col v-if="inProgressOrders.length === 0" cols="12">
             <p class="text-center text-medium-emphasis mt-10">
@@ -28,7 +28,7 @@
       <v-window-item value="completed">
         <v-row>
           <v-col v-for="order in completedOrders" :key="order.id" cols="12">
-            <OrderCard :order="order" />
+            <OrderCard role="customer" :order="order" :path="`/customer/order-state/${order.id}`"/>
           </v-col>
           <v-col v-if="completedOrders.length === 0" cols="12">
             <p class="text-center text-medium-emphasis mt-10">
@@ -42,96 +42,112 @@
 </template>
 
 <script setup lang="ts">
+import { useUserStore } from "../../../../stores/user"
+
+interface ApiOrderItem {
+  menuItemId: string;
+  name: string;
+  image: string | null;
+  info: string;
+  price: number;
+  quantity: number;
+  restaurant: {
+    id: string;
+    name: string;
+  };
+}
+interface ApiOrder {
+  _id: string;
+  user: string;
+  items: ApiOrderItem[];
+  total: number;
+  deliveryFee: number;
+  customerStatus: 'preparing' | 'on_the_way' | 'received' | 'completed';
+  createdAt: string;
+}
+interface ApiResponse {
+  success: boolean;
+  data: ApiOrder[];
+}
+interface DisplayOrder {
+  id: string;
+  restaurantNames: string;
+  date: string;
+  items: {
+    name: string;
+    quantity: number;
+  }[];
+  total: number;
+  status: string;
+}
+
 const tab = ref('inProgress');
+const userStore = useUserStore();
+const allOrders = ref<DisplayOrder[]>([]);
+const pending = ref(false);
+const error = ref<Error | null>(null);
 
-// 之後會改用api取得訂單資料
-// 未完成訂單
-const inProgressOrders = ref([
-  {
-    id: '12345',
-    restaurantNames: '阿姨鹹酥雞, 巷口牛肉麵',
-    date: '2025年10月08日',
-    items: [
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-      { name: '無骨鹹酥雞 (大份)', quantity: 2 },
-      { name: '紅燒牛肉麵', quantity: 1 },
-    ],
-    total: 290,
-    status: 'delivering',
-  },
-  {
-    id: '67890',
-    restaurantNames: '好好吃炸機',
-    date: '2025年10月12日',
-    items: [
-      { name: '炸雞腿', quantity: 3 },
-      { name: '可樂', quantity: 2 },
-    ],
-    total: 270,
-    status: 'preparing',
-  },
-  {
-    id: 'abcde',
-    restaurantNames: '哈囉你好下午茶',
-    date: '2025年10月19日',
-    items: [
-      { name: '超好吃蛋糕', quantity: 5 },
-    ],
-    total: 1000,
-    status: 'received',
-  },
-]);
+const fetchOrders = async () => {
+  if (!userStore.token) {
+    console.warn('No user token, skipping order fetch.');
+    error.value = new Error('請先登入以查看訂單');
+    return;
+  }
+  pending.value = true;
+  error.value = null;
+  try {
+    const response = await $fetch<ApiResponse>('/api/orders', {
+      method: 'GET',
+      query: { role: 'customer' },
+      headers: {
+        'Authorization': `Bearer ${userStore.token}`,
+        'Accept': 'application/json',
+      }
+    });
+    if (response && response.success) {
+      allOrders.value = response.data.map(order => {
+        const restaurantNames = Array.from(
+            new Set(order.items.map(item => item.restaurant.name))
+        ).join(', ');
+        const d = new Date(order.createdAt);
+        const date = `${d.getFullYear()}年${(d.getMonth() + 1).toString().padStart(2, '0')}月${d.getDate().toString().padStart(2, '0')}日`;
+        const displayItems = order.items.map(item => ({
+          name: item.name,
+          quantity: item.quantity
+        }));
+        return {
+          id: order._id,
+          restaurantNames: restaurantNames,
+          date: date,
+          items: displayItems,
+          total: order.total,
+          status: order.customerStatus
+        };
+      });
+    } else {
+      throw new Error('API response indicates failure');
+    }
+  } catch (err: any) {
+    console.error('取得訂單失敗:', err);
+    error.value = err;
+  } finally {
+    pending.value = false;
+  }
+};
 
-// 已完成訂單
-const completedOrders = ref([
-  {
-    id: '12344',
-    restaurantNames: '巷口營養三明治',
-    date: '2025年10月05日',
-    items: [
-      { name: '營養三明治', quantity: 2 },
-      { name: '木瓜牛奶', quantity: 1 },
-    ],
-    total: 150,
-    status: 'completed',
-  },
-  {
-    id: '12343',
-    restaurantNames: '愛喝水飲料店',
-    date: '2025年09月28日',
-    items: [
-      { name: '珍珠奶茶', quantity: 1 },
-      { name: '檸檬愛玉', quantity: 1 },
-    ],
-    total: 80,
-    status: 'completed',
-  },
-]);
+const inProgressStatuses = ['preparing', 'on_the_way', 'received'];
+const completedStatuses = ['completed'];
+
+const inProgressOrders = computed(() =>
+    allOrders.value.filter(order => inProgressStatuses.includes(order.status))
+);
+const completedOrders = computed(() =>
+    allOrders.value.filter(order => completedStatuses.includes(order.status))
+);
+
+onMounted(() => {
+  fetchOrders();
+});
 
 useHead({
   title: '我的訂單',
