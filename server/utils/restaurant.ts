@@ -5,7 +5,7 @@ import Restaurant from '../models/restaurant.model'
  */
 export async function updateRestaurantById(id: string, data: any) {
     try {
-        // 🧹 過濾掉空欄位
+        // 過濾掉空欄位
         const cleaned: Record<string, any> = {}
         for (const [key, val] of Object.entries(data)) {
             if (
@@ -19,7 +19,7 @@ export async function updateRestaurantById(id: string, data: any) {
             cleaned[key] = val
         }
 
-        // 🔧 更新資料庫
+        // 更新資料庫
         const updated = await Restaurant.findByIdAndUpdate(id, cleaned, {
             new: true,
             runValidators: true,
