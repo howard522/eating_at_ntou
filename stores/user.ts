@@ -20,12 +20,45 @@ export const useUserStore = defineStore('user', {
     }),
 
     actions: {
-        // 登入成功後呼叫
-        login(token: string, user: any) {
-            this.token = token
-            this.info = user
-            this.currentRole = null
-            this.saveToStorage()
+        // 登入請求, 並取得 token 及使用者資料
+        async loginPost(email: string, password: string) {
+            try {
+                const res = await $fetch('/api/auth/login', {
+                    method: 'POST',
+                    body: { email: email, password: password },
+                })
+
+                this.token = res.token
+                this.info = res.user
+                this.currentRole = null
+                this.saveToStorage()
+
+            } catch (err: any) {
+                console.error('Error logging in:', err.message || err);
+            }
+        },
+
+        // 註冊請求, 並取得 token 及使用者資料
+        async registerPost(name: string, email: string, password: string) {
+            try {
+                const res = await $fetch('/api/auth/register', {
+                    method: 'POST',
+                    body: {
+                        name: name,
+                        email: email,
+                        password: password,
+                        role: '',
+                    },
+                })
+
+                this.token = res.token
+                this.info = res.user
+                this.currentRole = null
+                this.saveToStorage()
+
+            } catch (err: any) {
+                console.error('Error registering:', err.message || err);
+            }
         },
 
         // 選擇身份
@@ -34,8 +67,64 @@ export const useUserStore = defineStore('user', {
             this.saveToStorage()
         },
 
+        // 同步使用者資料到DB
+        async syncUserInfoWithDB() {
+            if (!this.token || !this.info) {
+                console.log('User not logged in, skipping user info sync.');
+                return;
+            }
+            try {
+                await $fetch('/api/auth/me', {
+                    method: 'PATCH',
+                    headers: {
+                        'accept': '*/*',
+                        'Authorization': `Bearer ${this.token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: {
+                        name: this.info.name,
+                        address: this.info.address,
+                        phone: this.info.phone,
+                        img: this.info.img,
+                    },
+                });
+            } catch (err: any) {
+                console.error('Error syncing user info:', err.message || err);
+            }
+        },
+
+        // 更新密碼
+        async updatePassword(oldPassword: string, newPassword: string) {
+            if (!this.token) {
+                console.log('User not logged in, skipping password update.');
+                return;
+            }
+            try {
+                await $fetch('/api/auth/me/password', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${this.token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: {
+                        oldPassword,
+                        newPassword,
+                    },
+                });
+            } catch (err: any) {
+                console.error('Error updating password:', err.message || err);
+            }
+        },
+
         // 登出
         logout() {
+            this.token = null
+            this.info = null
+            this.currentRole = null
+            localStorage.removeItem('userStore')
+        },
+
+        clearUserData() {
             this.token = null
             this.info = null
             this.currentRole = null

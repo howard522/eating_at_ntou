@@ -71,6 +71,7 @@
                 <v-radio label="外送員" value="delivery"></v-radio>
               </div>
             </v-radio-group>
+            <div>可在"我的帳戶"切換身份</div>
 
             <div class="d-flex justify-end mb-4">
               <NuxtLink to="/forgot-password" class="text-caption">忘記密碼？</NuxtLink>
@@ -120,12 +121,8 @@ const onSubmit = async () => {
 
   loading.value = true
   try {
-    const res = await $fetch('/api/auth/login', {
-      method: 'POST',
-      body: { email: email.value, password: password.value },
-    })
-    userStore.login(res.token, res.user)
-    userStore.setRole(loginRole.value)
+    await userStore.loginPost(email.value, password.value)
+    // 根據使用者角色導向不同頁面
     if (userStore?.info?.role === 'admin')
       router.push('/admin/stores')
     else if (loginRole.value === 'delivery')
