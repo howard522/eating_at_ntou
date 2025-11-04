@@ -62,7 +62,7 @@ export default defineEventHandler(async (event) => {
   const name = (body.name || "") as string;
   const email = (body.email || "") as string;
   const password = (body.password || "") as string;
-  const role = (body.role || "customer") as string;
+  const role = (body.role || "multi") as string;
 
   if (!email || !password) {
     throw createError({
