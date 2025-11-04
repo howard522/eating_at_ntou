@@ -1,10 +1,10 @@
 <template>
   <v-container>
-    <h1 class="text-h4 font-weight-bold mb-6">我的訂單</h1>
+    <h1 class="text-h4 font-weight-bold mb-6">我的外送任務</h1>
 
     <v-tabs v-model="tab" color="primary" class="mb-4">
-      <v-tab value="inProgress" class="font-weight-bold">未完成</v-tab>
-      <v-tab value="completed" class="font-weight-bold">已完成</v-tab>
+      <v-tab value="inProgress" class="font-weight-bold">當前任務</v-tab>
+      <v-tab value="completed" class="font-weight-bold">歷史訂單</v-tab>
     </v-tabs>
 
     <v-window v-model="tab">
@@ -15,11 +15,11 @@
               :key="order.id"
               cols="12"
           >
-            <OrderCard role="customer" :order="order" :path="`/customer/order-state/${order.id}`"/>
+            <OrderCard role="delivery" :order="order" :path="`/delivery/customer-order-state/${order.id}`"/>
           </v-col>
           <v-col v-if="inProgressOrders.length === 0" cols="12">
             <p class="text-center text-medium-emphasis mt-10">
-              沒有未完成的訂單
+              沒有當前任務
             </p>
           </v-col>
         </v-row>
@@ -28,11 +28,11 @@
       <v-window-item value="completed">
         <v-row>
           <v-col v-for="order in completedOrders" :key="order.id" cols="12">
-            <OrderCard role="customer" :order="order" :path="`/customer/order-state/${order.id}`"/>
+            <OrderCard role="delivery" :order="order" :path="`/delivery/customer-order-state/${order.id}`"/>
           </v-col>
           <v-col v-if="completedOrders.length === 0" cols="12">
             <p class="text-center text-medium-emphasis mt-10">
-              沒有已完成的訂單
+              沒有歷史訂單
             </p>
           </v-col>
         </v-row>
@@ -62,7 +62,7 @@ interface ApiOrder {
   items: ApiOrderItem[];
   total: number;
   deliveryFee: number;
-  customerStatus: 'preparing' | 'on_the_way' | 'received' | 'completed';
+  deliveryStatus: 'preparing' | 'on_the_way' | 'delivered' | 'completed';
   createdAt: string;
 }
 interface ApiResponse {
@@ -79,6 +79,8 @@ interface DisplayOrder {
   }[];
   total: number;
   status: string;
+  deliveryFee: number;
+  deliveryAddress: string;
 }
 
 const tab = ref('inProgress');
@@ -98,7 +100,7 @@ const fetchOrders = async () => {
   try {
     const response = await $fetch<ApiResponse>('/api/orders', {
       method: 'GET',
-      query: { role: 'customer' },
+      query: { role: 'delivery' },
       headers: {
         'Authorization': `Bearer ${userStore.token}`,
         'Accept': 'application/json',
@@ -121,7 +123,9 @@ const fetchOrders = async () => {
           date: date,
           items: displayItems,
           total: order.total,
-          status: order.customerStatus
+          status: order.deliveryStatus,
+          deliveryFee: order.deliveryFee,
+          deliveryAddress: order.deliveryInfo.address,
         };
       });
     } else {
@@ -135,14 +139,14 @@ const fetchOrders = async () => {
   }
 };
 
-const inProgressStatuses = ['preparing', 'on_the_way', 'received'];
+const inProgressStatuses = ['preparing', 'on_the_way', 'delivered'];
 const completedStatuses = ['completed'];
 
 const inProgressOrders = computed(() =>
     allOrders.value.filter(order => inProgressStatuses.includes(order.status))
 );
 const completedOrders = computed(() =>
-    allOrders.value.filter(order => completedStatuses.includes(order.status))
+    allOrders.value.filter(order => order.status === 'completed')
 );
 
 onMounted(() => {
