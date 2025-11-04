@@ -36,6 +36,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *                   user: "670a15fa5c3b5a001279cc22"
  *                   total: 450
  *                   deliveryFee: 30
+ *                   arriveTime: "2024-08-01T12:30:00.000Z"
  *                   currency: "TWD"
  *                   items:
  *                     - name: "三杯雞"
