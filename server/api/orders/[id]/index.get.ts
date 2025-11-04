@@ -46,6 +46,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *                   name: "小明"
  *                 total: 450
  *                 deliveryFee: 30
+ *                 arriveTime: "2024-08-01T12:30:00.000Z"
  *                 currency: "TWD"
  *                 customerStatus: "completed"
  *                 deliveryStatus: "completed"
