@@ -67,17 +67,20 @@
 </template>
 
 <script setup lang="ts">
+import { useUserStore } from '../../../stores/user'
+
 const router = useRouter()
 const formRef = ref()
 const isValid = ref(false)
 const loading = ref(false)
 const showPwd = ref(false)
 
+const userStore = useUserStore()
+
 const form = reactive({
   name: '',
   email: '',
   password: '',
-  role: 'multi',
 })
 
 const nameRules = [
@@ -95,24 +98,8 @@ async function onSubmit() {
   const { valid } = await formRef.value.validate()
   if (!valid) return
   loading.value = true
-  try {
-    await $fetch('/api/auth/register', {
-      method: 'POST',
-      body: {
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        role: form.role,
-      },
-    })
-    alert('註冊成功，請使用新帳號登入')
-    router.push('/login')
-  } catch (e) {
-    console.error('註冊失敗:', e)
-    alert('註冊失敗，請稍後再試')
-  } finally {
-    loading.value = false
-  }
+  userStore.clearUserData()
+  userStore.registerPost(form.name, form.email, form.password)
 }
 
 useHead({ title: '註冊' })
