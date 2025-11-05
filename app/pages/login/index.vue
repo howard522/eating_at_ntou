@@ -122,13 +122,17 @@ const onSubmit = async () => {
   loading.value = true
   try {
     await userStore.loginPost(email.value, password.value)
-    // 根據使用者角色導向不同頁面
-    if (userStore?.info?.role === 'admin')
-      router.push('/admin/stores')
-    else if (loginRole.value === 'delivery')
-      router.push('/delivery/customer-orders')
-    else
-      router.push('/customer/stores')
+    userStore.setRole(loginRole.value)
+    if (userStore.token) {
+      if (userStore?.info?.role === 'admin')
+        router.push('/admin/stores')
+      else if (loginRole.value === 'delivery')
+        router.push('/delivery/customer-orders')
+      else
+        router.push('/customer/stores')
+    } else {
+      errorMessage.value = '登入失敗，請檢查帳號或密碼'
+    }
   } catch (e: any) {
     errorMessage.value =
       e?.data?.message || e?.message || '登入失敗，請檢查帳號或密碼'

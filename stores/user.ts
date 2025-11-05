@@ -25,6 +25,10 @@ export const useUserStore = defineStore('user', {
             try {
                 const res = await $fetch('/api/auth/login', {
                     method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
                     body: { email: email, password: password },
                 })
 
@@ -43,11 +47,14 @@ export const useUserStore = defineStore('user', {
             try {
                 const res = await $fetch('/api/auth/register', {
                     method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
                     body: {
                         name: name,
                         email: email,
                         password: password,
-                        role: '',
                     },
                 })
 
@@ -77,7 +84,7 @@ export const useUserStore = defineStore('user', {
                 await $fetch('/api/auth/me', {
                     method: 'PATCH',
                     headers: {
-                        'accept': '*/*',
+                        'Accept': '*/*',
                         'Authorization': `Bearer ${this.token}`,
                         'Content-Type': 'application/json',
                     },
@@ -107,8 +114,8 @@ export const useUserStore = defineStore('user', {
                         'Content-Type': 'application/json',
                     },
                     body: {
-                        oldPassword,
-                        newPassword,
+                        currentPassword: oldPassword,
+                        newPassword: newPassword,
                     },
                 });
             } catch (err: any) {
