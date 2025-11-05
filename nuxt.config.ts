@@ -11,10 +11,7 @@ export default defineNuxtConfig({
     'vuetify/styles',
     '@mdi/font/css/materialdesignicons.min.css',
   ],
-  plugins: ['~/plugins/vuetify.ts'],
-  routeRules: {
-    '/': { redirect: '/login' }
-  },
+  plugins: ['~/plugins/vuetify.ts', '~/plugins/fetch-auth.ts'],
   components: true,
   build: {
     transpile: ['vuetify'],
