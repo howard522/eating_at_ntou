@@ -207,6 +207,11 @@ function manageRole() {
     const newRole = current === 'customer' ? 'delivery' : 'customer'
     userStore.setRole?.(newRole as 'customer' | 'delivery')
     alert(`身分已切換為 ${newRole === 'customer' ? '顧客' : '外送員'}`)
+    if (newRole === 'delivery') {
+      window.location.href = '/delivery/orders'
+    } else {
+      window.location.href = '/customer/stores'
+    }
   }
 }
 
