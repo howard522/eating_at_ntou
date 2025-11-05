@@ -8,14 +8,14 @@
 
             <v-form ref="formRef" v-model="isValid" @submit.prevent="onSubmit">
               <v-text-field
-                v-model="form.name"
+                v-model="formData.name"
                 label="暱稱"
                 :rules="nameRules"
                 clearable
                 required
               />
                 <v-text-field
-                v-model="form.email"
+                v-model="formData.email"
                 label="Email"
                 type="email"
                 :rules="emailRules"
@@ -23,7 +23,7 @@
                 required
               />
               <v-text-field
-                v-model="form.password"
+                v-model="formData.password"
                 label="密碼"
                 :type="showPwd ? 'text' : 'password'"
                 :append-inner-icon="showPwd ? 'mdi-eye-off' : 'mdi-eye'"
@@ -33,12 +33,12 @@
                 required
               />
               <v-text-field
-                v-model="form.address"
+                v-model="formData.address"
                 label="預設外送地址（選填）"
                 clearable
               />
               <v-text-field
-                v-model="form.phone"
+                v-model="formData.phone"
                 label="聯絡電話（選填）"
                 clearable
               />
@@ -77,10 +77,12 @@ const showPwd = ref(false)
 
 const userStore = useUserStore()
 
-const form = reactive({
+const formData = ref({
   name: '',
   email: '',
   password: '',
+  address: '',
+  phone: '',
 })
 
 const nameRules = [
@@ -99,7 +101,19 @@ async function onSubmit() {
   if (!valid) return
   loading.value = true
   userStore.clearUserData()
-  userStore.registerPost(form.name, form.email, form.password)
+
+  try {
+    await userStore.registerPost(
+      formData.value.name,
+      formData.value.email,
+      formData.value.password,
+    )
+    router.push('/login')
+  } catch (err) {
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
 }
 
 useHead({ title: '註冊' })

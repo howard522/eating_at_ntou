@@ -43,7 +43,7 @@ export const useUserStore = defineStore('user', {
         },
 
         // 註冊請求, 並取得 token 及使用者資料
-        async registerPost(name: string, email: string, password: string) {
+        async registerPost(name: string, email: string, password: string, address?: string, phone?: string) {
             try {
                 const res = await $fetch('/api/auth/register', {
                     method: 'POST',
