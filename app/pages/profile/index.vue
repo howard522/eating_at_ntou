@@ -163,10 +163,6 @@ async function saveChanges() {
     phone: formData.value.phone,
   }
 
-  if (formData.value.password) {
-    dataToUpdate.password = formData.value.password
-  }
-
   userStore.$patch({
     info: {
       ...(userStore.info || {}),
@@ -176,10 +172,11 @@ async function saveChanges() {
 
   userStore.syncUserInfoWithDB()
 
-  if (dataToUpdate.password && formData.value.currentPassword) {
-    userStore.updatePassword(formData.value.currentPassword, dataToUpdate.password)
+  if (formData.value.currentPassword && formData.value.password) {
+    userStore.updatePassword(formData.value.currentPassword, formData.value.password)
   }
 
+  formData.value.currentPassword = ''
   formData.value.password = ''
   formData.value.passwordConfirm = ''
 }
@@ -210,6 +207,11 @@ function manageRole() {
     const newRole = current === 'customer' ? 'delivery' : 'customer'
     userStore.setRole?.(newRole as 'customer' | 'delivery')
     alert(`身分已切換為 ${newRole === 'customer' ? '顧客' : '外送員'}`)
+    if (newRole === 'delivery') {
+      window.location.href = '/delivery/orders'
+    } else {
+      window.location.href = '/customer/stores'
+    }
   }
 }
 

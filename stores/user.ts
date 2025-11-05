@@ -25,6 +25,10 @@ export const useUserStore = defineStore('user', {
             try {
                 const res = await $fetch('/api/auth/login', {
                     method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
                     body: { email: email, password: password },
                 })
 
@@ -39,22 +43,28 @@ export const useUserStore = defineStore('user', {
         },
 
         // 註冊請求, 並取得 token 及使用者資料
-        async registerPost(name: string, email: string, password: string) {
+        async registerPost(name: string, email: string, password: string, address?: string, phone?: string) {
             try {
                 const res = await $fetch('/api/auth/register', {
                     method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
                     body: {
                         name: name,
                         email: email,
                         password: password,
-                        role: '',
                     },
                 })
 
                 this.token = res.token
                 this.info = res.user
                 this.currentRole = null
+                this.info.address = address
+                this.info.phone = phone
                 this.saveToStorage()
+                this.syncUserInfoWithDB()
 
             } catch (err: any) {
                 console.error('Error registering:', err.message || err);
@@ -77,7 +87,7 @@ export const useUserStore = defineStore('user', {
                 await $fetch('/api/auth/me', {
                     method: 'PATCH',
                     headers: {
-                        'accept': '*/*',
+                        'Accept': '*/*',
                         'Authorization': `Bearer ${this.token}`,
                         'Content-Type': 'application/json',
                     },
@@ -94,21 +104,22 @@ export const useUserStore = defineStore('user', {
         },
 
         // 更新密碼
-        async updatePassword(oldPassword: string, newPassword: string) {
+        async updatePassword(currentPassword: string, newPassword: string) {
             if (!this.token) {
                 console.log('User not logged in, skipping password update.');
                 return;
             }
             try {
                 await $fetch('/api/auth/me/password', {
-                    method: 'POST',
+                    method: 'PATCH',
                     headers: {
+                        'Accept': '*/*',
                         'Authorization': `Bearer ${this.token}`,
                         'Content-Type': 'application/json',
                     },
                     body: {
-                        oldPassword,
-                        newPassword,
+                        currentPassword: currentPassword,
+                        newPassword: newPassword,
                     },
                 });
             } catch (err: any) {
