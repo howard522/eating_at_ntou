@@ -1,75 +1,37 @@
-# Nuxt Minimal Starter
+# Eating at NTOU
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+> 國立海洋大學校園餐飲外送平台
 
-## Setup
+此分支為 **main**，目前專案仍在開發整合階段。  
+完整功能與開發紀錄請參考 [dev 分支](https://github.com/howard522/eating_at_ntou/tree/dev)。
 
-Make sure to install dependencies:
+---
 
+## 需求文件(SRD)
+- [需求文件(SRD) 連結](https://hackmd.io/@se7/r1XpZyNTge)
+
+---
+
+## 技術
+
+| 類別                    | 使用技術                                                                                                              | 說明                                                                     |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **前端 (Frontend)**     | **Nuxt 4** · Vue 3 · Pinia · Vuetify · TypeScript                                                                 | 採用 Nuxt 全端框架與 Composition API，結合 Vuetify 建立一致的 UI；以 TypeScript 強化型別安全。 |
+| **後端 (Backend)**      | Node.js (Nitro / H3) · RESTful API · JWT (jsonwebtoken) · bcryptjs · Swagger (swagger-jsdoc / swagger-ui-express) | 使用 Nuxt 內建的 H3 伺服器撰寫 API，實作身分驗證、加密與自動生成 API 文件。                        |
+| **資料庫 (Database)**    | MongoDB · Mongoose                                                                                                | 定義使用者、餐廳、訂單等資料結構並提供 ODM 操作。                                            |
+| **開發流程 (Workflow)**   | TypeScript · npm scripts (dev / build / preview) · Git Flow · VS Code (tsconfig / linting)                        | 使用 TypeScript 強化開發流程與錯誤檢查；透過 Git Flow 維護版本一致性。                         |
+| **部署規劃 (Deployment)** | Render / Vercel （規劃中）                                                                                    | 預計將前後端整合部署於雲端平台，提供測試與展示環境。                                             |
+
+
+---
+
+## 開發者說明
 ```bash
-# npm
+# Clone 專案
+git clone https://github.com/howard522/eating_at_ntou.git
+
+# 安裝相依套件
 npm install
 
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
+# 啟動開發伺服器
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
