@@ -61,7 +61,10 @@ export const useUserStore = defineStore('user', {
                 this.token = res.token
                 this.info = res.user
                 this.currentRole = null
+                this.info.address = address
+                this.info.phone = phone
                 this.saveToStorage()
+                this.syncUserInfoWithDB()
 
             } catch (err: any) {
                 console.error('Error registering:', err.message || err);

@@ -107,6 +107,8 @@ async function onSubmit() {
       formData.value.name,
       formData.value.email,
       formData.value.password,
+      formData.value.address,
+      formData.value.phone,
     )
     router.push('/login')
   } catch (err) {
