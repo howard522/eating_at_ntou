@@ -41,6 +41,7 @@ const orderSchema = new mongoose.Schema({
     total: { type: Number, required: true }, // 總金額
     deliveryFee: { type: Number, required: true }, // 外送費
     currency: { type: String, default: 'TWD' },
+    arriveTime: { type: Date, required: true }, // 預計到達時間
 
 
     // 外送資訊（配送地址／聯絡方式）

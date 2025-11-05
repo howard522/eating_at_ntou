@@ -81,6 +81,15 @@ export default defineEventHandler(async (event) => {
     if (body.customerStatus) order.customerStatus = body.customerStatus
     if (body.deliveryStatus) order.deliveryStatus = body.deliveryStatus
 
+    // 自動完成訂單
+    const isCustomerDone = ['received', 'completed'].includes(order.customerStatus)
+    const isDeliveryDone = ['delivered', 'completed'].includes(order.deliveryStatus)
+
+    if (isCustomerDone && isDeliveryDone) {
+        order.customerStatus = 'completed'
+        order.deliveryStatus = 'completed'
+    }
+
     await order.save()
     return { success: true, data: order }
 })

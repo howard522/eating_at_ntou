@@ -35,6 +35,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *                 type: number
  *                 example: 30
  *                 description: 外送費（預設 0）
+ *               arriveTime:
+ *                 type: string
+ *                 format: date-time
  *           example:
  *             deliveryInfo:
  *               address: "基隆市中正區OO路123號"
@@ -42,6 +45,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *               contactPhone: "0912-345-678"
  *               note: "麻煩幫我放門口～"
  *             deliveryFee: 30
+ *             arriveTime: "2024-08-01T12:30:00.000Z"
  *     responses:
  *       200:
  *         description: 成功建立訂單
@@ -59,6 +63,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *                 total: 450
  *                 deliveryFee: 30
  *                 currency: "TWD"
+ *                 arriveTime: "2024-08-01T12:30:00.000Z"
  *                 items:
  *                   - name: "三杯雞"
  *                     price: 220
@@ -119,12 +124,14 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
     const deliveryInfo = body.deliveryInfo || {}
     const deliveryFee = typeof body.deliveryFee === 'number' && body.deliveryFee >= 0 ? body.deliveryFee : 0
+    const arriveTime = body.arriveTime || null
 
     const newOrder = new Order({
         user: userId,
         items: detailedItems,
         total: cart.total + deliveryFee,
         deliveryFee,
+        arriveTime,
         currency: cart.currency,
         deliveryInfo,
     })

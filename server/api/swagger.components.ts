@@ -130,6 +130,7 @@ export const components = {
                     items: { type: 'array', items: { $ref: '#/components/schemas/OrderItem' } },
                     total: { type: 'number' },
                     deliveryFee: { type: 'number' },
+                    arriveTime: { type: 'string', format: 'date-time' },
                     currency: { type: 'string', example: 'TWD' },
                     deliveryInfo: {
                         type: 'object',
