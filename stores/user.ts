@@ -101,20 +101,21 @@ export const useUserStore = defineStore('user', {
         },
 
         // 更新密碼
-        async updatePassword(oldPassword: string, newPassword: string) {
+        async updatePassword(currentPassword: string, newPassword: string) {
             if (!this.token) {
                 console.log('User not logged in, skipping password update.');
                 return;
             }
             try {
                 await $fetch('/api/auth/me/password', {
-                    method: 'POST',
+                    method: 'PATCH',
                     headers: {
+                        'Accept': '*/*',
                         'Authorization': `Bearer ${this.token}`,
                         'Content-Type': 'application/json',
                     },
                     body: {
-                        currentPassword: oldPassword,
+                        currentPassword: currentPassword,
                         newPassword: newPassword,
                     },
                 });
