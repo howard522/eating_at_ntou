@@ -94,6 +94,7 @@ const emailRules = [
 ]
 const passwordRules = [
   (v: string) => !!v || '請輸入密碼',
+  (v: string) => v.length >= 6 || '密碼長度至少 6 個字元',
 ]
 
 async function onSubmit() {
@@ -117,6 +118,8 @@ async function onSubmit() {
     loading.value = false
   }
 }
+
+definePageMeta({layout: false,})
 
 useHead({ title: '註冊' })
 </script>
