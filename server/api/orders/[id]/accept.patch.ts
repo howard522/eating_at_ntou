@@ -3,8 +3,6 @@ import connectDB from '../../../utils/db'
 import Order from '../../../models/order.model'
 import { verifyJwtFromEvent } from '../../../utils/auth'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
-
 /**
  * 前端請注意：
  * api不會檢查使用者是否為外送員，請自行在前端確認使用者角色後再呼叫此API。

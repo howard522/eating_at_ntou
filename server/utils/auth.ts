@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken'
 import User from '../models/user.model'
 import connectDB from './db'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
+export const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
 
 export type JwtPayload = { id: string; role?: string; iat?: number; exp?: number }
 

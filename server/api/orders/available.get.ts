@@ -3,8 +3,6 @@ import connectDB from '../../utils/db'
 import Order from '../../models/order.model'
 import { verifyJwtFromEvent } from '../../utils/auth'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
-
 /**
  * @openapi
  * /api/orders/available:
