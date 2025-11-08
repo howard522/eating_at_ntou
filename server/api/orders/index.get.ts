@@ -27,6 +27,18 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *           type: string
  *           enum: [customer, delivery]
  *         description: 查詢角色類型（不指定則預設為 customer）
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: 每頁最大回傳筆數（預設 50，上限 100）
+ *       - name: skip
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: 跳過筆數（用於分頁，預設 0）
  *     responses:
  *       200:
  *         description: 成功取得訂單列表
@@ -37,12 +49,20 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
  *               properties:
  *                 success:
  *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                   description: 本次回傳的訂單筆數（受 limit/skip 影響）
  *                 data:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Order'
+ *                 role:
+ *                   type: string
+ *                   description: 本次查詢使用的角色（customer 或 delivery）
  *             example:
  *               success: true
+ *               count: 1
+ *               role: "customer"
  *               data:
  *                 - _id: "671c0c2f5c3b5a001276a7ff"
  *                   total: 420
@@ -86,11 +106,19 @@ export default defineEventHandler(async (event) => {
             ? { deliveryPerson: userId }
             : { user: userId }
 
-    // 查詢訂單（新到舊）
-    const orders = await Order.find(condition).sort({ createdAt: -1 }).lean()
+    // 分頁參數
+    const DEFAULT_LIMIT = 50
+    const MAX_LIMIT = 100
+    let limit = Number(query.limit) || DEFAULT_LIMIT
+    limit = Math.min(limit, MAX_LIMIT)
+    const skip = Number(query.skip) || 0
+
+    // 查詢訂單（新到舊），支援 skip / limit
+    const orders = await Order.find(condition).sort({ createdAt: -1 }).skip(skip).limit(limit).lean()
 
     return {
         success: true,
+        count: orders.length,
         data: orders,
         role
     }
