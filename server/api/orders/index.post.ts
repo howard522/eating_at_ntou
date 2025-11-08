@@ -4,9 +4,9 @@ import Order from '../../models/order.model'
 import Cart from '../../models/cart.model'
 import { clearUserCart } from '../../utils/cart'
 
-import jwt from 'jsonwebtoken'
+import { verifyJwtFromEvent } from '../../utils/auth'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
+
 /**
  * @openapi
  * /api/orders:
@@ -81,18 +81,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
 
 export default defineEventHandler(async (event) => {
     await connectDB()
-    const auth = event.node.req.headers['authorization'] || event.node.req.headers['Authorization']
-    if (!auth || typeof auth !== 'string') throw createError({ statusCode: 401, statusMessage: 'Authorization header missing' })
-    const m = auth.match(/Bearer\s+(.+)/i)
-    if (!m) throw createError({ statusCode: 401, statusMessage: 'Invalid authorization format' })
-    const token = m[1]
-    let payload: any
-    try {
-        payload = jwt.verify(token, JWT_SECRET)
-    } catch (e) {
-        throw createError({ statusCode: 401, statusMessage: 'Invalid token' })
-    }
-
+    const payload = await verifyJwtFromEvent(event)
     const userId = payload.id
     if (!userId) throw createError({ statusCode: 401, statusMessage: 'Invalid token payload' })
 

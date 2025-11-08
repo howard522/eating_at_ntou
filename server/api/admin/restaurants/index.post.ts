@@ -70,6 +70,10 @@ import { geocodeAddress } from '../../../utils/nominatim'
  *         description: 伺服器內部錯誤
  */
 
+/** 
+ * 關於檢查使用者是否為管理員的 middleware，已在上層路由處理
+ * 此處專注於處理餐廳建立邏輯
+ */
 
 export default defineEventHandler(async (event) => {
     const form = await readMultipartFormData(event)

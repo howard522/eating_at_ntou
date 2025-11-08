@@ -1,7 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
 import connectDB from '../../../utils/db'
 import Order from '../../../models/order.model'
-import jwt from 'jsonwebtoken'
+import { verifyJwtFromEvent } from '../../../utils/auth'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
 
@@ -66,17 +66,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
 export default defineEventHandler(async (event) => {
     await connectDB()
 
-    // 驗證 JWT
-    const auth = event.node.req.headers['authorization']
-    if (!auth) throw createError({ statusCode: 401, statusMessage: 'missing authorization' })
-    const token = auth.split(' ')[1]
-    let payload: any
-    try {
-        payload = jwt.verify(token, JWT_SECRET)
-    } catch {
-        throw createError({ statusCode: 401, statusMessage: 'invalid token' })
-    }
-
+    const payload = await verifyJwtFromEvent(event)
     const userId = payload.id
     if (!event.context.params?.id)
         throw createError({ statusCode: 400, statusMessage: 'Missing order id' })
