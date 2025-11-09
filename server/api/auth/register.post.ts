@@ -54,7 +54,7 @@ import { defineEventHandler, readBody, createError } from "h3";
 import connectDB from "../../utils/db";
 import User from "../../models/user.model";
 import jwt from "jsonwebtoken";
-const JWT_SECRET_2 = process.env.JWT_SECRET || "supersecret";
+import { JWT_SECRET } from "../../utils/auth";
 
 export default defineEventHandler(async (event) => {
   await connectDB();
@@ -62,7 +62,7 @@ export default defineEventHandler(async (event) => {
   const name = (body.name || "") as string;
   const email = (body.email || "") as string;
   const password = (body.password || "") as string;
-  const role = (body.role || "customer") as string;
+  const role = (body.role || "multi") as string;
 
   if (!email || !password) {
     throw createError({
@@ -87,7 +87,7 @@ export default defineEventHandler(async (event) => {
   });
   await u.save();
 
-  const token = jwt.sign({ id: u._id, role: u.role }, JWT_SECRET_2, {
+  const token = jwt.sign({ id: u._id, role: u.role }, JWT_SECRET, {
     expiresIn: "7d",
   });
 

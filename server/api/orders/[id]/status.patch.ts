@@ -1,9 +1,7 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import connectDB from '../../../utils/db'
 import Order from '../../../models/order.model'
-import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
+import { verifyJwtFromEvent } from '../../../utils/auth'
 
 /**
  * @openapi
@@ -54,17 +52,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
 
 export default defineEventHandler(async (event) => {
     await connectDB()
-    const auth = event.node.req.headers['authorization']
-    if (!auth) throw createError({ statusCode: 401, statusMessage: 'missing authorization' })
-
-    const token = auth.split(' ')[1]
-    let payload: any
-    try {
-        payload = jwt.verify(token, JWT_SECRET)
-    } catch {
-        throw createError({ statusCode: 401, statusMessage: 'invalid token' })
-    }
-
+    const payload = await verifyJwtFromEvent(event)
     const userId = payload.id
     const orderId = event.context.params.id
     const body = await readBody(event)
@@ -80,6 +68,15 @@ export default defineEventHandler(async (event) => {
     // 更新狀態
     if (body.customerStatus) order.customerStatus = body.customerStatus
     if (body.deliveryStatus) order.deliveryStatus = body.deliveryStatus
+
+    // 自動完成訂單
+    const isCustomerDone = ['received', 'completed'].includes(order.customerStatus)
+    const isDeliveryDone = ['delivered', 'completed'].includes(order.deliveryStatus)
+
+    if (isCustomerDone && isDeliveryDone) {
+        order.customerStatus = 'completed'
+        order.deliveryStatus = 'completed'
+    }
 
     await order.save()
     return { success: true, data: order }

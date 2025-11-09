@@ -66,6 +66,18 @@
               </div>
 
               <div class="mb-4">
+                <p class="text-caption text-medium-emphasis mb-n1">舊密碼密碼</p>
+                <v-text-field
+                    v-model="formData.currentPassword"
+                    variant="plain"
+                    type="password"
+                    placeholder="留空表示不修改"
+                    hide-details
+                    class="font-weight-medium"
+                ></v-text-field>
+              </div>
+
+              <div class="mb-4">
                 <p class="text-caption text-medium-emphasis mb-n1">新密碼</p>
                 <v-text-field
                     v-model="formData.password"
@@ -95,6 +107,7 @@
                   block
                   size="large"
                   class="mt-6"
+                  :disabled="saving"
               >
                 <span class="text-h6 font-weight-bold">儲存變更</span>
               </v-btn>
@@ -130,11 +143,12 @@ const formData = ref({
   name: userStore.info?.name || '無法取得用戶暱稱',
   address: userStore.info?.address || '無法取得用戶地址',
   phone: userStore.info?.phone || '無法取得用戶電話',
+  currentPassword: '',
   password: '',
   passwordConfirm: '',
 })
 
-function saveChanges() {
+async function saveChanges() {
   // 密碼一致性檢查
   if (formData.value.password) {
     if (formData.value.password !== formData.value.passwordConfirm) {
@@ -149,18 +163,20 @@ function saveChanges() {
     phone: formData.value.phone,
   }
 
-  if (formData.value.password) {
-    dataToUpdate.password = formData.value.password
-  }
-
-  // 直接更新 store（之後改成呼叫 API，再在成功時更新 store）
   userStore.$patch({
     info: {
       ...(userStore.info || {}),
       ...dataToUpdate,
     },
   })
-  alert('變更已儲存！')
+
+  userStore.syncUserInfoWithDB()
+
+  if (formData.value.currentPassword && formData.value.password) {
+    userStore.updatePassword(formData.value.currentPassword, formData.value.password)
+  }
+
+  formData.value.currentPassword = ''
   formData.value.password = ''
   formData.value.passwordConfirm = ''
 }
@@ -191,6 +207,11 @@ function manageRole() {
     const newRole = current === 'customer' ? 'delivery' : 'customer'
     userStore.setRole?.(newRole as 'customer' | 'delivery')
     alert(`身分已切換為 ${newRole === 'customer' ? '顧客' : '外送員'}`)
+    if (newRole === 'delivery') {
+      window.location.href = '/delivery/orders'
+    } else {
+      window.location.href = '/customer/stores'
+    }
   }
 }
 

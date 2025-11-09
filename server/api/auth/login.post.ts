@@ -56,7 +56,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import User from '../../models/user.model'
 import connectDB from '../../utils/db'
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
+import { JWT_SECRET } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   await connectDB()

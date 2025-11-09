@@ -8,14 +8,14 @@
 
             <v-form ref="formRef" v-model="isValid" @submit.prevent="onSubmit">
               <v-text-field
-                v-model="form.name"
+                v-model="formData.name"
                 label="暱稱"
                 :rules="nameRules"
                 clearable
                 required
               />
                 <v-text-field
-                v-model="form.email"
+                v-model="formData.email"
                 label="Email"
                 type="email"
                 :rules="emailRules"
@@ -23,7 +23,7 @@
                 required
               />
               <v-text-field
-                v-model="form.password"
+                v-model="formData.password"
                 label="密碼"
                 :type="showPwd ? 'text' : 'password'"
                 :append-inner-icon="showPwd ? 'mdi-eye-off' : 'mdi-eye'"
@@ -33,12 +33,12 @@
                 required
               />
               <v-text-field
-                v-model="form.address"
+                v-model="formData.address"
                 label="預設外送地址（選填）"
                 clearable
               />
               <v-text-field
-                v-model="form.phone"
+                v-model="formData.phone"
                 label="聯絡電話（選填）"
                 clearable
               />
@@ -67,17 +67,22 @@
 </template>
 
 <script setup lang="ts">
+import { useUserStore } from '../../../stores/user'
+
 const router = useRouter()
 const formRef = ref()
 const isValid = ref(false)
 const loading = ref(false)
 const showPwd = ref(false)
 
-const form = reactive({
+const userStore = useUserStore()
+
+const formData = ref({
   name: '',
   email: '',
   password: '',
-  role: 'multi',
+  address: '',
+  phone: '',
 })
 
 const nameRules = [
@@ -95,21 +100,19 @@ async function onSubmit() {
   const { valid } = await formRef.value.validate()
   if (!valid) return
   loading.value = true
+  userStore.clearUserData()
+
   try {
-    await $fetch('/api/auth/register', {
-      method: 'POST',
-      body: {
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        role: form.role,
-      },
-    })
-    alert('註冊成功，請使用新帳號登入')
+    await userStore.registerPost(
+      formData.value.name,
+      formData.value.email,
+      formData.value.password,
+      formData.value.address,
+      formData.value.phone,
+    )
     router.push('/login')
-  } catch (e) {
-    console.error('註冊失敗:', e)
-    alert('註冊失敗，請稍後再試')
+  } catch (err) {
+    console.error(err)
   } finally {
     loading.value = false
   }

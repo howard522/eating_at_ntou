@@ -71,6 +71,7 @@
                 <v-radio label="外送員" value="delivery"></v-radio>
               </div>
             </v-radio-group>
+            <div>可在"我的帳戶"切換身份</div>
 
             <div class="d-flex justify-end mb-4">
               <NuxtLink to="/forgot-password" class="text-caption">忘記密碼？</NuxtLink>
@@ -120,18 +121,18 @@ const onSubmit = async () => {
 
   loading.value = true
   try {
-    const res = await $fetch('/api/auth/login', {
-      method: 'POST',
-      body: { email: email.value, password: password.value },
-    })
-    userStore.login(res.token, res.user)
+    await userStore.loginPost(email.value, password.value)
     userStore.setRole(loginRole.value)
-    if (userStore?.info?.role === 'admin')
-      router.push('/admin/stores')
-    else if (loginRole.value === 'delivery')
-      router.push('/delivery/customer-orders')
-    else
-      router.push('/customer/stores')
+    if (userStore.token) {
+      if (userStore?.info?.role === 'admin')
+        router.push('/admin/stores')
+      else if (loginRole.value === 'delivery')
+        router.push('/delivery/customer-orders')
+      else
+        router.push('/customer/stores')
+    } else {
+      errorMessage.value = '登入失敗，請檢查帳號或密碼'
+    }
   } catch (e: any) {
     errorMessage.value =
       e?.data?.message || e?.message || '登入失敗，請檢查帳號或密碼'
