@@ -221,9 +221,9 @@ const submitOrder = async () => {
           contactName: cartStore.receiveName,
           contactPhone: cartStore.phoneNumber,
           note: cartStore.note,
-          // arriveTime: cartStore.arriveTime,
         },
         deliveryFee: cartStore.deliveryFee,
+        arriveTime: cartStore.arriveTime.toISOString(),
       },
     });
     if (response && response.data && response.data._id) {

@@ -2,143 +2,170 @@
   <v-container>
     <v-row justify="center">
       <v-col cols="12" md="10" lg="8">
-        <div class="text-center mt-4 mb-8">
-          <h1 class="text-h3 font-weight-bold mb-2">訂單已送出！</h1>
-          <p class="text-h6 text-medium-emphasis">
-            您可以在下方追蹤您的訂單狀態
-          </p>
+        <div v-if="pending" key="loading" class="text-center pa-10">
+          <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+          <p class="text-h6 mt-4">正在載入訂單資訊...</p>
         </div>
 
-        <div class="d-flex align-center justify-center my-10 px-md-4">
-          <template v-for="(step, index) in steps" :key="step.id">
-            <div class="d-flex flex-column align-center">
-              <v-icon
-                  v-if="step.id < currentStep"
-                  color="success"
-                  size="40"
-              >
-                mdi-check-circle
-              </v-icon>
+        <v-alert
+            v-else-if="error || !orderData"
+            key="error"
+            type="error"
+            title="載入失敗"
+            text="無法讀取訂單資訊，請稍後再試或檢查訂單 ID。"
+            variant="outlined"
+            prominent
+            class="mt-10"
+        ></v-alert>
 
-              <v-sheet
-                  v-else-if="step.id === currentStep"
-                  color="primary"
-                  rounded="circle"
-                  width="40"
-                  height="40"
-                  class="d-flex align-center justify-center"
-              >
-                <span class="text-h6 font-weight-bold text-white">{{ step.id }}</span>
-              </v-sheet>
+        <template v-else key="content">
+          <div class="text-center mt-4 mb-8">
+            <h1 class="text-h3 font-weight-bold mb-2">訂單已送出！</h1>
+            <p class="text-h6 text-medium-emphasis">
+              您可以在下方追蹤您的訂單狀態
+            </p>
+          </div>
 
-              <v-sheet
-                  v-else
-                  border
-                  rounded="circle"
-                  width="40"
-                  height="40"
-                  class="d-flex align-center justify-center"
-              >
-                <span class="text-h6 font-weight-bold text-medium-emphasis">{{ step.id }}</span>
-              </v-sheet>
+          <v-stepper
+              v-model="currentStep"
+              alt-labels
+              flat
+              class="my-10"
+          >
+            <v-stepper-header>
+              <template v-for="(step, index) in steps" :key="step.id">
+                <v-stepper-item
+                    :title="step.title"
+                    :value="step.id"
+                    :complete="step.id < currentStep"
+                    :color="step.id === currentStep ? 'primary' : (step.id < currentStep ? 'success' : undefined)" >
+                </v-stepper-item>
+                <v-divider v-if="index < steps.length - 1"></v-divider>
+              </template>
+            </v-stepper-header>
+          </v-stepper>
 
-              <div
-                  class="text-body-1 font-weight-medium mt-2"
-                  :class="{
-                  'font-weight-bold text-primary': step.id === currentStep,
-                  'text-medium-emphasis': step.id > currentStep,
-                }"
-                  style="white-space: nowrap"
-              >
-                {{ step.title }}
+          <v-card flat border rounded="lg" class="mb-6">
+            <v-list-item lines="two" class="pa-5">
+              <template v-slot:prepend>
+                <v-avatar size="56" class="me-4">
+                  <v-img :src="deliver.img" cover>
+                    <template #error>
+                      <v-sheet
+                          color="white"
+                          rounded="circle"
+                          width="56"
+                          height="56"
+                          class="d-flex align-center justify-center"
+                      >
+                        <v-icon :color="orderData.deliveryPerson ? 'blue' : 'grey'" size="30">
+                          {{ orderData.deliveryPerson ? 'mdi-account' : 'mdi-help-rhombus-outline' }}
+                        </v-icon>
+                      </v-sheet>
+                    </template>
+                  </v-img>
+                </v-avatar>
+              </template>
+              <v-list-item-title class="text-h6 font-weight-bold mb-1">
+                {{ deliver.name }}
+              </v-list-item-title>
+              <v-list-item-subtitle>{{ deliver.status }}</v-list-item-subtitle>
+              <template v-slot:append>
+                <span
+                    v-if="deliver.phone && deliver.phone !== '未知'"
+                    class="text-body-1 font-weight-medium text-medium-emphasis"
+                >
+                  連絡電話：{{ deliver.phone }}
+                </span>
+              </template>
+            </v-list-item>
+          </v-card>
+
+          <v-card flat border rounded="lg" class="mb-6">
+            <v-card-text class="pa-6">
+              <v-row>
+                <v-col cols="12" md="6">
+                  <h3 class="text-h6 font-weight-bold">餐點資訊</h3>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <h3 class="text-h6 font-weight-bold">餐廳資訊</h3>
+                </v-col>
+              </v-row>
+              <v-divider></v-divider>
+
+              <div v-for="(item, index) in orderData.items" :key="item._id">
+                <v-row class="py-3 align-center">
+                  <v-col cols="12" md="6">
+                    <div class="text-body-1 font-weight-bold">
+                      {{ item.name }} x {{ item.quantity }}
+                    </div>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <div class="text-body-1">
+                      {{ item.restaurant?.name }}
+                      <span>
+                        （{{ item.restaurant.phone }}）
+                      </span>
+                    </div>
+                  </v-col>
+                </v-row>
+                <v-divider v-if="index < orderData.items.length - 1"></v-divider>
               </div>
-            </div>
 
-            <template v-if="index < steps.length - 1">
-              <v-divider
-                  class="mx-4"
-                  style="flex-grow: 1"
-                  :color="step.id < currentStep ? 'success' : 'grey-darken-2'"
-                  thickness="2"
-              ></v-divider>
-            </template>
-          </template>
-        </div>
-        <v-card flat border rounded="lg" class="mb-6">
-          <v-list-item lines="two" class="pa-5">
-            <template v-slot:prepend>
-              <v-avatar size="56" class="me-4">
-                <v-img :src="deliver.img" cover>
-                  <template #error>
-                    <v-sheet
-                        color="white"
-                        rounded="circle"
-                        width="56"
-                        height="56"
-                        class="d-flex align-center justify-center"
-                    >
-                      <v-icon color="blue" size="30">mdi-account</v-icon>
-                    </v-sheet>
-                  </template>
-                </v-img>
-              </v-avatar>
-            </template>
-            <v-list-item-title class="text-h6 font-weight-bold mb-1">
-              外送員：{{ deliver.name }}
-            </v-list-item-title>
-            <v-list-item-subtitle>{{ deliver.status }}</v-list-item-subtitle>
-            <template v-slot:append>
-              <span class="text-body-1 font-weight-medium text-medium-emphasis">{{ deliver.phone }}</span>
-            </template>
-          </v-list-item>
-        </v-card>
+              <v-divider></v-divider>
+              <div class="text-h6 font-weight-bold pt-5">
+                總計 ${{ orderData.total }}
+              </div>
+            </v-card-text>
+          </v-card>
 
-        <v-card flat border rounded="lg" class="mb-6">
-          <v-card-text class="pa-6">
-            <v-row>
-              <v-col cols="12" md="6">
-                <h3 class="text-h6 font-weight-bold mb-4">餐點資訊</h3>
-                <div
-                    v-for="item in order.items"
-                    :key="item.id"
-                    class="text-body-1 mb-2"
-                >
-                  {{ item.name }} x {{ item.quantity }}
-                </div>
-                <v-divider class="my-4"></v-divider>
-                <div class="text-h6 font-weight-bold">
-                  總計 ${{ order.total }}
-                </div>
-              </v-col>
-              <v-col cols="12" md="6">
-                <h3 class="text-h6 font-weight-bold mb-4">餐廳資訊</h3>
-                <div
-                    v-for="restaurant in order.restaurants"
-                    :key="restaurant.id"
-                    class="text-body-1 mb-2"
-                >
-                  {{ restaurant.name }} ({{ restaurant.phone }})
-                </div>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
+          <v-btn
+              color="success"
+              block
+              size="x-large"
+              class="mt-4"
+              :disabled="currentStep >= 3 || isUpdating"
+              :loading="isUpdating"
+              @click="openConfirmDialog"
+          >
+            <span class="text-h6 font-weight-bold">
+              {{ currentStep < 3 ? '我已收到餐點' : '已接收' }}
+            </span>
+          </v-btn>
 
-        <v-btn
-            color="success"
-            block
-            size="x-large"
-            class="mt-4"
-            @click="markAsDelivered"
-        >
-          <span class="text-h6 font-weight-bold">已接收</span>
-        </v-btn>
+          <v-dialog v-model="isConfirmDialogVisible" max-width="400">
+            <v-card>
+              <v-card-title class="text-h5 font-weight-bold">
+                確認收到餐點？
+              </v-card-title>
+              <v-card-text>
+                按下確認後，即表示您已確認收到餐點，請確認餐點無誤後再按下確認。
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn
+                    text="取消"
+                    :disabled="isUpdating"
+                    @click="isConfirmDialogVisible = false"
+                ></v-btn>
+                <v-btn
+                    color="success"
+                    text="確認"
+                    :loading="isUpdating"
+                    @click="markAsReceived"
+                ></v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </template>
       </v-col>
     </v-row>
   </v-container>
 </template>
 
 <script setup lang="ts">
+import { useUserStore } from "../../../../stores/user";
+
 const steps = ref([
   { id: 1, title: '準備中' },
   { id: 2, title: '在路上' },
@@ -146,35 +173,96 @@ const steps = ref([
   { id: 4, title: '已完成' },
 ]);
 
-// 之後根據id打api拿到訂單資料
-// const router = useRoute();
-// const orderId = route.params.id;
-const currentStep = ref(3);
-// 外送員資訊
-const deliver = ref({
-  name: '王大明',
-  phone: '0987654321',
-  img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSF6jwre87YE2xVWsEpo-X0jVkGsQ5WbSF96Q&s",
-  status: '正在為您配送中...',
-});
-// 訂單資訊
-const order = ref({
-  items: [
-    { id: 1, name: '無骨鹹酥雞 (大份)', quantity: 2 },
-    { id: 2, name: '紅燒牛肉麵', quantity: 1 },
-  ],
-  restaurants: [
-    { id: 1, name: '阿姨鹹酥雞', phone: '(02) 24621111' },
-    { id: 2, name: '巷口牛肉麵', phone: '(02) 24682222' },
-  ],
-  total: 290,
+const statusToStepMap: Record<string, number> = {
+  'preparing': 1,
+  'on_the_way': 2,
+  'received': 3,
+  'completed': 4,
+};
+
+const route = useRoute();
+const orderId = route.params.id as string;
+const userStore = useUserStore();
+
+const isUpdating = ref(false);
+const isConfirmDialogVisible = ref(false);
+
+const { data: orderResponse, pending, error } = await useFetch(
+    `/api/orders/${orderId}`,
+    {
+      transform: (response: any) => response.data,
+      headers: {
+        'Authorization': `Bearer ${userStore.token}`
+      }
+    }
+);
+
+const orderData = ref(orderResponse.value);
+
+const currentStep = computed(() => {
+  return statusToStepMap[orderData.value.customerStatus];
 });
 
-const markAsDelivered = () => {
-  // 打api更新狀態為已接收
-  currentStep.value = 4;
-  // 如果外送員點了已送達，更新狀態為已完成
-  currentStep.value = 5;
+const deliver = computed(() => {
+  if (orderData.value?.deliveryPerson) {
+    const deliveryStatus = orderData.value.deliveryStatus;
+    let statusText = '外送員正在處理您的訂單';
+    if (deliveryStatus === 'on_the_way') {
+      statusText = '正在為您配送中...';
+    } else if (deliveryStatus === 'delivered') {
+      statusText = '已送達指定地點';
+    }
+    return {
+      name: `外送員：${orderData.value.deliveryPerson.name}`,
+      phone: orderData.value.deliveryPerson.phone,
+      img: orderData.value.deliveryPerson.image,
+      status: statusText,
+    };
+  } else {
+    return {
+      name: '等待外送員接單',
+      phone: '未知',
+      img: '',
+      status: '正在為您尋找附近的外送員...',
+    };
+  }
+});
+
+const openConfirmDialog = () => {
+  isConfirmDialogVisible.value = true;
+};
+
+const markAsReceived = async () => {
+  if (currentStep.value >= 3) return;
+
+  isUpdating.value = true;
+  try {
+    const response: any = await $fetch(
+        `/api/orders/${orderId}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${userStore.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: {
+            customerStatus: 'received'
+          }
+        }
+    );
+
+    if (response.success && orderData.value) {
+      orderData.value.customerStatus = response.data.customerStatus;
+      orderData.value.deliveryStatus = response.data.deliveryStatus;
+    } else {
+      console.error('Failed to update status', response);
+    }
+  } catch (err) {
+    console.error('Error updating status', err);
+  } finally {
+    isUpdating.value = false;
+    isConfirmDialogVisible.value = false;
+  }
 };
 
 useHead({

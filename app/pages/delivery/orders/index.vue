@@ -64,6 +64,13 @@ interface ApiOrder {
   deliveryFee: number;
   deliveryStatus: 'preparing' | 'on_the_way' | 'delivered' | 'completed';
   createdAt: string;
+  arriveTime: string;
+  deliveryInfo: {
+    address: string;
+    contactName: string;
+    contactPhone: string;
+    notes?: string;
+  };
 }
 interface ApiResponse {
   success: boolean;
@@ -81,6 +88,7 @@ interface DisplayOrder {
   status: string;
   deliveryFee: number;
   deliveryAddress: string;
+  arriveTime: string;
 }
 
 const tab = ref('inProgress');
@@ -113,6 +121,8 @@ const fetchOrders = async () => {
         ).join(', ');
         const d = new Date(order.createdAt);
         const date = `${d.getFullYear()}年${(d.getMonth() + 1).toString().padStart(2, '0')}月${d.getDate().toString().padStart(2, '0')}日`;
+        const ad = new Date(order.arriveTime);
+        const arriveTimeFormatted = `${ad.getHours().toString().padStart(2, '0')}:${ad.getMinutes().toString().padStart(2, '0')}`;
         const displayItems = order.items.map(item => ({
           name: item.name,
           quantity: item.quantity
@@ -126,6 +136,7 @@ const fetchOrders = async () => {
           status: order.deliveryStatus,
           deliveryFee: order.deliveryFee,
           deliveryAddress: order.deliveryInfo.address,
+          arriveTime: arriveTimeFormatted,
         };
       });
     } else {
@@ -140,7 +151,6 @@ const fetchOrders = async () => {
 };
 
 const inProgressStatuses = ['preparing', 'on_the_way', 'delivered'];
-const completedStatuses = ['completed'];
 
 const inProgressOrders = computed(() =>
     allOrders.value.filter(order => inProgressStatuses.includes(order.status))
