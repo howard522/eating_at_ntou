@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useCartStore } from "./cart";
 
 export const useUserStore = defineStore('user', {
     state: () => ({
@@ -151,6 +152,9 @@ export const useUserStore = defineStore('user', {
             this.info = null
             this.currentRole = null
             localStorage.removeItem('userStore')
+            const cartStore = useCartStore()
+            cartStore.clearCart()
+            localStorage.removeItem('cartDeliveryInfo')
         },
 
         clearUserData() {
