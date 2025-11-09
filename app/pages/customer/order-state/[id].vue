@@ -103,8 +103,8 @@
                   <v-col cols="12" md="6">
                     <div class="text-body-1">
                       {{ item.restaurant?.name }}
-                      <span v-if="item.restaurant?.phone">
-                        ({{ item.restaurant.phone }})
+                      <span>
+                        （{{ item.restaurant.phone }}）
                       </span>
                     </div>
                   </v-col>
@@ -207,7 +207,7 @@ const deliver = computed(() => {
   if (orderData.value?.deliveryPerson) {
     const deliveryStatus = orderData.value.deliveryStatus;
     let statusText = '外送員正在處理您的訂單';
-    if (deliveryStatus === 'delivering') {
+    if (deliveryStatus === 'on_the_way') {
       statusText = '正在為您配送中...';
     } else if (deliveryStatus === 'delivered') {
       statusText = '已送達指定地點';
