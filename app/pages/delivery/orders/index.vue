@@ -163,6 +163,10 @@ onMounted(() => {
   fetchOrders();
 });
 
+onActivated(() => {
+  fetchOrders();
+});
+
 useHead({
   title: '我的訂單',
 });
