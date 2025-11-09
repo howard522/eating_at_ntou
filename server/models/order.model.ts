@@ -19,7 +19,8 @@ const orderItemSchema = new mongoose.Schema({
     // 餐廳快照
     restaurant: {
         id: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', required: false, index: true },//index方便查詢某餐廳的訂單
-        name: { type: String }
+        name: { type: String },
+        phone: { type: String },
     },
 })
 
@@ -41,7 +42,7 @@ const orderSchema = new mongoose.Schema({
     total: { type: Number, required: true }, // 總金額
     deliveryFee: { type: Number, required: true }, // 外送費
     currency: { type: String, default: 'TWD' },
-    arriveTime: { type: Date, required: true }, // 預計到達時間
+    arriveTime: { type: Date }, // 預計到達時間
 
 
     // 外送資訊（配送地址／聯絡方式）
