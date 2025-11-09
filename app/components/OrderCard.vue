@@ -111,7 +111,7 @@ const itemSummary = computed(() => {
       .join(', ');
 });
 
-const shortId = computed(() => props.order.id.slice(-6));
+const shortId = computed(() => props.order.id.slice(-6).toUpperCase());
 const deliveryTitle = computed(() => {
   const isCompleted = props.order.status === 'completed';
   return {
