@@ -40,8 +40,10 @@ import { verifyJwtFromEvent } from '../../../utils/auth'
  *                   id: "670a15fa5c3b5a001279cc22"
  *                   name: "宋辰星"
  *                 deliveryPerson:
- *                   id: "670a15fa5c3b5a001279cc33"
+ *                   _id: "670a15fa5c3b5a001279cc33"
  *                   name: "小明"
+ *                   img: "https://example.com/avatar/min.png"
+ *                   phone: "0912-111-222"
  *                 total: 450
  *                 deliveryFee: 30
  *                 arriveTime: "2024-08-01T12:30:00.000Z"
@@ -54,6 +56,7 @@ import { verifyJwtFromEvent } from '../../../utils/auth'
  *                     quantity: 1
  *                     restaurant:
  *                       name: "傑哥加長加長菜"
+ *                       phone: "02-1234-5678"
  *                 deliveryInfo:
  *                   address: "基隆市中正區OO路123號"
  *                   contactName: "宋辰星"
@@ -70,9 +73,11 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 400, statusMessage: 'Missing order id' })
 
     const orderId = event.context.params.id
-    const order = await Order.findById(orderId)
+    const order: any = await Order.findById(orderId)
         .populate('user', 'name email')
-        .populate('deliveryPerson', 'name email')
+        // 將外送員回傳必要欄位：name, img, phone
+        .populate('deliveryPerson', 'name img phone')
+        // items.restaurant.phone 已存為 snapshot，無需額外 populate
         .lean()
 
     if (!order) throw createError({ statusCode: 404, statusMessage: 'Order not found' })
@@ -87,6 +92,26 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 403, statusMessage: 'Not allowed to view this order' })
     }
 
+    // 正規化 deliveryPerson：考慮可能為 null（尚未被外送員接單）或未被 populate
+    try {
+        if (order.deliveryPerson) {
+            // 若為 populated object，取必要欄位；若僅為 id（未 populate），只回傳 id
+            const dp: any = order.deliveryPerson
+            order.deliveryPerson = {
+                _id: dp._id || dp,
+                name: dp.name || null,
+                img: dp.img || '',
+                phone: dp.phone || '',
+            }
+        } else {
+            order.deliveryPerson = null
+        }
+    } catch (e) {
+        // 若任何情況發生錯誤，保險起見設為 null
+        order.deliveryPerson = null
+    }
+
+    // restaurant phone 已在 order.snapshot (items[].restaurant.phone)，不需額外處理
 
     return { success: true, data: order }
 })

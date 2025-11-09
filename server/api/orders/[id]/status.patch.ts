@@ -54,7 +54,8 @@ export default defineEventHandler(async (event) => {
     await connectDB()
     const payload = await verifyJwtFromEvent(event)
     const userId = payload.id
-    const orderId = event.context.params.id
+    const orderId = event.context.params?.id
+    if (!orderId) throw createError({ statusCode: 400, statusMessage: 'Missing order id' })
     const body = await readBody(event)
 
     const order = await Order.findById(orderId)
@@ -79,5 +80,13 @@ export default defineEventHandler(async (event) => {
     }
 
     await order.save()
+
+    // 若有外送員，populate deliveryPerson 以回傳 name/img/phone（與其他 endpoint 保持一致）
+    try {
+        if (order.deliveryPerson) await order.populate('deliveryPerson', 'name img phone')
+    } catch (e) {
+        // ignore
+    }
+
     return { success: true, data: order }
 })
