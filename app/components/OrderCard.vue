@@ -15,8 +15,15 @@
           </v-chip>
         </div>
 
-        <div class="text-body-2 text-medium-emphasis mb-3">
+        <div class="text-body-2 text-medium-emphasis mb-1">
           {{ order.date }}
+        </div>
+
+        <div
+            v-if="order.arriveTime && order.status !== 'completed'"
+            class="text-body-1 font-weight-bold text-primary mb-3"
+        >
+          預計送達時間: {{ order.arriveTime }}
         </div>
 
         <div class="text-body-1 mb-2">{{ itemSummary }}</div>
@@ -39,11 +46,16 @@
           </v-chip>
         </div>
 
+        <div
+            v-if="order.arriveTime && order.status !== 'completed'"
+            class="text-body-1 font-weight-bold text-primary mb-3"
+        >
+          預計送達時間: {{ order.arriveTime }}
+        </div>
         <div class="text-body-1 mb-1">
           取餐: <span class="text-medium-emphasis">{{ order.restaurantNames }}</span>
         </div>
-        <div class="text-body-1 mb-3">
-          送餐至: <span class="text-medium-emphasis">{{ order.deliveryAddress }}</span>
+        <div class="text-body-1 mb-1"> 送餐至: <span class="text-medium-emphasis">{{ order.deliveryAddress }}</span>
         </div>
 
         <div class="text-right text-h6 font-weight-bold text-success">
@@ -53,7 +65,7 @@
 
     </v-card-text>
 
-    <v-card-actions v-if="order.status !== 'completed'" class="pa-4 pt-0">
+    <v-card-actions v-if="!(role === 'delivery' && order.status === 'completed')" class="pa-4 pt-0">
       <v-btn
           :to="path"
           color="primary"
@@ -80,7 +92,8 @@ interface DisplayOrder {
   items?: OrderItem[];
   total?: number;
   deliveryAddress?: string;
-  reward?: number;
+  deliveryFee?: number;
+  arriveTime?: string;
 }
 
 const props = defineProps<{

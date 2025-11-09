@@ -64,6 +64,7 @@ interface ApiOrder {
   deliveryFee: number;
   customerStatus: 'preparing' | 'on_the_way' | 'received' | 'completed';
   createdAt: string;
+  arriveTime: string;
 }
 interface ApiResponse {
   success: boolean;
@@ -79,6 +80,7 @@ interface DisplayOrder {
   }[];
   total: number;
   status: string;
+  arriveTime: string;
 }
 
 const tab = ref('inProgress');
@@ -111,6 +113,8 @@ const fetchOrders = async () => {
         ).join(', ');
         const d = new Date(order.createdAt);
         const date = `${d.getFullYear()}年${(d.getMonth() + 1).toString().padStart(2, '0')}月${d.getDate().toString().padStart(2, '0')}日`;
+        const ad = new Date(order.arriveTime);
+        const arriveTimeFormatted = `${ad.getHours().toString().padStart(2, '0')}:${ad.getMinutes().toString().padStart(2, '0')}`;
         const displayItems = order.items.map(item => ({
           name: item.name,
           quantity: item.quantity
@@ -121,7 +125,8 @@ const fetchOrders = async () => {
           date: date,
           items: displayItems,
           total: order.total,
-          status: order.customerStatus
+          status: order.customerStatus,
+          arriveTime: arriveTimeFormatted,
         };
       });
     } else {
