@@ -117,6 +117,8 @@ export const components = {
                         properties: {
                             id: { type: 'string' },
                             name: { type: 'string' }
+                            ,
+                            phone: { type: 'string' }
                         }
                     }
                 }
@@ -126,7 +128,8 @@ export const components = {
                 properties: {
                     _id: { type: 'string' },
                     user: { type: 'string' },
-                    deliveryPerson: { type: 'string', nullable: true },
+                    // deliveryPerson 會回傳 populated 的 UserPublic（或 null）
+                    deliveryPerson: { $ref: '#/components/schemas/UserPublic', nullable: true },
                     items: { type: 'array', items: { $ref: '#/components/schemas/OrderItem' } },
                     total: { type: 'number' },
                     deliveryFee: { type: 'number' },

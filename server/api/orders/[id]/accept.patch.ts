@@ -1,9 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
 import connectDB from '../../../utils/db'
 import Order from '../../../models/order.model'
-import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
+import { verifyJwtFromEvent } from '../../../utils/auth'
 
 /**
  * 前端請注意：
@@ -50,18 +48,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
 export default defineEventHandler(async (event) => {
     await connectDB()
 
-    const auth = event.node.req.headers['authorization']
-    if (!auth) throw createError({ statusCode: 401, statusMessage: 'missing authorization' })
-    const token = auth.split(' ')[1]
-    let payload: any
-    try {
-        payload = jwt.verify(token, JWT_SECRET)
-    } catch {
-        throw createError({ statusCode: 401, statusMessage: 'invalid token' })
-    }
-
+    const payload = await verifyJwtFromEvent(event)
     const userId = payload.id
-    const orderId = event.context.params.id
+    const orderId = event.context.params?.id
+    if (!orderId) throw createError({ statusCode: 400, statusMessage: 'Missing order id' })
 
     const order = await Order.findById(orderId)
     if (!order) throw createError({ statusCode: 404, statusMessage: 'Order not found' })
@@ -71,6 +61,13 @@ export default defineEventHandler(async (event) => {
     order.deliveryPerson = userId
     order.deliveryStatus = 'on_the_way'
     await order.save()
+
+    // populate deliveryPerson so API 回傳格式與其他 endpoint 一致（含 name/img/phone）
+    try {
+        await order.populate('deliveryPerson', 'name img phone')
+    } catch (e) {
+        // ignore populate errors
+    }
 
     return { success: true, data: order }
 })

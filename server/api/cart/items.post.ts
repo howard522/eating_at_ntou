@@ -1,10 +1,9 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import connectDB from '../../utils/db'
 import Cart from '../../models/cart.model'
-import jwt from 'jsonwebtoken'
+import { verifyJwtFromEvent } from '../../utils/auth'
 import { clearUserCart } from '../../utils/cart'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
 
 /**
  * @openapi
@@ -84,15 +83,8 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
 
     // Auth
-    const auth = event.node.req.headers['authorization'] || event.node.req.headers['Authorization']
-    if (!auth || typeof auth !== 'string') throw createError({ statusCode: 401, statusMessage: 'missing authorization' })
-    const m = auth.match(/Bearer\s+(.+)/i)
-    if (!m) throw createError({ statusCode: 401, statusMessage: 'invalid authorization format' })
-    const token = m[1]
-    let payload: any
-    try { payload = jwt.verify(token, JWT_SECRET) } catch (e) { throw createError({ statusCode: 401, statusMessage: 'invalid token' }) }
+    const payload = await verifyJwtFromEvent(event)
     const userId = payload.id
-    if (!userId) throw createError({ statusCode: 401, statusMessage: 'invalid token payload' })
 
     // Expect body.items: array of { name, price, quantity, restaurantId?, menuItemId?, options? }
     const items = Array.isArray(body.items) ? body.items : []
