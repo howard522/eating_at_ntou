@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { useUserStore } from "./user";
+import { useUserStore } from '@stores/user';
 
 export interface CartMenuItem {
     menuItemId: string;

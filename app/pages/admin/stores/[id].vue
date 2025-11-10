@@ -135,7 +135,7 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { useUserStore } from '../../../../stores/user'
+import { useUserStore } from '@stores/user'
 
 interface MenuItem {
   _key?: string; // 本地新增、尚未儲存的項目

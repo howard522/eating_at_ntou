@@ -24,7 +24,7 @@
  *       401: { description: 密碼不正確 / 未授權 }
  */
 import { defineEventHandler, readBody, createError } from 'h3'
-import { getUserFromEvent } from '../../../utils/auth'
+import { getUserFromEvent } from '@server/utils/auth'
 import bcrypt from 'bcryptjs'
 
 export default defineEventHandler(async (event) => {

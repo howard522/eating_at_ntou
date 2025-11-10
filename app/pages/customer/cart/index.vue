@@ -108,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { useCartStore, type CartItem } from '../../../../stores/cart';
+import { useCartStore, type CartItem } from '@stores/cart';
 
 const cartStore = useCartStore();
 

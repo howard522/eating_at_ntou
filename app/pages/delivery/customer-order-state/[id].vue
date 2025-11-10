@@ -175,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from "../../../../stores/user";
+import { useUserStore } from '@stores/user';
 
 const steps = ref([
   { id: 1, title: '準備中' },

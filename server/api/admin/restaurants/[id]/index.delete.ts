@@ -1,5 +1,5 @@
 import { defineEventHandler, createError } from 'h3'
-import Restaurant from '../../../../models/restaurant.model'
+import Restaurant from '@server/models/restaurant.model'
 
 /**
  * @openapi
