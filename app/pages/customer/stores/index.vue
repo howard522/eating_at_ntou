@@ -192,17 +192,17 @@ const fetchStores = async (opts: { reset?: boolean } = {}) => {
 
   try {
     const response = await $fetch<apiResponse>('/api/restaurants/near', {
-      query: buildQuery(reset ? 0 : offset.value + limit),
+      query: buildQuery(reset ? 0 : offset.value),
     });
 
     const items = response.data ?? [];
 
     if (reset) {
       allStores.value = items;
-      offset.value = 0;
+      offset.value = items.length;
     } else {
       allStores.value.push(...items);
-      offset.value += limit;
+      offset.value += items.length;
     }
 
     hasMore.value = items.length >= limit;

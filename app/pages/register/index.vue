@@ -3,8 +3,35 @@
     <v-row justify="center" align="center">
       <v-col cols="12" sm="8" md="6" lg="4">
         <v-card rounded="lg" border>
-          <v-card-text class="pa-8">
-            <h1 class="text-h5 font-weight-bold text-center mb-6">建立新帳戶</h1>
+          <v-card-text class="pa-4">
+            <h1 class="text-h5 font-weight-bold text-center mb-3">建立新帳戶</h1>
+
+            <!-- 點擊頭像觸發裁切對話框 -->
+            <div class="text-center mt-2 mb-4">
+              <v-avatar color="primary" size="80" class="cursor-pointer" @click="showCropper = true">
+                <v-img
+                    :src="imagePreviewUrl"
+                    cover
+                ></v-img>
+              </v-avatar>
+              <p class="text-body-1 text-medium-emphasis">
+                {{ userStore.info?.email }}
+              </p>
+            </div>
+
+            <!-- 裁切頭像 Dialog -->
+            <v-dialog v-model="showCropper" max-width="600">
+              <v-card>
+                <v-card-title class="font-weight-bold">裁切頭像</v-card-title>
+                <v-card-text>
+                  <AvatarCropper @cropped="onAvatarCropped"/>
+                </v-card-text>
+                <v-card-actions>
+                  <v-spacer />
+                  <v-btn text @click="showCropper = false">取消</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
 
             <v-form ref="formRef" v-model="isValid" @submit.prevent="onSubmit">
               <v-text-field
@@ -13,15 +40,17 @@
                 :rules="nameRules"
                 clearable
                 required
-              />
-                <v-text-field
+                class="mb-2"
+              ></v-text-field>
+              <v-text-field
                 v-model="formData.email"
                 label="Email"
                 type="email"
                 :rules="emailRules"
                 clearable
                 required
-              />
+                class="mb-2"
+              ></v-text-field>
               <v-text-field
                 v-model="formData.password"
                 label="密碼"
@@ -31,24 +60,27 @@
                 :rules="passwordRules"
                 clearable
                 required
-              />
+                class="mb-2"
+              ></v-text-field>
               <v-text-field
                 v-model="formData.address"
                 label="預設外送地址（選填）"
                 clearable
-              />
+                class="mb-2"
+              ></v-text-field>
               <v-text-field
                 v-model="formData.phone"
                 label="聯絡電話（選填）"
                 clearable
-              />
+                class="mb-2"
+              ></v-text-field>
 
               <v-btn
                 type="submit"
                 color="primary"
                 block
                 size="large"
-                class="mt-4"
+                class="mt-2"
                 :loading="loading"
                 :disabled="loading || !isValid"
               >
@@ -56,7 +88,12 @@
               </v-btn>
             </v-form>
 
-            <div class="text-center mt-6">
+            <!-- Snackbar 提示 -->
+            <v-snackbar v-model="snack.show" :color="snack.color" timeout="2500">
+              {{ snack.text }}
+            </v-snackbar>
+
+            <div class="text-center mt-3">
               <NuxtLink to="/login" class="text-primary text-body-2">已有帳號？前往登入</NuxtLink>
             </div>
           </v-card-text>
@@ -77,6 +114,13 @@ const showPwd = ref(false)
 
 const userStore = useUserStore()
 
+// snackbar 狀態
+const snack = reactive({
+  show: false,
+  text: '',
+  color: 'success' as 'success' | 'error'
+})
+
 const formData = ref({
   name: '',
   email: '',
@@ -94,7 +138,18 @@ const emailRules = [
 ]
 const passwordRules = [
   (v: string) => !!v || '請輸入密碼',
+  (v: string) => v.length >= 6 || '密碼長度至少 6 個字元',
 ]
+
+const imageFile = ref<File | null>(null)
+const imagePreviewUrl = ref<string | undefined>(undefined)
+const showCropper = ref(false)
+
+function onAvatarCropped(blob: Blob) {
+  imageFile.value = new File([blob], 'avatar.png', { type: 'image/png' })
+  imagePreviewUrl.value = URL.createObjectURL(imageFile.value)
+  showCropper.value = false
+}
 
 async function onSubmit() {
   const { valid } = await formRef.value.validate()
@@ -109,17 +164,37 @@ async function onSubmit() {
       formData.value.password,
       formData.value.address,
       formData.value.phone,
+      imageFile.value,
     )
-    router.push('/login')
-  } catch (err) {
+
+    snack.text = '註冊成功，請登入'
+    snack.color = 'success'
+    snack.show = true
+    setTimeout(() => router.push('/login'), 600)
+  } catch (err: any) {
+    let msg = err?.message || err?.data?.message || '註冊失敗，請稍後再試'
+    if (
+      typeof msg === 'string' &&
+      (msg.toLowerCase().includes('email'))
+    ) {
+      msg = '註冊失敗，該電子郵件已被註冊'
+    }
     console.error(err)
+    snack.text = msg
+    snack.color = 'error'
+    snack.show = true
   } finally {
     loading.value = false
   }
 }
 
+definePageMeta({layout: false,})
+
 useHead({ title: '註冊' })
 </script>
 
 <style scoped>
+.v-text-field {
+  margin-bottom: 12px !important;
+}
 </style>
