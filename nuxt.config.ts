@@ -16,4 +16,9 @@ export default defineNuxtConfig({
   build: {
     transpile: ['vuetify'],
   },
+  alias: {
+    '@stores': '/stores',
+    '@app': '/app',
+    '@server': '/server',
+  },
 })
