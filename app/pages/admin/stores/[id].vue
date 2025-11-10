@@ -6,7 +6,7 @@
     </div>
 
     <v-alert v-else-if="error" type="error">
-      載入資料時發生錯誤：{{ error.message }}
+      載入資料時發生錯誤：{{ error?.message || '未知錯誤' }}
     </v-alert>
 
     <v-form v-else-if="editableStore" ref="form">
@@ -52,8 +52,11 @@
               </p>
             </v-col>
           </v-row>
+
           <v-divider class="my-8"></v-divider>
+
           <h3 class="text-h6 mb-4">菜單管理</h3>
+
           <div v-for="(item, index) in editableStore.menu" :key="item._id || item._key" class="mb-4">
             <v-card flat border>
               <v-card-text>
@@ -74,7 +77,6 @@
                       </template>
                     </v-img>
                     <v-file-input
-                        v-model="item.imageFile"
                         label="上傳圖片"
                         variant="underlined"
                         density="compact"
@@ -82,7 +84,7 @@
                         accept="image/*"
                         prepend-icon="mdi-camera"
                         hide-details
-                        @change="previewMenuImage(item)"
+                        @update:modelValue="previewMenuImage(item, $event)"
                     ></v-file-input>
                   </v-col>
 
@@ -112,16 +114,18 @@
             <v-icon start>mdi-plus</v-icon>
             新增菜單項目
           </v-btn>
+
           <v-divider class="my-8"></v-divider>
+
           <v-btn
-              color="red"
+              color="primary"
               size="large"
               block
               class="mt-4"
               :loading="isSaving"
               @click="saveStore"
           >
-            儲存店家資訊
+            儲存所有變更
           </v-btn>
         </v-card-text>
       </v-card>
@@ -130,16 +134,17 @@
 </template>
 
 <script setup lang="ts">
-import {useRoute} from 'vue-router';
+import { useRoute } from 'vue-router'
+import { useUserStore } from '../../../../stores/user'
 
 interface MenuItem {
-  _key?: string;
-  _id?: string;
+  _key?: string; // 本地新增、尚未儲存的項目
+  _id?: string; // 資料庫中的 ID
   name: string;
   price: number;
   info: string;
-
-  imageFile?: File;
+  image: string;
+  imageFile?: File | null;
   imagePreviewUrl?: string;
 }
 interface Store {
@@ -158,20 +163,23 @@ interface ApiResponse {
 
 const route = useRoute();
 const storeId = route.params.id as string;
+const userStore = useUserStore();
+
 const form = ref<any>(null);
 const editableStore = ref<Store | null>(null);
-const imageFile = ref<File>(null);
+const imageFile = ref<File | null>(null);
 const imagePreviewUrl = ref<string | undefined>(undefined);
 const isSaving = ref(false);
 
+const pendingDeletionMenuIds = ref<string[]>([]);
+
 const addressRules = [
-  (value: string) => !!value || '外送地址為必填欄位。',
+  (value: string) => !!value || '餐廳地址為必填欄位。',
   (value: string) => {
     const regex = /(?<zipcode>(^\d{5}|^\d{3})?)(?<city>\D+[縣市])(?<district>\D+?(市區|鎮區|鎮市|[鄉鎮市區]))(?<others>.+)/;
     return regex.test(value) || '地址格式不正確，請輸入完整地址。';
   },
 ];
-
 const phoneRules = [
   (value: string) => !!value || '聯絡電話為必填欄位。',
   (value: string) => {
@@ -180,7 +188,7 @@ const phoneRules = [
   },
 ];
 
-const { data: apiResponse, pending, error } = useFetch<ApiResponse>(
+const { data: apiResponse, pending, error, refresh } = useFetch<ApiResponse>(
     `/api/restaurants/${storeId}`
 )
 watch(apiResponse, (newApiResponse) => {
@@ -188,7 +196,7 @@ watch(apiResponse, (newApiResponse) => {
     const storeData = JSON.parse(JSON.stringify(newApiResponse.data));
     if (storeData.menu) {
       storeData.menu.forEach((item: MenuItem) => {
-        item.imageFile = undefined;
+        item.imageFile = null;
         item.imagePreviewUrl = undefined;
       });
     }
@@ -205,35 +213,78 @@ const saveStore = async () => {
   }
   isSaving.value = true;
 
-  const formData = new FormData();
-  formData.append('name', editableStore.value.name);
-  formData.append('info', editableStore.value.info);
-  formData.append('address', editableStore.value.address);
-  formData.append('phone', editableStore.value.phone);
+  const savePromises: Promise<any>[] = [];
+  const headers = {
+    'Authorization': `Bearer ${userStore.token}`,
+  };
+
+  // 更新餐聽資訊
+  const storeFormData = new FormData();
+  storeFormData.append('name', editableStore.value.name);
+  storeFormData.append('info', editableStore.value.info);
+  storeFormData.append('address', editableStore.value.address);
+  storeFormData.append('phone', editableStore.value.phone);
   if (imageFile.value) {
-    formData.append('image', imageFile.value);
+    storeFormData.append('image', imageFile.value);
   }
-  const cleanMenu = editableStore.value.menu.map((item, index) => {
+  savePromises.push($fetch(
+      `/api/admin/restaurants/${storeId}`,
+      { method: 'PATCH', headers, body: storeFormData }
+  ));
+
+  // 更新餐點資訊
+  for (const item of editableStore.value.menu) {
+    const menuFormData = new FormData();
+    menuFormData.append('name', item.name);
+    menuFormData.append('price', item.price.toString());
+    menuFormData.append('info', item.info);
     if (item.imageFile) {
-      formData.append(`menuImage_${index}`, item.imageFile);
+      menuFormData.append('image', item.imageFile);
     }
-    const { imageFile, imagePreviewUrl, ...rest } = item;
-    return rest;
-  });
-  formData.append('menu', JSON.stringify(cleanMenu));
-  // 之後會改成用api更新到db
-  // try {
-  //   await $fetch(`/api/restaurants/${storeId}`, {
-  //     method: 'PUT',
-  //     body: formData,
-  //   });
-  // } catch (e) {
-  //   console.error('Failed to save store:', e);
-  // } finally {
-  //   isSaving.value = false;
-  // }
-  isSaving.value = false;
-  alert("儲存成功!");
+    if (item._id) {
+      savePromises.push($fetch(
+          `/api/admin/restaurants/${storeId}/menu/${item._id}`,
+          { method: 'PATCH', headers, body: menuFormData }
+      ));
+    } else if (item._key) {
+      savePromises.push($fetch(
+          `/api/admin/restaurants/${storeId}/menu`,
+          { method: 'POST', headers, body: menuFormData }
+      ));
+    }
+  }
+
+  // 刪除餐點
+  for (const menuId of pendingDeletionMenuIds.value) {
+    savePromises.push($fetch(
+        `/api/admin/restaurants/${storeId}/menu/${menuId}`,
+        { method: 'DELETE', headers }
+    ));
+  }
+
+  try {
+    const results = await Promise.allSettled(savePromises);
+    let hasError = false;
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        hasError = true;
+        console.error(`第 ${index + 1} 個儲存任務失敗:`, result.reason);
+      }
+    });
+    if (hasError) {
+      alert('部分資料儲存失敗，請檢查主控台(console)錯誤訊息。');
+    } else {
+      alert('儲存成功！');
+      pendingDeletionMenuIds.value = [];
+    }
+    await refresh();
+
+  } catch (e) {
+    console.error('儲存過程中發生嚴重錯誤:', e);
+    alert('儲存過程中發生嚴重錯誤。');
+  } finally {
+    isSaving.value = false;
+  }
 };
 
 const addMenuItem = () => {
@@ -244,7 +295,7 @@ const addMenuItem = () => {
       price: 0,
       info: '',
       image: '',
-      imageFile: undefined,
+      imageFile: null,
       imagePreviewUrl: undefined,
     });
   }
@@ -252,6 +303,10 @@ const addMenuItem = () => {
 
 const removeMenuItem = (index: number) => {
   if (editableStore.value) {
+    const item = editableStore.value.menu[index];
+    if (item._id) {
+      pendingDeletionMenuIds.value.push(item._id);
+    }
     editableStore.value.menu.splice(index, 1);
   }
 };
@@ -260,21 +315,23 @@ const previewMainImage = () => {
   if (imageFile.value) {
     imagePreviewUrl.value = URL.createObjectURL(imageFile.value);
   } else {
+    imageFile.value = null;
     imagePreviewUrl.value = undefined;
   }
 };
 
-const previewMenuImage = (item: MenuItem) => {
-  if (item.imageFile) {
-    const file = item.imageFile;
-    item.imagePreviewUrl = URL.createObjectURL(file);
+const previewMenuImage = (item: MenuItem, files: File) => {
+  if (files) {
+    item.imageFile = files;
+    item.imagePreviewUrl = URL.createObjectURL(files);
   } else {
+    item.imageFile = null;
     item.imagePreviewUrl = undefined;
   }
 };
 
 useHead({
-  title: () => "修改餐廳"
+  title: () => editableStore.value ? `編輯：${editableStore.value.name}` : "修改餐廳"
 });
 </script>
 
