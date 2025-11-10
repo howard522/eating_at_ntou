@@ -46,7 +46,7 @@ export const useUserStore = defineStore('user', {
         },
 
         // 註冊請求, 並取得 token 及使用者資料
-        async registerPost(name: string, email: string, password: string, address?: string, phone?: string) {
+        async registerPost(name: string, email: string, password: string, address?: string, phone?: string, img?: File) {
             try {
                 const res = await $fetch('/api/auth/register', {
                     method: 'POST',
@@ -67,6 +67,9 @@ export const useUserStore = defineStore('user', {
                 if (this.info) {
                     this.info.address = address
                     this.info.phone = phone
+                    if (img) {
+                        this.info.img = img
+                    }
                 }
                 this.saveToStorage()
                 await this.syncUserInfoWithDB()
