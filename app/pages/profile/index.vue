@@ -113,6 +113,11 @@
               </v-btn>
             </v-form>
 
+            <!-- Snackbar 提示 -->
+            <v-snackbar v-model="snack.show" :color="snack.color" timeout="2500">
+              {{ snack.text }}
+            </v-snackbar>
+
             <v-divider class="my-6"></v-divider>
 
             <div class="text-center">
@@ -138,6 +143,15 @@
 import { useUserStore } from '../../../stores/user'
 
 const userStore = useUserStore()
+// 補上 saving 狀態
+const saving = ref(false)
+
+// 新增 snackbar 狀態
+const snack = reactive({
+  show: false,
+  text: '',
+  color: 'success' as 'success' | 'error'
+})
 
 const formData = ref({
   name: userStore.info?.name || '無法取得用戶暱稱',
@@ -151,8 +165,16 @@ const formData = ref({
 async function saveChanges() {
   // 密碼一致性檢查
   if (formData.value.password) {
+    if (formData.value.password.length < 6) {
+      snack.text = '新密碼長度至少 6 個字元'
+      snack.color = 'error'
+      snack.show = true
+      return
+    }
     if (formData.value.password !== formData.value.passwordConfirm) {
-      alert('兩次輸入的密碼不一致')
+      snack.text = '兩次輸入的密碼不一致'
+      snack.color = 'error'
+      snack.show = true
       return
     }
   }
@@ -163,22 +185,37 @@ async function saveChanges() {
     phone: formData.value.phone,
   }
 
-  userStore.$patch({
-    info: {
-      ...(userStore.info || {}),
-      ...dataToUpdate,
-    },
-  })
+  saving.value = true
+  try {
+    userStore.$patch({
+      info: {
+        ...(userStore.info || {}),
+        ...dataToUpdate,
+      },
+    })
 
-  userStore.syncUserInfoWithDB()
+    await userStore.syncUserInfoWithDB()
+    snack.text = '資料已更新'
+    snack.color = 'success'
+    snack.show = true
 
-  if (formData.value.currentPassword && formData.value.password) {
-    userStore.updatePassword(formData.value.currentPassword, formData.value.password)
+    if (formData.value.currentPassword && formData.value.password) {
+      await userStore.updatePassword(formData.value.currentPassword, formData.value.password)
+      snack.text = '密碼已更新'
+      snack.color = 'success'
+      snack.show = true
+    }
+
+    formData.value.currentPassword = ''
+    formData.value.password = ''
+    formData.value.passwordConfirm = ''
+  } catch (e: any) {
+    snack.text = e?.message || '更新失敗，請稍後再試'
+    snack.color = 'error'
+    snack.show = true
+  } finally {
+    saving.value = false
   }
-
-  formData.value.currentPassword = ''
-  formData.value.password = ''
-  formData.value.passwordConfirm = ''
 }
 
 const roleButton = computed(() => {
@@ -200,17 +237,22 @@ const roleButton = computed(() => {
   return { text: '管理員', action: null, disabled: true };
 });
 
+const router = useRouter()
 function manageRole() {
   const action = roleButton.value.action
   if (action === 'switch') {
     const current = userStore.currentRole
     const newRole = current === 'customer' ? 'delivery' : 'customer'
     userStore.setRole?.(newRole as 'customer' | 'delivery')
-    alert(`身分已切換為 ${newRole === 'customer' ? '顧客' : '外送員'}`)
+
+    snack.text = `身分已切換為 ${newRole === 'customer' ? '顧客' : '外送員'}`
+    snack.color = 'success'
+    snack.show = true
+
     if (newRole === 'delivery') {
-      window.location.href = '/delivery/orders'
+      router.push('/delivery/orders')
     } else {
-      window.location.href = '/customer/stores'
+      router.push('/customer/stores')
     }
   }
 }

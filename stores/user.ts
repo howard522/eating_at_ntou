@@ -37,9 +37,11 @@ export const useUserStore = defineStore('user', {
                 this.info = res.user
                 this.currentRole = null
                 this.saveToStorage()
-
+                return res
             } catch (err: any) {
-                console.error('Error logging in:', err.message || err);
+                const msg = err?.data?.message || err?.message || '登入失敗，請稍後再試'
+                console.error('Error logging in:', msg);
+                throw new Error(msg)
             }
         },
 
@@ -62,13 +64,17 @@ export const useUserStore = defineStore('user', {
                 this.token = res.token
                 this.info = res.user
                 this.currentRole = null
-                this.info.address = address
-                this.info.phone = phone
+                if (this.info) {
+                    this.info.address = address
+                    this.info.phone = phone
+                }
                 this.saveToStorage()
-                this.syncUserInfoWithDB()
-
+                await this.syncUserInfoWithDB()
+                return res
             } catch (err: any) {
-                console.error('Error registering:', err.message || err);
+                const msg = err?.data?.message || err?.message || '註冊失敗，請稍後再試'
+                console.error('Error registering:', msg);
+                throw new Error(msg)
             }
         },
 
@@ -82,7 +88,7 @@ export const useUserStore = defineStore('user', {
         async syncUserInfoWithDB() {
             if (!this.token || !this.info) {
                 console.log('User not logged in, skipping user info sync.');
-                return;
+                throw new Error('尚未登入')
             }
             try {
                 // 使用 FormData 傳送，讓後端能接收檔案（img）與其他欄位
@@ -117,16 +123,18 @@ export const useUserStore = defineStore('user', {
                     },
                     body: form,
                 })
+                return true
             } catch (err: any) {
-                console.error('Error syncing user info:', err.message || err)
+                const msg = err?.data?.message || err?.message || '更新個人資料失敗，請稍後再試'
+                console.error('Error syncing user info:', msg)
+                throw new Error(msg)
             }
         },
 
         // 更新密碼
         async updatePassword(currentPassword: string, newPassword: string) {
             if (!this.token) {
-                console.log('User not logged in, skipping password update.');
-                return;
+                throw new Error('尚未登入')
             }
             try {
                 await $fetch('/api/auth/me/password', {
@@ -141,8 +149,11 @@ export const useUserStore = defineStore('user', {
                         newPassword: newPassword,
                     },
                 });
+                return true
             } catch (err: any) {
-                console.error('Error updating password:', err.message || err);
+                const msg = err?.data?.message || err?.message || '更新密碼失敗，請稍後再試'
+                console.error('Error updating password:', msg);
+                throw new Error(msg)
             }
         },
 

@@ -56,6 +56,11 @@
               </v-btn>
             </v-form>
 
+            <!-- Snackbar 提示 -->
+            <v-snackbar v-model="snack.show" :color="snack.color" timeout="2500">
+              {{ snack.text }}
+            </v-snackbar>
+
             <div class="text-center mt-6">
               <NuxtLink to="/login" class="text-primary text-body-2">已有帳號？前往登入</NuxtLink>
             </div>
@@ -76,6 +81,13 @@ const loading = ref(false)
 const showPwd = ref(false)
 
 const userStore = useUserStore()
+
+// snackbar 狀態
+const snack = reactive({
+  show: false,
+  text: '',
+  color: 'success' as 'success' | 'error'
+})
 
 const formData = ref({
   name: '',
@@ -111,9 +123,23 @@ async function onSubmit() {
       formData.value.address,
       formData.value.phone,
     )
-    router.push('/login')
-  } catch (err) {
+
+    snack.text = '註冊成功，請登入'
+    snack.color = 'success'
+    snack.show = true
+    setTimeout(() => router.push('/login'), 600)
+  } catch (err: any) {
+    let msg = err?.message || err?.data?.message || '註冊失敗，請稍後再試'
+    if (
+      typeof msg === 'string' &&
+      (msg.toLowerCase().includes('email'))
+    ) {
+      msg = '註冊失敗，該電子郵件已被註冊'
+    }
     console.error(err)
+    snack.text = msg
+    snack.color = 'error'
+    snack.show = true
   } finally {
     loading.value = false
   }
