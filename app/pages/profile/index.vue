@@ -222,6 +222,7 @@ async function saveChanges() {
     }
 
     await userStore.syncUserInfoWithDB()
+    userStore.saveToStorage()
     snack.text = '資料已更新'
     snack.color = 'success'
     snack.show = true
