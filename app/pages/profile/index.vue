@@ -2,7 +2,6 @@
   <v-container>
     <v-row justify="center">
       <v-col cols="12" md="8" lg="6">
-
         <v-card flat border rounded="lg">
           <v-card-text class="pa-6">
             <v-btn
@@ -17,12 +16,12 @@
             </v-btn>
 
             <div class="text-center mt-4 mb-10">
-              <v-avatar color="primary" size="96">
+              <!-- 點擊頭像觸發裁切對話框 -->
+              <v-avatar color="primary" size="96" class="cursor-pointer" @click="showCropper = true">
                 <v-img
-                    :src="userStore.info?.img"
+                    :src="imagePreviewUrl || userStore.info?.img"
                     cover
-                >
-                </v-img>
+                ></v-img>
               </v-avatar>
               <h2 class="text-h5 font-weight-bold mt-4">
                 {{ userStore.info?.name }}
@@ -31,6 +30,20 @@
                 {{ userStore.info?.email }}
               </p>
             </div>
+
+            <!-- 裁切頭像 Dialog -->
+            <v-dialog v-model="showCropper" max-width="600">
+              <v-card>
+                <v-card-title class="font-weight-bold">裁切頭像</v-card-title>
+                <v-card-text>
+                  <AvatarCropper @cropped="onAvatarCropped"/>
+                </v-card-text>
+                <v-card-actions>
+                  <v-spacer />
+                  <v-btn text @click="showCropper = false">取消</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
 
             <v-form @submit.prevent="saveChanges">
               <div class="mb-4">
@@ -143,10 +156,9 @@
 import { useUserStore } from '../../../stores/user'
 
 const userStore = useUserStore()
-// 補上 saving 狀態
 const saving = ref(false)
 
-// 新增 snackbar 狀態
+// snackbar 狀態
 const snack = reactive({
   show: false,
   text: '',
@@ -161,6 +173,16 @@ const formData = ref({
   password: '',
   passwordConfirm: '',
 })
+
+const imageFile = ref<File | null>(null)
+const imagePreviewUrl = ref<string | undefined>(undefined)
+const showCropper = ref(false)
+
+function onAvatarCropped(blob: Blob) {
+  imageFile.value = new File([blob], 'avatar.png', { type: 'image/png' })
+  imagePreviewUrl.value = URL.createObjectURL(imageFile.value)
+  showCropper.value = false
+}
 
 async function saveChanges() {
   // 密碼一致性檢查
@@ -193,6 +215,10 @@ async function saveChanges() {
         ...dataToUpdate,
       },
     })
+
+    if (imageFile.value) {
+      userStore.info.img = imageFile.value
+    }
 
     await userStore.syncUserInfoWithDB()
     snack.text = '資料已更新'
@@ -261,5 +287,7 @@ useHead({title: '我的帳戶',});
 </script>
 
 <style scoped>
-
+.cursor-pointer {
+  cursor: pointer;
+}
 </style>
