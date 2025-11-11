@@ -153,6 +153,10 @@ watch(
     { immediate: true }
 );
 
+onActivated(() => {
+  fetchStores({ reset: true });
+});
+
 useHead({ title: '管理店家' });
 </script>
 

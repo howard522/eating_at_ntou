@@ -37,8 +37,8 @@
                 <v-stepper-item
                     :title="step.title"
                     :value="step.id"
-                    :complete="step.id < currentStep"
-                    :color="step.id === currentStep ? 'primary' : (step.id < currentStep ? 'success' : undefined)" >
+                    :complete="step.id < currentStep || currentStep === 4"
+                    :color="currentStep === 4 ? 'success' : (step.id === currentStep) ? 'primary' : (step.id < currentStep ? 'success' : undefined)" >
                 </v-stepper-item>
                 <v-divider v-if="index < steps.length - 1"></v-divider>
               </template>
