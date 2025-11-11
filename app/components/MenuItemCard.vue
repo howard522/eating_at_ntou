@@ -74,10 +74,11 @@ const isInCart = computed(() => cartStore.items?.some(i => i._id === props.item.
 
 <style scoped>
 .item-name {
+  display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 80%;
+  max-width: 200px;
 }
 
 .item-info {
