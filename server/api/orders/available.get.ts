@@ -217,7 +217,7 @@ export default defineEventHandler(async (event) => {
 
     // 查詢訂單
     let orders = await Order.find(baseFilter)
-        .populate('items.restaurant.id', 'name locationGeo phone')
+        .populate('items.restaurant.id', 'name locationGeo phone address')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

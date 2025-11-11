@@ -21,6 +21,7 @@ const orderItemSchema = new mongoose.Schema({
         id: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', required: false, index: true },//index方便查詢某餐廳的訂單
         name: { type: String },
         phone: { type: String },
+        address: { type: String },
     },
 })
 

@@ -118,7 +118,8 @@ export const components = {
                             id: { type: 'string' },
                             name: { type: 'string' }
                             ,
-                            phone: { type: 'string' }
+                            phone: { type: 'string' },
+                            address: { type: 'string' }
                         }
                     }
                 }
