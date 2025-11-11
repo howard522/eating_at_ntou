@@ -23,6 +23,7 @@ export const components = {
                     tags: { type: 'array', items: { type: 'string' } },
                     menu: { type: 'array', items: { $ref: '#/components/schemas/MenuItem' } }
                     ,
+                    isActive: { type: 'boolean', description: '是否上架/營業（預設 true）', example: true, default: true },
                     locationGeo: {
                         type: 'object',
                         description: 'GeoJSON Point: { type: "Point", coordinates: [lon, lat] }',
