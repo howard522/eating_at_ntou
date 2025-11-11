@@ -1,100 +1,176 @@
 import { defineEventHandler, createError, getQuery } from 'h3'
 import connectDB from '@server/utils/db'
 import Order from '@server/models/order.model'
+import Restaurant from '@server/models/restaurant.model'
 import { verifyJwtFromEvent } from '@server/utils/auth'
 
 /**
  * @openapi
  * /api/orders/available:
  *   get:
- *     summary: 查詢可接單列表
- *     description: 取得所有尚未被外送員接單、狀態為準備中的訂單清單。
- *     tags:
- *       - Order
+ *     summary: 查詢可接單列表（含距離排序）
+ *     description: >
+ *       以外送員當前座標為中心，搜尋附近餐廳的可接訂單。  
+ *       距離與排序皆由 MongoDB `$geoNear` 計算，效能最佳。  
+ *       支援依關鍵字搜尋餐廳名稱、外送費、建立時間或預估到達時間排序。
+ *     tags: [Order]
  *     security:
  *       - BearerAuth: []
  *     parameters:
+ *       - name: keyword
+ *         in: query
+ *         schema:
+ *           type: string
+ *         description: 餐廳名稱關鍵字（模糊搜尋）
+ *         example: "港邊"
+ *       - name: lat
+ *         in: query
+ *         schema:
+ *           type: number
+ *         required: true
+ *         description: 外送員目前位置緯度
+ *         example: 25.1327
+ *       - name: lon
+ *         in: query
+ *         schema:
+ *           type: number
+ *         required: true
+ *         description: 外送員目前位置經度
+ *         example: 121.7401
+ *       - name: maxDistance
+ *         in: query
+ *         schema:
+ *           type: integer
+ *         description: 搜尋最大距離（公尺，預設 5000）
+ *         example: 3000
+ *       - name: sortBy
+ *         in: query
+ *         schema:
+ *           type: string
+ *           enum: [createdAt, deliveryFee, arriveTime, distance]
+ *         description: 排序依據（distance 需含 lat/lon）
+ *         example: "distance"
+ *       - name: order
+ *         in: query
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: 排序方向（預設 desc）
+ *         example: "asc"
  *       - name: limit
  *         in: query
- *         required: false
  *         schema:
  *           type: integer
- *         description: 每頁最大回傳筆數（預設 50，上限 100）
+ *           default: 50
+ *           maximum: 100
+ *         description: 每頁最大回傳筆數
+ *         example: 20
  *       - name: skip
  *         in: query
- *         required: false
  *         schema:
  *           type: integer
- *         description: 跳過筆數（用於分頁，預設 0）
- *     responses:
- *       200:
- *         description: 成功取得可接單列表
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 count:
- *                   type: integer
- *                   description: 本次回傳的訂單筆數（受 limit/skip 影響）
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Order'
- *             example:
- *               success: true
- *               count: 1
- *               data:
- *                 - _id: "671c0c2f5c3b5a001276a7ff"
- *                   user: "670a15fa5c3b5a001279cc22"
- *                   total: 450
- *                   deliveryFee: 30
- *                   arriveTime: "2024-08-01T12:30:00.000Z"
- *                   currency: "TWD"
- *                   items:
- *                     - name: "三杯雞"
- *                       price: 220
- *                       quantity: 1
- *                       restaurant:
- *                         name: "傑哥加長加長菜"
- *                   deliveryInfo:
- *                     address: "基隆市中正區OO路123號"
- *                     contactName: "宋辰星"
- *                     contactPhone: "0912-345-678"
- *                     note: "請放門口"
- *                   customerStatus: "preparing"
- *                   deliveryStatus: "preparing"
+ *           default: 0
+ *         description: 要跳過的筆數（用於分頁）
+ *         example: 0
  */
 
 export default defineEventHandler(async (event) => {
     await connectDB()
-
-    // Auth
     const payload = await verifyJwtFromEvent(event)
 
     const query = getQuery(event)
-    // 分頁參數
+    const {
+        keyword = '',
+        sortBy = 'createdAt',
+        order = 'desc',
+        lat,
+        lon,
+        maxDistance = 5000
+    } = query
+
+    if (!lat || !lon) {
+        throw createError({ statusCode: 400, statusMessage: '缺少經緯度參數' })
+    }
+
     const DEFAULT_LIMIT = 50
     const MAX_LIMIT = 100
-    let limit = Number(query.limit) || DEFAULT_LIMIT
-    limit = Math.min(limit, MAX_LIMIT)
+    let limit = Math.min(Number(query.limit) || DEFAULT_LIMIT, MAX_LIMIT)
     const skip = Number(query.skip) || 0
+    const dir = order === 'asc' ? 1 : -1
 
-    // 查詢尚未接單的訂單（支援 skip / limit）
-    const orders = await Order.find({
+    
+    // 找附近的餐廳
+    const nearbyRestaurants = await Restaurant.aggregate([
+        {
+            $geoNear: {
+                near: { type: 'Point', coordinates: [Number(lon), Number(lat)] },
+                distanceField: 'distance',
+                maxDistance: Number(maxDistance),
+                spherical: true
+            }
+        },
+        keyword
+            ? {
+                $match: {
+                    name: { $regex: keyword, $options: 'i' }
+                }
+            }
+            : { $match: {} },
+        { $project: { _id: 1, name: 1, distance: 1 } },
+        { $limit: 100 } // 最多先抓 100 家餐廳
+    ])
+
+    const restaurantIds = nearbyRestaurants.map((r) => r._id)
+    if (restaurantIds.length === 0) {
+        return { success: true, count: 0, data: [] }
+    }
+
+    // 查找該範圍內的訂單
+    let orders = await Order.find({
         deliveryPerson: null,
-        deliveryStatus: 'preparing'
+        deliveryStatus: 'preparing',
+        'items.restaurant.id': { $in: restaurantIds }
     })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
+        .populate('items.restaurant.id', 'name phone locationGeo')
         .lean()
+
+
+    // 加入距離欄位
+
+    const distanceMap = new Map(
+        nearbyRestaurants.map((r) => [String(r._id), r.distance])
+    )
+    orders = orders.map((o) => {
+        const restId = String(o.items?.[0]?.restaurant?.id?._id || '')
+        const dist = distanceMap.get(restId) ?? Infinity
+        return { ...o, _distance: dist }
+    })
+
+    // 排序與分頁
+    orders.sort((a, b) => {
+        switch (sortBy) {
+            case 'deliveryFee':
+                return dir * ((a.deliveryFee || 0) - (b.deliveryFee || 0))
+            case 'arriveTime':
+                return dir * (
+                    new Date(a.arriveTime || 0).getTime() -
+                    new Date(b.arriveTime || 0).getTime()
+                )
+            case 'distance':
+                return dir * ((a._distance || Infinity) - (b._distance || Infinity))
+            case 'createdAt':
+            default:
+                return dir * (
+                    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                )
+        }
+    })
+
+    const paged = orders.slice(skip, skip + limit)
 
     return {
         success: true,
-        count: orders.length,
-        data: orders
+        count: paged.length,
+        data: paged
     }
 })
