@@ -25,10 +25,10 @@
  *       200: { description: 已更新 }
  */
 import { defineEventHandler, readBody } from 'h3'
-import { getUserFromEvent, toPublicUser } from '../../../utils/auth'
-import connectDB from '../../../utils/db'
-import User from '../../../models/user.model'
-import { uploadImageToImageBB } from '../../../utils/imageUploader'
+import { getUserFromEvent, toPublicUser } from '@server/utils/auth'
+import connectDB from '@server/utils/db'
+import User from '@server/models/user.model'
+import { uploadImageToImageBB } from '@server/utils/imageUploader'
 
 export default defineEventHandler(async (event) => {
   const me = await getUserFromEvent(event)

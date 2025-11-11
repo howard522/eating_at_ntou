@@ -1,7 +1,7 @@
 // middleware/adminOnly.ts
 
 import { defineEventHandler, createError } from 'h3'
-import { getUserFromEvent } from '../utils/auth'
+import { getUserFromEvent } from '@server/utils/auth'
 
 export default defineEventHandler(async (event) => {
     if (!event.node.req.url?.startsWith('/api/admin')) {

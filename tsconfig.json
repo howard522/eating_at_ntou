@@ -4,6 +4,11 @@
       "@types/node",
       "nuxt/schema"
     ],
+    "paths": {
+      "@app/*": ["./app/*"],
+      "@server/*": ["./server/*"],
+      "@stores/*": ["./stores/*"]
+    },
     "moduleResolution": "bundler",
     "allowJs": true,
     "strict": true,

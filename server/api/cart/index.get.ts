@@ -1,7 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
-import connectDB from '../../utils/db'
-import Cart from '../../models/cart.model'
-import { verifyJwtFromEvent } from '../../utils/auth'
+import connectDB from '@server/utils/db'
+import Cart from '@server/models/cart.model'
+import { verifyJwtFromEvent } from '@server/utils/auth'
 
 
 /**

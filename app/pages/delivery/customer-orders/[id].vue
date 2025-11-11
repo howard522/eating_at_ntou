@@ -118,6 +118,28 @@
           </v-card>
         </template>
 
+        <v-dialog v-model="isPhoneMissing" max-width="450" persistent>
+          <v-card>
+            <v-card-title class="text-h5 font-weight-bold">
+              請先填寫聯絡電話
+            </v-card-title>
+            <v-card-text>
+              為了確保訂單順利，您必須先在「我的帳戶」頁面中填寫您的電話號碼，然後才能開始接單。
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                  text="取消"
+                  @click="isPhoneMissing = false"
+              ></v-btn>
+              <v-btn
+                  color="primary"
+                  text="前往我的帳戶"
+                  @click="goToAccount"
+              ></v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-col>
     </v-row>
   </v-container>
@@ -125,13 +147,14 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { useUserStore } from '../../../../stores/user';
+import { useUserStore } from '@stores/user';
 
 const route = useRoute();
 const router = useRouter();
 const orderId = route.params.id as string;
 const userStore = useUserStore();
 const isAccepting = ref(false);
+const isPhoneMissing = ref(false);
 
 const { data: orderResponse, pending, error } = await useFetch(
     `/api/orders/${orderId}`,
@@ -186,6 +209,10 @@ const maskedCustomerPhone = computed(() => {
 
 
 const acceptOrder = async () => {
+  if (!userStore.info || !userStore.info.phone || userStore.info.phone === '無法取得用戶電話') {
+    isPhoneMissing.value = true;
+    return;
+  }
   isAccepting.value = true;
   try {
     const response: any = await $fetch(
@@ -211,6 +238,11 @@ const acceptOrder = async () => {
   } finally {
     isAccepting.value = false;
   }
+};
+
+const goToAccount = () => {
+  isPhoneMissing.value = false;
+  router.push('/profile');
 };
 
 useHead({

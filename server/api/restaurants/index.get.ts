@@ -1,7 +1,7 @@
-import Restaurant from '../../models/restaurant.model'
-import connectDB from "../../utils/db";
+import Restaurant from '@server/models/restaurant.model'
+import connectDB from "@server/utils/db";
 import { getQuery } from 'h3'
-import { geocodeAddress, sleep } from '../../utils/nominatim';
+import { geocodeAddress, sleep } from '@server/utils/nominatim';
 
 /**
  * @openapi

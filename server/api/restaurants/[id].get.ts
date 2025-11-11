@@ -1,5 +1,5 @@
-import Restaurant from '../../models/restaurant.model'
-import connectDB from "../../utils/db";
+import Restaurant from '@server/models/restaurant.model'
+import connectDB from "@server/utils/db";
 
 /**
  * @openapi

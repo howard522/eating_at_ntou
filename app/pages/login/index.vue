@@ -30,6 +30,11 @@
             {{ errorMessage }}
           </v-alert>
 
+          <!-- Snackbar 提示 -->
+          <v-snackbar v-model="snack.show" :color="snack.color" timeout="2500">
+            {{ snack.text }}
+          </v-snackbar>
+
           <v-form ref="formRef" v-model="formValid" @submit.prevent="onSubmit">
             <!-- 電子郵件欄位 -->
             <label for="login-email" class="form-label mb-1">電子郵件</label>
@@ -99,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '../../../stores/user'
+import { useUserStore } from '@stores/user'
 
 const router = useRouter()
 const formRef = ref()
@@ -112,6 +117,13 @@ const loading = ref(false)
 const errorMessage = ref('')
 const loginRole = ref<'customer' | 'delivery'>('customer')
 
+// snackbar 狀態
+const snack = reactive({
+  show: false,
+  text: '',
+  color: 'success' as 'success' | 'error'
+})
+
 const userStore = useUserStore()
 
 const onSubmit = async () => {
@@ -123,6 +135,11 @@ const onSubmit = async () => {
   try {
     await userStore.loginPost(email.value, password.value)
     userStore.setRole(loginRole.value)
+
+    snack.text = '登入成功'
+    snack.color = 'success'
+    snack.show = true
+
     if (userStore.token) {
       if (userStore?.info?.role === 'admin')
         router.push('/admin/stores')
@@ -132,10 +149,16 @@ const onSubmit = async () => {
         router.push('/customer/stores')
     } else {
       errorMessage.value = '登入失敗，請檢查帳號或密碼'
+      snack.text = errorMessage.value
+      snack.color = 'error'
+      snack.show = true
     }
   } catch (e: any) {
     errorMessage.value =
-      e?.data?.message || e?.message || '登入失敗，請檢查帳號或密碼'
+      e?.message || e?.data?.message || '登入失敗，請檢查帳號或密碼'
+    snack.text = errorMessage.value
+    snack.color = 'error'
+    snack.show = true
   } finally {
     loading.value = false
   }
