@@ -1,4 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import path from 'path'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   pages: true,
@@ -15,5 +17,10 @@ export default defineNuxtConfig({
   components: true,
   build: {
     transpile: ['vuetify'],
+  },
+  alias: {
+    '@stores': path.resolve(__dirname, './stores'),
+    '@app': path.resolve(__dirname, './app'),
+    '@server': path.resolve(__dirname, './server'),
   },
 })

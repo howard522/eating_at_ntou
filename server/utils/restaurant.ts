@@ -1,4 +1,4 @@
-import Restaurant from '../models/restaurant.model'
+import Restaurant from '@server/models/restaurant.model'
 
 /**
  * 更新餐廳資料，會自動略過空字串、null、undefined、空陣列

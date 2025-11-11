@@ -1,6 +1,6 @@
 // api/admin/restaurants/[id]/menu/[menuId].patch.ts
 import { defineEventHandler, readMultipartFormData } from 'h3'
-import Restaurant from '../../../../../models/restaurant.model'
+import Restaurant from '@server/models/restaurant.model'
 
 /**
  * @openapi

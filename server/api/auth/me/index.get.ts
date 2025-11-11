@@ -23,7 +23,7 @@
  *         description: 未授權
  */
 import { defineEventHandler } from 'h3'
-import { getUserFromEvent, toPublicUser } from '../../../utils/auth'
+import { getUserFromEvent, toPublicUser } from '@server/utils/auth'
 
 export default defineEventHandler(async (event) => {
   const user = await getUserFromEvent(event)

@@ -1,6 +1,6 @@
 // usage npx tsx server/utils/createTestUser.ts [email] [password] [role]
 import connectDB from './db'
-import User from '../models/user.model'
+import User from '@server/models/user.model'
 import dotenv from 'dotenv'
 import mongoose from 'mongoose'
 

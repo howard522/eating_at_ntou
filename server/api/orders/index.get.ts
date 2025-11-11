@@ -1,7 +1,7 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
-import connectDB from '../../utils/db'
-import Order from '../../models/order.model'
-import { verifyJwtFromEvent } from '../../utils/auth'
+import connectDB from '@server/utils/db'
+import Order from '@server/models/order.model'
+import { verifyJwtFromEvent } from '@server/utils/auth'
 
 /**
  * @openapi
