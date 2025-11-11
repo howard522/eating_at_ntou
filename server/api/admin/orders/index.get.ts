@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
         if (rawCompleted !== undefined) {
             const completed = String(rawCompleted).toLowerCase() === 'true' || String(rawCompleted) === '1'
             if (completed) {
-                // 我們將「已完成」定義為 customerStatus 與 deliveryStatus 都為 'completed'
+                // 「已完成」定義為 customerStatus 與 deliveryStatus 都為 'completed'
                 mongoQuery = {
                     $and: [
                         { customerStatus: 'completed' },
