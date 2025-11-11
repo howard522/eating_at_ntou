@@ -154,7 +154,7 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '../../../stores/user'
+import { useUserStore } from '@stores/user'
 
 const userStore = useUserStore()
 const saving = ref(false)
@@ -222,6 +222,7 @@ async function saveChanges() {
     }
 
     await userStore.syncUserInfoWithDB()
+    userStore.saveToStorage()
     snack.text = '資料已更新'
     snack.color = 'success'
     snack.show = true

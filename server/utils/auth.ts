@@ -2,7 +2,7 @@
 // ============================================================================
 import { H3Event, createError } from 'h3'
 import jwt from 'jsonwebtoken'
-import User from '../models/user.model'
+import User from '@server/models/user.model'
 import connectDB from './db'
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'

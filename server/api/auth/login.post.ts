@@ -54,9 +54,9 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
-import User from '../../models/user.model'
-import connectDB from '../../utils/db'
-import { JWT_SECRET } from '../../utils/auth'
+import User from '@server/models/user.model'
+import connectDB from '@server/utils/db'
+import { JWT_SECRET } from '@server/utils/auth'
 
 export default defineEventHandler(async (event) => {
   await connectDB()

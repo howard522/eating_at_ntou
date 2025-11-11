@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 import connectDB from './db'
-import User from '../models/user.model'
+import User from '@server/models/user.model'
 import dotenv from 'dotenv'
 import mongoose from 'mongoose'
 

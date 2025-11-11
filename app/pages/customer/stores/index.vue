@@ -84,8 +84,8 @@
 
 <script setup lang="ts">
 import debounce from 'lodash-es/debounce';
-import { useCartStore } from "../../../../stores/cart";
-import { useUserStore } from "../../../../stores/user";
+import { useCartStore } from '@stores/cart';
+import { useUserStore } from '@stores/user';
 
 interface menuItem { _id: string; name: string; price: number; image: string; info: string; }
 interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; menu: menuItem[]; }
