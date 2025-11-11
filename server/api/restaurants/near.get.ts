@@ -135,12 +135,12 @@ export default defineEventHandler(async (event) => {
 
     // 如果有關鍵字條件，將它附加在 $geoNear.query，讓地理搜尋同時做關鍵字過濾
     if (orClauses.length > 0) {
-        geoNearStage.$geoNear.query = { $or: orClauses };
+        geoNearStage.$geoNear.query = Object.assign({}, { $or: orClauses }, { isActive: true });
     }
 
     // Attempt aggregation. But before that, ensure that documents missing locationGeo are attempted geocode-once.
     // We'll find a small set of restaurants that have no locationGeo and try to geocode them (best-effort, limited to 20 per request)
-    const missing = await Restaurant.find({ $or: [{ locationGeo: { $exists: false } }, { 'locationGeo.coordinates': { $exists: false } }, { 'locationGeo.coordinates': null }] }).limit(20);
+    const missing = await Restaurant.find(Object.assign({}, { $or: [{ locationGeo: { $exists: false } }, { 'locationGeo.coordinates': { $exists: false } }, { 'locationGeo.coordinates': null }] }, { isActive: true })).limit(20);
     for (const r of missing) {
         if (r.address) {
             try {
