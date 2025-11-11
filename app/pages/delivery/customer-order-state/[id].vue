@@ -175,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from "../../../../stores/user";
+import { useUserStore } from '@stores/user';
 
 const steps = ref([
   { id: 1, title: '準備中' },
@@ -312,9 +312,6 @@ const updateDeliveryStatus = async () => {
   const requestBody: { deliveryStatus: string; customerStatus?: string } = {
     deliveryStatus: nextDeliveryStatus.value
   };
-  if (nextDeliveryStatus.value === 'on_the_way') {
-    requestBody.customerStatus = 'on_the_way';
-  }
 
   isUpdating.value = true;
   try {

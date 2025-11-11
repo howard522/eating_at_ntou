@@ -1,6 +1,6 @@
 import { defineEventHandler, readMultipartFormData, createError } from 'h3'
-import Restaurant from '../../../models/restaurant.model'
-import { geocodeAddress } from '../../../utils/nominatim'
+import Restaurant from '@server/models/restaurant.model'
+import { geocodeAddress } from '@server/utils/nominatim'
 
 /**
  * @openapi

@@ -50,8 +50,8 @@
 </template>
 
 <script setup lang="ts">
-import { useCartStore } from '../../stores/cart';
-import { createCartImageAnimator } from '../utils/cartAnimation';
+import { useCartStore } from '@stores/cart';
+import { createCartImageAnimator } from '@app/utils/cartAnimation';
 
 interface MenuItem {
   _id: string

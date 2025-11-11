@@ -1,8 +1,8 @@
 // server/api/admin/restaurants/[id].patch.ts
 import { defineEventHandler, readMultipartFormData } from 'h3'
-import { updateRestaurantById } from '../../../../utils/restaurant'
-import { geocodeAddress } from '../../../../utils/nominatim'
-import type { UpdateRestaurantBody } from '../../../../utils/types'
+import { updateRestaurantById } from '@server/utils/restaurant'
+import { geocodeAddress } from '@server/utils/nominatim'
+import type { UpdateRestaurantBody } from '@server/utils/types'
 /**
  * @openapi
  * /api/admin/restaurants/{id}:

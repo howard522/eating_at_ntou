@@ -1,4 +1,4 @@
-import Cart from '../models/cart.model'
+import Cart from '@server/models/cart.model'
 
 export async function clearUserCart(userId: string) {
     // Find the user's cart

@@ -1,10 +1,10 @@
 import { defineEventHandler, readBody, createError } from 'h3'
-import connectDB from '../../utils/db'
-import Order from '../../models/order.model'
-import Cart from '../../models/cart.model'
-import { clearUserCart } from '../../utils/cart'
+import connectDB from '@server/utils/db'
+import Order from '@server/models/order.model'
+import Cart from '@server/models/cart.model'
+import { clearUserCart } from '@server/utils/cart'
 
-import { verifyJwtFromEvent } from '../../utils/auth'
+import { verifyJwtFromEvent } from '@server/utils/auth'
 
 
 /**

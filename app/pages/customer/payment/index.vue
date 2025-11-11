@@ -142,8 +142,8 @@
 </template>
 
 <script setup lang="ts">
-import { useCartStore } from '../../../../stores/cart';
-import { useUserStore } from '../../../../stores/user';
+import { useCartStore } from '@stores/cart';
+import { useUserStore } from '@stores/user';
 
 const cartStore = useCartStore();
 const userStore = useUserStore();

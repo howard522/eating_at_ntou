@@ -164,7 +164,7 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from "../../../../stores/user";
+import { useUserStore } from '@stores/user';
 
 const steps = ref([
   { id: 1, title: '準備中' },
@@ -198,6 +198,33 @@ const { data: orderResponse, pending, error } = await useFetch(
 );
 
 const orderData = ref(orderResponse.value);
+if (orderData.value && orderData.value.deliveryPerson && orderData.value.customerStatus === 'preparing') {
+  isUpdating.value = true;
+  try {
+    const response: any = await $fetch(
+        `/api/orders/${orderId}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${userStore.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: { customerStatus: 'on_the_way' },
+        }
+    );
+
+    if (response.success && orderData.value) {
+      orderData.value.customerStatus = response.data.customerStatus;
+      orderData.value.deliveryStatus = response.data.deliveryStatus;
+    } else {
+      console.error('Failed to auto-update status to on_the_way', response);
+    }
+  } catch (err) {
+    console.error('Error auto-updating status to on_the_way', err);
+  } finally {
+    isUpdating.value = false;
+  }
+}
 
 const currentStep = computed(() => {
   return statusToStepMap[orderData.value.customerStatus];

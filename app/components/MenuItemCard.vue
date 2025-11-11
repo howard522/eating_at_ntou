@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { useCartStore } from '../../stores/cart';
+import { useCartStore } from '@stores/cart';
 
 interface MenuItem {
   _id: string

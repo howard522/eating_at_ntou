@@ -1,4 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import path from 'path'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   pages: true,
@@ -12,8 +14,17 @@ export default defineNuxtConfig({
     '@mdi/font/css/materialdesignicons.min.css',
   ],
   plugins: ['~/plugins/vuetify.ts', '~/plugins/fetch-auth.ts'],
+  devServer: {
+    host: '0.0.0.0',
+    port: 3000,
+  },
   components: true,
   build: {
     transpile: ['vuetify'],
+  },
+  alias: {
+    '@stores': path.resolve(__dirname, './stores'),
+    '@app': path.resolve(__dirname, './app'),
+    '@server': path.resolve(__dirname, './server'),
   },
 })

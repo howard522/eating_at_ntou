@@ -1,8 +1,22 @@
 <template>
   <v-container>
     <h1 class="text-h4 font-weight-bold mb-6">待接單：顧客訂單列表</h1>
-
+    
     <v-row>
+      <v-col cols="12" sm="5" md="4">
+        <v-text-field
+          v-model="keyword"
+          label="搜尋餐廳名稱"
+          variant="outlined"
+          density="compact"
+          hide-details
+          clearable
+          append-inner-icon="mdi-magnify"
+          @keydown.enter="fetchAvailableOrders"
+          @click:append-inner="fetchAvailableOrders"
+        ></v-text-field>
+      </v-col>
+
       <v-col cols="12" sm="4" md="3">
         <v-select
             v-model="sortOption"
@@ -15,27 +29,14 @@
             hide-details
         ></v-select>
       </v-col>
-      <v-col cols="12" sm="4" md="3">
-        <v-select
-            v-model="filterOption"
-            :items="restaurantList"
-            item-title="title"
-            item-value="value"
-            label="篩選"
-            variant="outlined"
-            density="compact"
-            hide-details
-        ></v-select>
-      </v-col>
+      
     </v-row>
-
     <v-row v-if="pending" class="mt-10">
       <v-col cols="12" class="text-center">
         <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
         <p class="mt-4 text-medium-emphasis">正在載入可接訂單...</p>
       </v-col>
     </v-row>
-
     <v-row v-else-if="error" class="mt-10">
       <v-col cols="12" class="text-center text-red-darken-2">
         <v-icon size="60">mdi-alert-circle-outline</v-icon>
@@ -45,15 +46,14 @@
     </v-row>
 
     <v-row v-else class="mt-6">
-      <v-col v-if="sortedOrders.length === 0" cols="12">
+      <v-col v-if="allOrders.length === 0" cols="12">
         <p class="text-center text-medium-emphasis mt-10">
-          目前沒有可接的訂單
+          目前沒有符合條件的訂單
         </p>
       </v-col>
       <v-col
           v-else
-          v-for="order in sortedOrders"
-          :key="order.id"
+          v-for="order in allOrders" :key="order.id"
           cols="12"
           md="10"
           lg="8"
@@ -62,12 +62,11 @@
         <CustomerOrderCard :order="order" />
       </v-col>
     </v-row>
-
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '../../../../stores/user';
+import { useUserStore } from '@stores/user';
 
 interface ApiOrderItem {
   restaurant: { id: string; name: string; };
@@ -79,6 +78,7 @@ interface ApiOrder {
   deliveryInfo: { address: string; };
   createdAt: string;
   arriveTime: string;
+  _distance?: number; 
 }
 interface ApiResponse {
   success: boolean;
@@ -92,22 +92,32 @@ interface DisplayOrder {
   deliveryFee: number;
   deliveryTime: string;
   createdAt: string;
+  distance?: number;
 }
 
 const userStore = useUserStore();
 const allOrders = ref<DisplayOrder[]>([]);
 const pending = ref(true);
 const error = ref<Error | null>(null);
-
+const keyword = ref('');
 const sortOption = ref('newest');
-const filterOption = ref('all');
+const latitude = ref<number | null>(null);
+const longitude = ref<number | null>(null);
+const geolocationError = ref<string | null>(null);
 
 const sortItems = [
   { title: '最新發佈', value: 'newest' },
   { title: '最高外送費', value: 'deliveryFee' },
   { title: '最早送達時間', value: 'deliveryTime' },
+  { title: '距離最近', value: 'distance' },
 ];
 
+const sortMap: Record<string, { sortBy: string, order: 'asc' | 'desc' }> = {
+  'newest': { sortBy: 'createdAt', order: 'desc' },
+  'deliveryFee': { sortBy: 'deliveryFee', order: 'desc' },
+  'deliveryTime': { sortBy: 'arriveTime', order: 'asc' },
+  'distance': { sortBy: 'distance', order: 'asc' },
+};
 
 const fetchAvailableOrders = async () => {
   if (!userStore.token) {
@@ -118,12 +128,27 @@ const fetchAvailableOrders = async () => {
   pending.value = true;
   error.value = null;
   try {
+    const params = new URLSearchParams();
+    if (keyword.value) {
+      params.append('keyword', keyword.value);
+    }
+    if (latitude.value && longitude.value) {
+      params.append('lat', latitude.value.toString());
+      params.append('lon', longitude.value.toString());
+    }
+    let selectedSort = sortMap[sortOption.value];
+    if (selectedSort.sortBy === 'distance' && (!latitude.value || !longitude.value)) {
+      selectedSort = sortMap['newest'];
+    }
+    params.append('sortBy', selectedSort.sortBy);
+    params.append('order', selectedSort.order);
+
     const response = await $fetch<ApiResponse>('/api/orders/available', {
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
+      headers: { 'Authorization': `Bearer ${userStore.token}` },
+      query: { ...Object.fromEntries(params) },
     });
 
     if (!response.success) throw new Error('無法取得可接訂單');
-
     allOrders.value = response.data.map(order => {
       const uniqueNamesArray = Array.from(
           new Set(order.items.map(item => item.restaurant.name))
@@ -135,72 +160,67 @@ const fetchAvailableOrders = async () => {
         deliveryAddress: order.deliveryInfo.address,
         deliveryFee: order.deliveryFee,
         deliveryTime: order.arriveTime,
-        createdAt: order.createdAt
+        createdAt: order.createdAt,
+        distance: order._distance,
       };
     });
   } catch (err: any) {
-    console.error('Error:', err);
+    console.error('Error fetching orders:', err);
     error.value = err;
   } finally {
     pending.value = false;
   }
 };
 
-// 篩選
-const restaurantList = computed(() => {
-  const allIndividualNames = new Set<string>();
-  allOrders.value.forEach(order => {
-    order.restaurantNamesArray.forEach(name => {
-      allIndividualNames.add(name);
-    });
-  });
-
-  const list = Array.from(allIndividualNames).map(name => ({
-    title: name,
-    value: name
-  }));
-  return [
-    { title: '所有餐廳', value: 'all' },
-    ...list
-  ];
-});
-const filteredOrders = computed(() => {
-  if (filterOption.value === 'all') {
-    return allOrders.value;
-  }
-  return allOrders.value.filter(order =>
-      order.restaurantNamesArray.includes(filterOption.value)
+onMounted(() => {
+  navigator.geolocation.getCurrentPosition(
+    // 成功
+    (position) => {
+      latitude.value = position.coords.latitude;
+      longitude.value = position.coords.longitude;
+      geolocationError.value = null;
+      fetchAvailableOrders();
+    },
+    // 失敗
+    (error) => {
+      console.error("Geolocation error:", error.message);
+      geolocationError.value = error.message;
+      latitude.value = null;
+      longitude.value = null;
+      fetchAvailableOrders();
+    },
+    { enableHighAccuracy: true }
   );
 });
 
-// 排序
-const sortedOrders = computed(() => {
-  const sorted = [...filteredOrders.value];
+onActivated(() => {
+  navigator.geolocation.getCurrentPosition(
+      // 成功
+      (position) => {
+        latitude.value = position.coords.latitude;
+        longitude.value = position.coords.longitude;
+        geolocationError.value = null;
+        fetchAvailableOrders();
+      },
+      // 失敗
+      (error) => {
+        console.error("Geolocation error:", error.message);
+        geolocationError.value = error.message;
+        latitude.value = null;
+        longitude.value = null;
+        fetchAvailableOrders();
+      },
+      { enableHighAccuracy: true }
+  );
+});
 
-  switch (sortOption.value) {
-    // 最高外送費
-    case 'deliveryFee':
-      return sorted.sort((a, b) => b.deliveryFee - a.deliveryFee);
-    // 最早送達
-    case 'deliveryTime':
-      return sorted.sort((a, b) =>
-          new Date(a.deliveryTime).getTime() - new Date(b.deliveryTime).getTime()
-      );
-    // 最新發佈
-    case 'newest':
-    default:
-      return sorted.sort((a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+watch(sortOption, (newValue, oldValue) => {
+  if (newValue !== oldValue) {
+    fetchAvailableOrders();
   }
 });
 
-onMounted(() => {
-  fetchAvailableOrders();
-});
-
 useHead({ title: '瀏覽可接訂單' });
-
 </script>
 
 <style scoped>

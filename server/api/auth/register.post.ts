@@ -51,10 +51,10 @@
  *                 statusMessage: { type: string, example: email already in use }
  */
 import { defineEventHandler, readBody, createError } from "h3";
-import connectDB from "../../utils/db";
-import User from "../../models/user.model";
+import connectDB from "@server/utils/db";
+import User from "@server/models/user.model";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../../utils/auth";
+import { JWT_SECRET } from "@server/utils/auth";
 
 export default defineEventHandler(async (event) => {
   await connectDB();
