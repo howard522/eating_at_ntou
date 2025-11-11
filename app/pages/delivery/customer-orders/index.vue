@@ -193,6 +193,27 @@ onMounted(() => {
   );
 });
 
+onActivated(() => {
+  navigator.geolocation.getCurrentPosition(
+      // 成功
+      (position) => {
+        latitude.value = position.coords.latitude;
+        longitude.value = position.coords.longitude;
+        geolocationError.value = null;
+        fetchAvailableOrders();
+      },
+      // 失敗
+      (error) => {
+        console.error("Geolocation error:", error.message);
+        geolocationError.value = error.message;
+        latitude.value = null;
+        longitude.value = null;
+        fetchAvailableOrders();
+      },
+      { enableHighAccuracy: true }
+  );
+});
+
 watch(sortOption, (newValue, oldValue) => {
   if (newValue !== oldValue) {
     fetchAvailableOrders();
