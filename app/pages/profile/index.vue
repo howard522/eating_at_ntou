@@ -278,7 +278,7 @@ function manageRole() {
     snack.show = true
 
     if (newRole === 'delivery') {
-      router.push('/delivery/orders')
+      router.push('/delivery/customer-orders')
     } else {
       router.push('/customer/stores')
     }
