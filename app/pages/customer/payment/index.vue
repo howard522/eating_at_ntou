@@ -145,7 +145,7 @@
 <script setup lang="ts">
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
-import { useSnackbarStore } from '../../../utils/snackbar';
+import { useSnackbarStore } from '@utils/snackbar';
 
 const cartStore = useCartStore();
 const userStore = useUserStore();
