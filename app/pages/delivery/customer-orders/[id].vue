@@ -35,9 +35,12 @@
                       :class="index > 0 ? 'mt-1' : ''" >
                     <div class="text-body-1 text-primary-darken-1 font-weight-bold">
                       {{ restaurant.name }}
-                      <span class="text-body-1 font-weight-regular text-primary-darken-1 ms-1">
+                      <div class="text-body-1 font-weight-regular text-primary-darken-1 ms-1">
+                        {{ restaurant.address || '無地址資訊' }}
+                        <span class="text-body-1 font-weight-regular text-primary-darken-1 ms-1">
                         {{ restaurant.phone }}
                       </span>
+                      </div>
                     </div>
                   </div>
                   <div v-if="uniqueRestaurants.length === 0" class="text-body-1 text-primary-darken-1 font-weight-bold">
@@ -176,13 +179,14 @@ const uniqueRestaurants = computed(() => {
   if (!orderData.value?.items || orderData.value.items.length === 0) {
     return [];
   }
-  const restaurantMap = new Map<string, { id: string, name: string, phone: string }>();
+  const restaurantMap = new Map<string, { id: string, name: string, phone: string, address: string }>();
   for (const item of orderData.value.items) {
     if (item.restaurant && !restaurantMap.has(item.restaurant.id)) {
       restaurantMap.set(item.restaurant.id, {
         id: item.restaurant.id,
         name: item.restaurant.name,
-        phone: item.restaurant.phone
+        phone: item.restaurant.phone,
+        address: item.restaurant.address,
       });
     }
   }
