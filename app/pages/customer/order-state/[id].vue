@@ -242,7 +242,7 @@ const deliver = computed(() => {
     return {
       name: `外送員：${orderData.value.deliveryPerson.name}`,
       phone: orderData.value.deliveryPerson.phone,
-      img: orderData.value.deliveryPerson.image,
+      img: orderData.value.deliveryPerson.img,
       status: statusText,
     };
   } else {
