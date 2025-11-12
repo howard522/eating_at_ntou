@@ -135,8 +135,8 @@
                   >
                     <v-card-text>
                       <v-row>
-                        <v-col cols="12" md="3" class="text-center">
-                          <p class="text-subtitle-2 mb-2">餐點照片</p>
+                        <v-col cols="12" md="3">
+                          <p class="text-subtitle-2 mb-2 ml-1">餐點照片</p>
                           <div class="menu-image-wrapper mx-auto">
                             <v-img
                               :src="item.imagePreviewUrl || ''"
