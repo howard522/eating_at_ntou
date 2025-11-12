@@ -132,15 +132,12 @@
     </v-form>
   </v-container>
 
-  <!-- Snackbar 提示 -->
-  <v-snackbar v-model="snack.show" :color="snack.color" timeout="2500">
-    {{ snack.text }}
-  </v-snackbar>
 </template>
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@stores/user'
+import { useSnackbarStore } from '../../../utils/snackbar'
 
 interface MenuItem {
   _key?: string; // 本地新增、尚未儲存的項目
@@ -175,15 +172,10 @@ const editableStore = ref<Store | null>(null);
 const imageFile = ref<File | null>(null);
 const imagePreviewUrl = ref<string | undefined>(undefined);
 const isSaving = ref(false);
+const snackbarStore = useSnackbarStore()
 
 const pendingDeletionMenuIds = ref<string[]>([]);
 
-// snackbar 狀態
-const snack = reactive({
-  show: false,
-  text: '',
-  color: 'success' as 'success' | 'error'
-})
 
 const addressRules = [
   (value: string) => !!value || '餐廳地址為必填欄位。',
@@ -220,10 +212,8 @@ const saveStore = async () => {
   if (!editableStore.value || !form.value) return;
   const { valid } = await form.value.validate();
   if (!valid) {
-    snack.text = '請修正表單中的錯誤後再儲存。';
-    snack.color = 'error';
-    snack.show = true;
-    return;
+    snackbarStore.showSnackbar('請修正表單中的錯誤後再儲存。', 'error')
+    return
   }
   isSaving.value = true;
 
@@ -286,24 +276,18 @@ const saveStore = async () => {
       }
     });
     if (hasError) {
-      snack.text = '部分資料儲存失敗，請檢查主控台(console)錯誤訊息。';
-      snack.color = 'error';
-      snack.show = true;
+      snackbarStore.showSnackbar('部分資料儲存失敗，請檢查主控台(console)錯誤訊息。', 'error')
     } else {
-      snack.text = '儲存成功！';
-      snack.color = 'success';
-      snack.show = true;
+      snackbarStore.showSnackbar('儲存成功！', 'success')
       pendingDeletionMenuIds.value = [];
     }
     await refresh();
 
   } catch (e) {
     console.error('儲存過程中發生嚴重錯誤:', e);
-    snack.text = '儲存過程中發生嚴重錯誤。';
-    snack.color = 'error';
-    snack.show = true;
+    snackbarStore.showSnackbar('儲存過程中發生嚴重錯誤。', 'error')
   } finally {
-    isSaving.value = false;
+    isSaving.value = false
   }
 };
 

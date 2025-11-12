@@ -139,21 +139,20 @@
       </v-col>
     </v-row>
 
-    <!-- Snackbar 提示 -->
-    <v-snackbar v-model="snack.show" :color="snack.color" timeout="2500">
-      {{ snack.text }}
-    </v-snackbar>
   </v-container>
 </template>
 
 <script setup lang="ts">
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
+import { useSnackbarStore } from '../../../utils/snackbar';
 
 const cartStore = useCartStore();
 const userStore = useUserStore();
 const isFormValid = ref(false);
 const loading = ref(false);
+const snackbarStore = useSnackbarStore()
+
 const localDeliveryAddress = ref(cartStore.deliveryAddress);
 const localPhoneNumber = ref(cartStore.phoneNumber);
 const localReceiveName = ref(cartStore.receiveName);
@@ -162,13 +161,6 @@ const items = computed(() => cartStore.items);
 const totalPrice = computed(() => cartStore.totalPrice);
 const deliveryFee = computed(() => cartStore.deliveryFee);
 let timer: ReturnType<typeof setInterval> | null = null;
-
-// snackbar 狀態
-const snack = reactive({
-  show: false,
-  text: '',
-  color: 'success' as 'success' | 'error'
-})
 
 // 目前只有現場付款
 const paymentMethod = ref('現場付款');
@@ -240,28 +232,22 @@ const submitOrder = async () => {
     });
     if (response && response.data && response.data._id) {
       const orderId = response.data._id;
-      snack.text = '訂單已送出';
-      snack.color = 'success';
-      snack.show = true;
+      snackbarStore.showSnackbar('訂單已送出', 'success')
       cartStore.clearCart();
       const router = useRouter();
       router.push(`/customer/order-state/${orderId}`);
     }
     else {
       console.error('創建訂單異常：', response);
-      snack.text = '創建訂單異常，請稍後再試';
-      snack.color = 'error';
-      snack.show = true;
+      snackbarStore.showSnackbar('創建訂單異常，請稍後再試', 'error')
     }
   }
   catch (e) {
     console.error('創建訂單失敗:', e);
-    snack.text = '創建訂單失敗，請稍後再試';
-    snack.color = 'error';
-    snack.show = true;
+    snackbarStore.showSnackbar('創建訂單失敗，請稍後再試', 'error')
   }
   finally {
-    loading.value = false;
+    loading.value = false
   }
 };
 

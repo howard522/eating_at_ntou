@@ -126,11 +126,6 @@
               </v-btn>
             </v-form>
 
-            <!-- Snackbar 提示 -->
-            <v-snackbar v-model="snack.show" :color="snack.color" timeout="2500">
-              {{ snack.text }}
-            </v-snackbar>
-
             <v-divider class="my-4"></v-divider>
 
             <div class="text-center">
@@ -155,16 +150,11 @@
 
 <script setup lang="ts">
 import { useUserStore } from '@stores/user'
+import { useSnackbarStore } from '../../utils/snackbar'
 
 const userStore = useUserStore()
 const saving = ref(false)
-
-// snackbar 狀態
-const snack = reactive({
-  show: false,
-  text: '',
-  color: 'success' as 'success' | 'error'
-})
+const snackbarStore = useSnackbarStore()
 
 const formData = ref({
   name: userStore.info?.name || '無法取得用戶暱稱',
@@ -189,15 +179,11 @@ async function saveChanges() {
   // 密碼一致性檢查
   if (formData.value.password) {
     if (formData.value.password.length < 6) {
-      snack.text = '新密碼長度至少 6 個字元'
-      snack.color = 'error'
-      snack.show = true
+      snackbarStore.showSnackbar('新密碼長度至少 6 個字元', 'error')
       return
     }
     if (formData.value.password !== formData.value.passwordConfirm) {
-      snack.text = '兩次輸入的密碼不一致'
-      snack.color = 'error'
-      snack.show = true
+      snackbarStore.showSnackbar('兩次輸入的密碼不一致', 'error')
       return
     }
   }
@@ -223,24 +209,18 @@ async function saveChanges() {
 
     await userStore.syncUserInfoWithDB()
     userStore.saveToStorage()
-    snack.text = '資料已更新'
-    snack.color = 'success'
-    snack.show = true
+    snackbarStore.showSnackbar('資料已更新', 'success')
 
     if (formData.value.currentPassword && formData.value.password) {
       await userStore.updatePassword(formData.value.currentPassword, formData.value.password)
-      snack.text = '密碼已更新'
-      snack.color = 'success'
-      snack.show = true
+      snackbarStore.showSnackbar('密碼已更新', 'success')
     }
 
     formData.value.currentPassword = ''
     formData.value.password = ''
     formData.value.passwordConfirm = ''
   } catch (e: any) {
-    snack.text = e?.message || '更新失敗，請稍後再試'
-    snack.color = 'error'
-    snack.show = true
+    snackbarStore.showSnackbar(e?.message || '更新失敗，請稍後再試', 'error')
   } finally {
     saving.value = false
   }
@@ -273,9 +253,7 @@ function manageRole() {
     const newRole = current === 'customer' ? 'delivery' : 'customer'
     userStore.setRole?.(newRole as 'customer' | 'delivery')
 
-    snack.text = `身分已切換為 ${newRole === 'customer' ? '顧客' : '外送員'}`
-    snack.color = 'success'
-    snack.show = true
+    snackbarStore.showSnackbar(`身分已切換為 ${newRole === 'customer' ? '顧客' : '外送員'}`, 'success')
 
     if (newRole === 'delivery') {
       router.push('/delivery/customer-orders')
