@@ -80,21 +80,7 @@
 </template>
 
 <script setup lang="ts">
-interface OrderItem {
-  name: string;
-  quantity: number;
-}
-interface DisplayOrder {
-  id: string;
-  status: string;
-  restaurantNames: string;
-  date?: string;
-  items?: OrderItem[];
-  total?: number;
-  deliveryAddress?: string;
-  deliveryFee?: number;
-  arriveTime?: string;
-}
+import type { DisplayOrder } from '@types/order'
 
 const props = defineProps<{
   order: DisplayOrder;

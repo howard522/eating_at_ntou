@@ -43,45 +43,7 @@
 
 <script setup lang="ts">
 import { useUserStore } from '@stores/user'
-
-interface ApiOrderItem {
-  menuItemId: string;
-  name: string;
-  image: string | null;
-  info: string;
-  price: number;
-  quantity: number;
-  restaurant: {
-    id: string;
-    name: string;
-  };
-}
-interface ApiOrder {
-  _id: string;
-  user: string;
-  items: ApiOrderItem[];
-  total: number;
-  deliveryFee: number;
-  customerStatus: 'preparing' | 'on_the_way' | 'received' | 'completed';
-  createdAt: string;
-  arriveTime: string;
-}
-interface ApiResponse {
-  success: boolean;
-  data: ApiOrder[];
-}
-interface DisplayOrder {
-  id: string;
-  restaurantNames: string;
-  date: string;
-  items: {
-    name: string;
-    quantity: number;
-  }[];
-  total: number;
-  status: string;
-  arriveTime: string;
-}
+import type { ApiOrder, ApiResponse, DisplayOrder } from '@types/order'
 
 const tab = ref('inProgress');
 const userStore = useUserStore();
@@ -98,7 +60,7 @@ const fetchOrders = async () => {
   pending.value = true;
   error.value = null;
   try {
-    const response = await $fetch<ApiResponse>('/api/orders', {
+    const response = await $fetch<ApiResponse<ApiOrder[]>>('/api/orders', {
       method: 'GET',
       query: { role: 'customer' },
       headers: {
@@ -125,7 +87,7 @@ const fetchOrders = async () => {
           date: date,
           items: displayItems,
           total: order.total,
-          status: order.customerStatus,
+          status: order.customerStatus!,
           arriveTime: arriveTimeFormatted,
         };
       });
