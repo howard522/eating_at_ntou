@@ -69,7 +69,7 @@ const onAddClick = () => {
 };
 
 const cartStore = useCartStore();
-const isInCart = computed(() => cartStore.items?.some(i => i._id === props.item._id) ?? false);
+const isInCart = computed(() => cartStore.items?.some(i => i.menuItemId === props.item._id) ?? false);
 </script>
 
 <style scoped>
