@@ -235,7 +235,7 @@ const deliver = computed(() => {
     const deliveryStatus = orderData.value.deliveryStatus;
     let statusText = '外送員正在處理您的訂單';
     if (deliveryStatus === 'on_the_way') {
-      statusText = '正在為您配送中...';
+      statusText = '預計送達時間：' + new Date(orderData.value.arriveTime).toLocaleString();
     } else if (deliveryStatus === 'delivered') {
       statusText = '已送達指定地點';
     }
