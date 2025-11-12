@@ -80,12 +80,18 @@
     <v-main style="background-color: #f1f2f6;">
       <slot />
     </v-main>
+
+    <!-- 全局 Snackbar -->
+    <v-snackbar v-model="snackbarStore.show" :color="snackbarStore.color" :timeout="snackbarStore.timeout">
+      {{ snackbarStore.text }}
+    </v-snackbar>
   </v-app>
 </template>
 
 <script setup lang="ts">
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
+import { useSnackbarStore } from '../utils/snackbar';
 
 interface link {
   title: string;
@@ -103,6 +109,7 @@ provide('cartIconEl', fridgeIconEl);
 
 const cartStore = useCartStore();
 const userStore = useUserStore();
+const snackbarStore = useSnackbarStore();
 
 const role = computed(() => {
   if (userStore?.info?.role === 'admin') {

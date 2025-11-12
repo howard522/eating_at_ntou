@@ -131,11 +131,13 @@
       </v-card>
     </v-form>
   </v-container>
+
 </template>
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@stores/user'
+import { useSnackbarStore } from '../../../utils/snackbar'
 
 interface MenuItem {
   _key?: string; // 本地新增、尚未儲存的項目
@@ -170,8 +172,10 @@ const editableStore = ref<Store | null>(null);
 const imageFile = ref<File | null>(null);
 const imagePreviewUrl = ref<string | undefined>(undefined);
 const isSaving = ref(false);
+const snackbarStore = useSnackbarStore()
 
 const pendingDeletionMenuIds = ref<string[]>([]);
+
 
 const addressRules = [
   (value: string) => !!value || '餐廳地址為必填欄位。',
@@ -208,8 +212,8 @@ const saveStore = async () => {
   if (!editableStore.value || !form.value) return;
   const { valid } = await form.value.validate();
   if (!valid) {
-    alert('請修正表單中的錯誤後再儲存。');
-    return;
+    snackbarStore.showSnackbar('請修正表單中的錯誤後再儲存。', 'error')
+    return
   }
   isSaving.value = true;
 
@@ -272,18 +276,18 @@ const saveStore = async () => {
       }
     });
     if (hasError) {
-      alert('部分資料儲存失敗，請檢查主控台(console)錯誤訊息。');
+      snackbarStore.showSnackbar('部分資料儲存失敗，請檢查主控台(console)錯誤訊息。', 'error')
     } else {
-      alert('儲存成功！');
+      snackbarStore.showSnackbar('儲存成功！', 'success')
       pendingDeletionMenuIds.value = [];
     }
     await refresh();
 
   } catch (e) {
     console.error('儲存過程中發生嚴重錯誤:', e);
-    alert('儲存過程中發生嚴重錯誤。');
+    snackbarStore.showSnackbar('儲存過程中發生嚴重錯誤。', 'error')
   } finally {
-    isSaving.value = false;
+    isSaving.value = false
   }
 };
 
