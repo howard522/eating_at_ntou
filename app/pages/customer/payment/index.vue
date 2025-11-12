@@ -7,7 +7,7 @@
         <v-card flat border class="mb-6">
           <v-card-title class="text-h6">外送詳細資訊</v-card-title>
           <v-card-text>
-            <v-form v-model="isFormValid">
+            <v-form ref="form" v-model="isFormValid">
               <div class="mb-4">
                 <p class="text-caption text-medium-emphasis">外送地址</p>
                 <v-text-field
@@ -138,6 +138,11 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Snackbar 提示 -->
+    <v-snackbar v-model="snack.show" :color="snack.color" timeout="2500">
+      {{ snack.text }}
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -157,6 +162,13 @@ const items = computed(() => cartStore.items);
 const totalPrice = computed(() => cartStore.totalPrice);
 const deliveryFee = computed(() => cartStore.deliveryFee);
 let timer: ReturnType<typeof setInterval> | null = null;
+
+// snackbar 狀態
+const snack = reactive({
+  show: false,
+  text: '',
+  color: 'success' as 'success' | 'error'
+})
 
 // 目前只有現場付款
 const paymentMethod = ref('現場付款');
@@ -182,8 +194,8 @@ const addressRules = [
 const phoneRules = [
   (value: string) => !!value || '聯絡電話為必填欄位。',
   (value: string) => {
-    const regex = /^09\d{8}$/;
-    return regex.test(value) || '請輸入有效的 10 位手機號碼 (格式為 09xxxxxxxx)。';
+    const regex = /^0\d{9}$/;
+    return regex.test(value) || '請輸入有效的 10 位號碼 (格式為 0xxxxxxxxx)。';
   },
 ];
 
@@ -228,22 +240,32 @@ const submitOrder = async () => {
     });
     if (response && response.data && response.data._id) {
       const orderId = response.data._id;
-      alert('訂單已送出');
+      snack.text = '訂單已送出';
+      snack.color = 'success';
+      snack.show = true;
       cartStore.clearCart();
       const router = useRouter();
       router.push(`/customer/order-state/${orderId}`);
     }
     else {
       console.error('創建訂單異常：', response);
+      snack.text = '創建訂單異常，請稍後再試';
+      snack.color = 'error';
+      snack.show = true;
     }
   }
   catch (e) {
-    console.error('創建訂單失敗:', e)
+    console.error('創建訂單失敗:', e);
+    snack.text = '創建訂單失敗，請稍後再試';
+    snack.color = 'error';
+    snack.show = true;
   }
   finally {
     loading.value = false;
   }
 };
+
+const form = ref();
 
 onMounted(() => {
   updateArriveTime();
@@ -251,6 +273,7 @@ onMounted(() => {
   if (cartStore.items.length === 0) {
     cartStore.fetchCart();
   }
+  form.value.validate();
 });
 onUnmounted(() => {
   if (timer) {

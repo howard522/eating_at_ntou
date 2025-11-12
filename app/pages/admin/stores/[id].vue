@@ -131,6 +131,11 @@
       </v-card>
     </v-form>
   </v-container>
+
+  <!-- Snackbar 提示 -->
+  <v-snackbar v-model="snack.show" :color="snack.color" timeout="2500">
+    {{ snack.text }}
+  </v-snackbar>
 </template>
 
 <script setup lang="ts">
@@ -173,6 +178,13 @@ const isSaving = ref(false);
 
 const pendingDeletionMenuIds = ref<string[]>([]);
 
+// snackbar 狀態
+const snack = reactive({
+  show: false,
+  text: '',
+  color: 'success' as 'success' | 'error'
+})
+
 const addressRules = [
   (value: string) => !!value || '餐廳地址為必填欄位。',
   (value: string) => {
@@ -208,7 +220,9 @@ const saveStore = async () => {
   if (!editableStore.value || !form.value) return;
   const { valid } = await form.value.validate();
   if (!valid) {
-    alert('請修正表單中的錯誤後再儲存。');
+    snack.text = '請修正表單中的錯誤後再儲存。';
+    snack.color = 'error';
+    snack.show = true;
     return;
   }
   isSaving.value = true;
@@ -272,16 +286,22 @@ const saveStore = async () => {
       }
     });
     if (hasError) {
-      alert('部分資料儲存失敗，請檢查主控台(console)錯誤訊息。');
+      snack.text = '部分資料儲存失敗，請檢查主控台(console)錯誤訊息。';
+      snack.color = 'error';
+      snack.show = true;
     } else {
-      alert('儲存成功！');
+      snack.text = '儲存成功！';
+      snack.color = 'success';
+      snack.show = true;
       pendingDeletionMenuIds.value = [];
     }
     await refresh();
 
   } catch (e) {
     console.error('儲存過程中發生嚴重錯誤:', e);
-    alert('儲存過程中發生嚴重錯誤。');
+    snack.text = '儲存過程中發生嚴重錯誤。';
+    snack.color = 'error';
+    snack.show = true;
   } finally {
     isSaving.value = false;
   }
