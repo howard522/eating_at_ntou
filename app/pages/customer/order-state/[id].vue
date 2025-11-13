@@ -80,7 +80,18 @@
               </template>
             </v-list-item>
           </v-card>
-
+          <v-card flat border rounded="lg" class="mb-6">
+            <v-card-title class="text-h6 font-weight-bold">
+              外送地圖（示意）
+            </v-card-title>
+            <v-card-text>
+              <DeliveryMap
+                  :driver-position="courierPosition"
+                  :customer-position="customerPosition"
+                  :restaurant-positions="restaurantPositions"
+              />
+            </v-card-text>
+          </v-card>
           <v-card flat border rounded="lg" class="mb-6">
             <v-card-text class="pa-6">
               <v-row>
@@ -185,7 +196,14 @@ const orderId = route.params.id as string;
 const userStore = useUserStore();
 
 const isUpdating = ref(false);
-const isConfirmDialogVisible = ref(false);
+const isConfirmDialogVisible = ref(false); 
+type LatLng = [number, number]
+const customerPosition = ref<LatLng>([25.1508, 121.7730])
+const courierPosition = ref<LatLng | null>([25.152, 121.770])
+const restaurantPositions = ref<LatLng[]>([
+  [25.155, 121.775],
+  [25.148, 121.770],
+])
 
 const { data: orderResponse, pending, error } = await useFetch(
     `/api/orders/${orderId}`,

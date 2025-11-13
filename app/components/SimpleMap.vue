@@ -12,11 +12,10 @@
 import { onMounted } from 'vue'
 
 onMounted(async () => {
-  // 這裡只會在瀏覽器端執行
   const L = await import('leaflet')
 
-  // 設定一個預設中心點：這裡示範台北 101
-  const center: [number, number] = [25.033964, 121.564472]
+  // 設定一個預設中心點：這裡為海洋大學
+  const center: [number, number] = [25.15081780087686, 121.77303369797978]
   const zoom = 15
 
   const map = L.map('simple-map').setView(center, zoom)
