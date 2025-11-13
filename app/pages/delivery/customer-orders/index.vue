@@ -67,33 +67,7 @@
 
 <script setup lang="ts">
 import { useUserStore } from '@stores/user';
-
-interface ApiOrderItem {
-  restaurant: { id: string; name: string; };
-}
-interface ApiOrder {
-  _id: string;
-  items: ApiOrderItem[];
-  deliveryFee: number;
-  deliveryInfo: { address: string; };
-  createdAt: string;
-  arriveTime: string;
-  _distance?: number; 
-}
-interface ApiResponse {
-  success: boolean;
-  data: ApiOrder[];
-}
-interface DisplayOrder {
-  id: string;
-  restaurantNameDisplay: string;
-  restaurantNamesArray: string[];
-  deliveryAddress: string;
-  deliveryFee: number;
-  deliveryTime: string;
-  createdAt: string;
-  distance?: number;
-}
+import type { ApiOrderAvailable as ApiOrder, ApiResponse, AvailableDisplayOrder as DisplayOrder } from '@types/order'
 
 const userStore = useUserStore();
 const allOrders = ref<DisplayOrder[]>([]);
@@ -143,7 +117,7 @@ const fetchAvailableOrders = async () => {
     params.append('sortBy', selectedSort.sortBy);
     params.append('order', selectedSort.order);
 
-    const response = await $fetch<ApiResponse>('/api/orders/available', {
+    const response = await $fetch<ApiResponse<ApiOrder[]>>('/api/orders/available', {
       headers: { 'Authorization': `Bearer ${userStore.token}` },
       query: { ...Object.fromEntries(params) },
     });
@@ -159,7 +133,7 @@ const fetchAvailableOrders = async () => {
         restaurantNamesArray: uniqueNamesArray,
         deliveryAddress: order.deliveryInfo.address,
         deliveryFee: order.deliveryFee,
-        deliveryTime: order.arriveTime,
+        deliveryTime: order.arriveTime!,
         createdAt: order.createdAt,
         distance: order._distance,
       };

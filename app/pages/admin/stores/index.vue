@@ -101,7 +101,7 @@ const fetchStores = async (opts: { reset?: boolean } = {}) => {
   error.value = null;
 
   try {
-    const response = await $fetch<apiResponse>('/api/restaurants/near', {
+    const response = await $fetch<apiResponse>('/api/restaurants', {
       query: buildQuery(reset ? 0 : offset.value + limit),
     });
 

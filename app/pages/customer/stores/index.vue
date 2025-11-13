@@ -86,7 +86,7 @@
 import debounce from 'lodash-es/debounce';
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
-import { useInfiniteFetch } from '../../../composable/useInfiniteFetch';
+import { useInfiniteFetch } from '@composable/useInfiniteFetch';
 
 interface menuItem { _id: string; name: string; price: number; image: string; info: string; }
 interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; menu: menuItem[]; }
