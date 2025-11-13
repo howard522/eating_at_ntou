@@ -53,6 +53,7 @@
                     variant="plain"
                     hide-details
                     class="font-weight-medium"
+                    placeholder="無法取得用戶暱稱"
                 ></v-text-field>
               </div>
 
@@ -65,6 +66,7 @@
                     variant="plain"
                     hide-details
                     class="font-weight-medium"
+                    placeholder="無法取得用戶地址"
                 ></v-text-field>
               </div>
 
@@ -75,6 +77,7 @@
                     variant="plain"
                     hide-details
                     class="font-weight-medium"
+                    placeholder="無法取得用戶電話"
                 ></v-text-field>
               </div>
 
@@ -157,9 +160,9 @@ const saving = ref(false)
 const snackbarStore = useSnackbarStore()
 
 const formData = ref({
-  name: userStore.info?.name || '無法取得用戶暱稱',
-  address: userStore.info?.address || '無法取得用戶地址',
-  phone: userStore.info?.phone || '無法取得用戶電話',
+  name: userStore.info?.name || '',
+  address: userStore.info?.address || '',
+  phone: userStore.info?.phone || '',
   currentPassword: '',
   password: '',
   passwordConfirm: '',
@@ -188,32 +191,54 @@ async function saveChanges() {
     }
   }
 
-  const dataToUpdate: any = {
-    name: formData.value.name,
-    address: formData.value.address,
-    phone: formData.value.phone,
-  }
+  const originalName = userStore.info?.name || ''
+  const originalAddress = userStore.info?.address || ''
+  const originalPhone = userStore.info?.phone || ''
+
+  const hasInfoChanges = (formData.value.name !== originalName && formData.value.name.trim()) ||
+                         (formData.value.address !== originalAddress && formData.value.address.trim()) ||
+                         (formData.value.phone !== originalPhone && formData.value.phone.trim()) ||
+                         !!imageFile.value
+  const hasPasswordChange = !!(formData.value.currentPassword && formData.value.password)
 
   saving.value = true
   try {
-    userStore.$patch({
-      info: {
-        ...(userStore.info || {}),
-        ...dataToUpdate,
-      },
-    })
+    if (hasInfoChanges) {
+      const dataToUpdate: any = {}
 
-    if (imageFile.value) {
-      userStore.info.img = imageFile.value
+      if (formData.value.name !== originalName && formData.value.name.trim()) {
+        dataToUpdate.name = formData.value.name
+      }
+      if (formData.value.address !== originalAddress && formData.value.address.trim()) {
+        dataToUpdate.address = formData.value.address
+      }
+      if (formData.value.phone !== originalPhone && formData.value.phone.trim()) {
+        dataToUpdate.phone = formData.value.phone
+      }
+
+      userStore.$patch({
+        info: {
+          ...(userStore.info || {}),
+          ...dataToUpdate,
+        },
+      })
+
+      if (imageFile.value) {
+        userStore.info.img = imageFile.value
+      }
+
+      await userStore.syncUserInfoWithDB()
+      userStore.saveToStorage()
+      snackbarStore.showSnackbar('資料已更新', 'success')
     }
 
-    await userStore.syncUserInfoWithDB()
-    userStore.saveToStorage()
-    snackbarStore.showSnackbar('資料已更新', 'success')
-
-    if (formData.value.currentPassword && formData.value.password) {
+    if (hasPasswordChange) {
       await userStore.updatePassword(formData.value.currentPassword, formData.value.password)
       snackbarStore.showSnackbar('密碼已更新', 'success')
+    }
+
+    if (!hasInfoChanges && !hasPasswordChange) {
+      snackbarStore.showSnackbar('沒有任何修改', 'info')
     }
 
     formData.value.currentPassword = ''
