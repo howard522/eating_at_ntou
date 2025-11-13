@@ -100,7 +100,7 @@
 
 <script setup lang="ts">
 import { useUserStore } from '@stores/user'
-import { useSnackbarStore } from '../../utils/snackbar'
+import { useSnackbarStore } from '@utils/snackbar'
 
 const router = useRouter()
 const formRef = ref()

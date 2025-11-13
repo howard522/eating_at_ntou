@@ -49,15 +49,8 @@
 </template>
 
 <script setup lang="ts">
-interface DisplayOrder {
-  id: string;
-  restaurantNameDisplay: string;
-  restaurantNamesArray: string[];
-  deliveryAddress: string;
-  deliveryFee: number;
-  deliveryTime: string;
-  createdAt: string;
-}
+import type { AvailableDisplayOrder as DisplayOrder } from '@types/order'
+import type { PropType } from 'vue'
 
 const props = defineProps({
   order: {
