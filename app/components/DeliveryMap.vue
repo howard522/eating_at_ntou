@@ -21,10 +21,11 @@ const mapContainer = ref<HTMLDivElement | null>(null)
 let map: any = null
 let L: any = null
 
-// 分別存各種 marker，之後更新時先移除舊的
+// 各種圖層的暫存
 let driverMarker: any = null
 let customerMarker: any = null
 let restaurantMarkers: any[] = []
+let routePolyline: any = null
 
 const fallbackCenter: LatLng = [25.15081780087686, 121.77303369797978] // 海洋大學附近
 const initialZoom = 15
@@ -61,11 +62,11 @@ onMounted(async () => {
 
   console.log('[DeliveryMap] 地圖已建立，中心點 =', center)
 
-  // 一開始就畫一次 marker
-  updateMarkersAndFit()
+  // 一開始就畫一次 marker + 路線
+  updateMarkersAndRoute()
 })
 
-// 監聽座標變化（未來你移動外送員位置會用到）
+// 監聽座標變化（外送員移動、資料更新時會觸發）
 watch(
   () => ({
     driver: props.driverPosition,
@@ -74,12 +75,12 @@ watch(
   }),
   () => {
     if (!map || !L) return
-    updateMarkersAndFit()
+    updateMarkersAndRoute()
   },
   { deep: true }
 )
 
-function clearMarkers() {
+function clearMarkersAndRoute() {
   if (driverMarker) {
     driverMarker.remove()
     driverMarker = null
@@ -92,16 +93,21 @@ function clearMarkers() {
     restaurantMarkers.forEach(m => m.remove())
     restaurantMarkers = []
   }
+  if (routePolyline) {
+    routePolyline.remove()
+    routePolyline = null
+  }
 }
 
-function updateMarkersAndFit() {
+function updateMarkersAndRoute() {
   if (!map || !L) return
 
-  clearMarkers()
+  clearMarkersAndRoute()
 
   const boundsPoints: LatLng[] = []
+  const routePoints: LatLng[] = []
 
-  // 外送員標記
+  // 1) 外送員標記
   if (props.driverPosition) {
     driverMarker = L.circleMarker(props.driverPosition, {
       radius: 9,
@@ -111,23 +117,12 @@ function updateMarkersAndFit() {
       fillOpacity: 0.9,
     }).addTo(map)
     driverMarker.bindPopup('外送員位置')
+
     boundsPoints.push(props.driverPosition)
+    routePoints.push(props.driverPosition)
   }
 
-  // 顧客標記
-  if (props.customerPosition) {
-    customerMarker = L.circleMarker(props.customerPosition, {
-      radius: 8,
-      color: '#2e7d32',       // 綠色：顧客
-      weight: 3,
-      fillColor: '#43a047',
-      fillOpacity: 0.9,
-    }).addTo(map)
-    customerMarker.bindPopup('顧客位置')
-    boundsPoints.push(props.customerPosition)
-  }
-
-  // 餐廳標記（可能有多家）
+  // 2) 餐廳標記（可能有多家）
   if (props.restaurantPositions && props.restaurantPositions.length > 0) {
     props.restaurantPositions.forEach((pos, index) => {
       const marker = L.circleMarker(pos, {
@@ -137,13 +132,40 @@ function updateMarkersAndFit() {
         fillColor: '#ffb300',
         fillOpacity: 0.9,
       }).addTo(map)
+
       marker.bindPopup(`餐廳 ${index + 1}`)
       restaurantMarkers.push(marker)
+
       boundsPoints.push(pos)
+      routePoints.push(pos) // 路線依照陣列順序串接餐廳
     })
   }
 
-  // 如果有任何點，就自動縮放讓所有點都在畫面內
+  // 3) 顧客標記
+  if (props.customerPosition) {
+    customerMarker = L.circleMarker(props.customerPosition, {
+      radius: 8,
+      color: '#2e7d32',       // 綠色：顧客
+      weight: 3,
+      fillColor: '#43a047',
+      fillOpacity: 0.9,
+    }).addTo(map)
+    customerMarker.bindPopup('顧客位置')
+
+    boundsPoints.push(props.customerPosition)
+    routePoints.push(props.customerPosition)
+  }
+
+  // 4) 畫出「外送員 ➜ 餐廳們 ➜ 顧客」的簡單路線
+  if (routePoints.length >= 2) {
+    routePolyline = L.polyline(routePoints, {
+      weight: 4,
+      opacity: 0.8,
+      dashArray: '6 4',   // 虛線，看起來像路線示意
+    }).addTo(map)
+  }
+
+  // 5) 自動縮放到剛好包含所有點
   if (boundsPoints.length > 0) {
     const bounds = L.latLngBounds(boundsPoints)
     map.fitBounds(bounds, {
