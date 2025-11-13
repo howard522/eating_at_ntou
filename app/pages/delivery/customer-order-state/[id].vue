@@ -120,7 +120,14 @@
               ></v-list-item>
             </v-list>
           </v-card>
-
+          <v-card flat border rounded="lg" class="mb-6">
+            <v-card-title class="text-h6 font-weight-bold">
+              外送地圖（示意）
+            </v-card-title>
+            <v-card-text>
+              <SimpleMap />
+            </v-card-text>
+          </v-card>
           <v-card flat border rounded="lg" class="mb-6">
             <v-card-text class="pa-5">
               <div class="text-h6 font-weight-bold d-flex justify-space-between">

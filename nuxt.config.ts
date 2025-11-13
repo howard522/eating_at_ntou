@@ -12,6 +12,7 @@ export default defineNuxtConfig({
   css: [
     'vuetify/styles',
     '@mdi/font/css/materialdesignicons.min.css',
+    'leaflet/dist/leaflet.css'
   ],
   plugins: ['~/plugins/vuetify.ts', '~/plugins/fetch-auth.ts'],
   devServer: {
