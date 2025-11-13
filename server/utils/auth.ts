@@ -9,6 +9,17 @@ export const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
 
 export type JwtPayload = { id: string; role?: string; iat?: number; exp?: number }
 
+
+export function verifyJwt(token: string): JwtPayload | null {
+    try {
+        const payload = jwt.verify(token, JWT_SECRET);
+        return payload as JwtPayload;
+    } catch (err) {
+        console.error("JWT verification error:", err);
+        return null;
+    }
+}
+
 /**
  * 從 Event 中解析並驗證 Bearer JWT，回傳 payload。
  * 統一處理 Authorization header 的大小寫、格式檢查與 jwt.verify 的錯誤。
