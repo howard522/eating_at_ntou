@@ -18,10 +18,10 @@
  *       - name: limit
  *         in: query
  *         required: false
- *         description: 最大回傳筆數（預設 20，限制為 100）
+ *         description: 最大回傳筆數（預設 50，限制為 100）
  *         schema:
  *           type: integer
- *           default: 20
+ *           default: 50
  *       - name: skip
  *         in: query
  *         required: false
@@ -29,10 +29,17 @@
  *         schema:
  *           type: integer
  *           default: 0
- *       - name: since
+ *       - name: after
  *         in: query
  *         required: false
  *         description: 只回傳此時間戳之後的訊息（ISO 8601 格式）
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - name: before
+ *         in: query
+ *         required: false
+ *         description: 只回傳此時間戳之前的訊息（ISO 8601 格式）
  *         schema:
  *           type: string
  *           format: date-time
@@ -53,7 +60,7 @@
  *         description: 訂單不存在
  */
 
-import { createError, defineEventHandler, getQuery } from "h3";
+import { createError, defineEventHandler, getQuery, getRouterParam } from "h3";
 import ChatMessage from "@server/models/chatMessage.model";
 import Order from "@server/models/order.model";
 import connectDB from "@server/utils/db";
@@ -66,7 +73,7 @@ export default defineEventHandler(async (event) => {
     const userId = payload.id;
     if (!event.context.params?.id) throw createError({ statusCode: 400, statusMessage: "Missing order id" });
 
-    const orderId = event.context.params.id;
+    const orderId = getRouterParam(event, "id");
     const order: any = await Order.findById(orderId)
         .populate("user", "name img")
         .populate("deliveryPerson", "name img")
@@ -85,7 +92,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const query = getQuery(event);
-    const DEFAULT_LIMIT = 20;
+    const DEFAULT_LIMIT = 50;
     const MIN_LIMIT = 1;
     const MAX_LIMIT = 100;
     const DEFAULT_SKIP = 0;
@@ -93,15 +100,32 @@ export default defineEventHandler(async (event) => {
 
     let limit = parseInt(query.limit as string) || DEFAULT_LIMIT;
     let skip = parseInt(query.skip as string) || DEFAULT_SKIP;
-    let since = query.since ? new Date(query.since as string) : null;
+    let after = query.after ? new Date(query.after as string) : null;
+    let before = query.before ? new Date(query.before as string) : null;
+
+    const timestampFilter: Record<string, any> = {};
+
+    if (after) {
+        timestampFilter.$gte = after;
+    }
+
+    if (before) {
+        timestampFilter.$lte = before;
+    }
+
+    const filter: Record<string, any> = { order: orderId };
+
+    if (after || before) {
+        filter.timestamp = timestampFilter;
+    }
 
     limit = Math.min(Math.max(limit, MIN_LIMIT), MAX_LIMIT);
     skip = Math.max(skip, MIN_SKIP);
 
-    const chatMessages = await ChatMessage.find({ order: orderId, ...(since ? { timestamp: { $gte: since } } : {}) })
+    const chatMessages = await ChatMessage.find(filter)
         .sort({ timestamp: -1 }) // 排序：新到舊
-        .limit(20)
-        .skip(0)
+        .limit(limit)
+        .skip(skip)
         .populate("sender", "name img");
 
     return {
