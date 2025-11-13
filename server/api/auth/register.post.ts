@@ -59,7 +59,7 @@ import { JWT_SECRET } from "@server/utils/auth";
 export default defineEventHandler(async (event) => {
   await connectDB();
   const body = await readBody(event);
-  const name = (body.name || "") as string;
+  const name = (body.name || "這個人很懶，不想取暱稱") as string;
   const email = (body.email || "") as string;
   const password = (body.password || "") as string;
   const role = (body.role || "multi") as string;
