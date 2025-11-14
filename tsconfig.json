@@ -4,6 +4,7 @@
       "@types/node",
       "nuxt/schema"
     ],
+    "baseUrl": ".",
     "paths": {
       "@app/*": ["./app/*"],
       "@server/*": ["./server/*"],
@@ -19,6 +20,8 @@
   "include": [
     "nuxt.config.ts",
     "**/*.ts",
+    "**/*.vue",
     ".nuxt/**/*.ts"
-  ]
+  ],
+  "extends": "./.nuxt/tsconfig.json"
 }
