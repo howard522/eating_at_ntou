@@ -31,7 +31,7 @@ import User from '@server/models/user.model'
 import { uploadImageToImageBB } from '@server/utils/imageUploader'
 
 export default defineEventHandler(async (event) => {
-  const me = await getUserFromEvent(event)
+  const me = await getUserFromEvent(event)// 取得目前使用者，11/15更新後會檔掉被封鎖的使用者
   await connectDB()
   const parts = await readMultipartFormData(event)
   if (!parts) {

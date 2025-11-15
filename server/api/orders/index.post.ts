@@ -3,8 +3,7 @@ import connectDB from '@server/utils/db'
 import Order from '@server/models/order.model'
 import Cart from '@server/models/cart.model'
 import { clearUserCart } from '@server/utils/cart'
-
-import { verifyJwtFromEvent } from '@server/utils/auth'
+import { assertNotBanned, getUserFromEvent } from '@server/utils/auth'
 
 
 /**
@@ -81,10 +80,11 @@ import { verifyJwtFromEvent } from '@server/utils/auth'
 
 export default defineEventHandler(async (event) => {
     await connectDB()
-    const payload = await verifyJwtFromEvent(event)
-    const userId = payload.id
+    // const payload = await verifyJwtFromEvent(event)
+    // const userId = payload.id
+    const user = await getUserFromEvent(event) // 取得目前使用者，11/15更新後會檔掉被封鎖的使用者
+    const userId = user._id
     if (!userId) throw createError({ statusCode: 401, statusMessage: 'Invalid token payload' })
-
     // 同時 populate 餐廳 phone & address，之後將這些欄位存入 order 的 snapshot
     const cart = await Cart.findOne({ user: userId }).populate('items.restaurantId', 'name phone menu address')
     if (!cart || cart.items.length === 0) {
