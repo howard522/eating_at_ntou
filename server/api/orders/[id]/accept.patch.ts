@@ -1,7 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
 import connectDB from '@server/utils/db'
 import Order from '@server/models/order.model'
-import { verifyJwtFromEvent, assertNotBanned } from '@server/utils/auth'
+import { getUserFromEvent } from '@server/utils/auth'
 
 /**
  * 前端請注意：
@@ -48,9 +48,13 @@ import { verifyJwtFromEvent, assertNotBanned } from '@server/utils/auth'
 export default defineEventHandler(async (event) => {
     await connectDB()
 
-    const payload = await verifyJwtFromEvent(event)
-    assertNotBanned(payload) // 確保使用者未被封鎖
-    const userId = payload.id
+    // const payload = await verifyJwtFromEvent(event)
+    // assertNotBanned(payload) // 確保使用者未被封鎖
+    // const userId = payload.id
+    const user = await getUserFromEvent(event) // 取得目前使用者，11/15更新後會檔掉被封鎖的使用者
+    const userId = user._id
+
+    if (!userId) throw createError({ statusCode: 401, statusMessage: 'Invalid token payload' })
     const orderId = event.context.params?.id
     if (!orderId) throw createError({ statusCode: 400, statusMessage: 'Missing order id' })
 
