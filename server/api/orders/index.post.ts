@@ -85,8 +85,8 @@ export default defineEventHandler(async (event) => {
     const userId = payload.id
     if (!userId) throw createError({ statusCode: 401, statusMessage: 'Invalid token payload' })
 
-    // 同時 populate 餐廳 phone，之後將 phone 存入 order 的 snapshot
-    const cart = await Cart.findOne({ user: userId }).populate('items.restaurantId', 'name phone menu')
+    // 同時 populate 餐廳 phone & address，之後將這些欄位存入 order 的 snapshot
+    const cart = await Cart.findOne({ user: userId }).populate('items.restaurantId', 'name phone menu address')
     if (!cart || cart.items.length === 0) {
         throw createError({ statusCode: 400, statusMessage: '購物車為空，無法建立訂單' })
     }
@@ -107,7 +107,8 @@ export default defineEventHandler(async (event) => {
             restaurant: {
                 id: restaurant?._id,
                 name: restaurant?.name || '(未知餐廳)',
-                phone: restaurant?.phone || ''
+                phone: restaurant?.phone || '',
+                address: restaurant?.address || ''
             },
         }
     })

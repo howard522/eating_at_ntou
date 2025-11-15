@@ -86,10 +86,10 @@
 import debounce from 'lodash-es/debounce';
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
+import { useInfiniteFetch } from '@composable/useInfiniteFetch';
 
 interface menuItem { _id: string; name: string; price: number; image: string; info: string; }
 interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; menu: menuItem[]; }
-interface apiResponse { success: boolean; data: store[]; count: number; }
 interface PresetLocation { title: string; value: string; }
 
 const presetLocations = [
@@ -113,14 +113,6 @@ const selectedTags = ref<string[]>([]);
 const addressInput = ref<PresetLocation | string>('電資暨綜合教學大樓');
 const debouncedAddressInput = ref<PresetLocation | string>(addressInput.value);
 
-const offset = ref(0); // 當前偏移量
-const allStores = ref<store[]>([]);
-const loadingMore = ref(false);
-const hasMore = ref(true);
-
-const pending = ref(false); // 初次載入的等待狀態
-const error = ref<unknown>(null); // 錯誤狀態儲存
-
 // 計算送貨地址
 const deliveryAddress = computed(() => {
   const input = debouncedAddressInput.value;
@@ -132,7 +124,7 @@ const deliveryAddress = computed(() => {
 });
 const selectedTagsString = computed(() => selectedTags.value.join(' '));
 const searchQuery = computed(() => [debouncedSearchTerm.value, selectedTagsString.value].join(' ').trim());
-const stores = computed(() => allStores.value);
+//const stores = computed(() => allStores.value);
 
 // 驗證地址格式
 const validateAddress = (value: PresetLocation | string): boolean | string => {
@@ -167,73 +159,17 @@ watch(deliveryAddress, (newVal) => {
   });
 }, { immediate: true });
 
-// 查詢參數
-const buildQuery = (skip: number) => ({
-  address: deliveryAddress.value,
-  search: searchQuery.value,
+const { items: stores, pending, loadingMore, fetchItems } = useInfiniteFetch<store>({
+  api: '/api/restaurants/near',
   limit,
-  skip,
-});
-
-// 統一載入函式（初次載入/條件變更重新載入/載入更多）
-const fetchStores = async (opts: { reset?: boolean } = {}) => {
-  const reset = !!opts.reset;
-  if (pending.value || loadingMore.value) return;
-
-  if (reset) {
-    hasMore.value = true;
-    offset.value = 0;
-    pending.value = true;
-  } else {
-    loadingMore.value = true;
-  }
-
-  error.value = null;
-
-  try {
-    const response = await $fetch<apiResponse>('/api/restaurants/near', {
-      query: buildQuery(reset ? 0 : offset.value),
-    });
-
-    const items = response.data ?? [];
-
-    if (reset) {
-      allStores.value = items;
-      offset.value = items.length;
-    } else {
-      allStores.value.push(...items);
-      offset.value += items.length;
-    }
-
-    hasMore.value = items.length >= limit;
-  } catch (e) {
-    console.error('取得店家資料失敗:', e);
-    error.value = e;
-  } finally {
-    pending.value = false;
-    loadingMore.value = false;
-  }
-};
-
-// 滾動載入
-const handleScroll = debounce(() => {
-  if (!hasMore.value || loadingMore.value) return;
-  const bottom = Math.ceil(window.innerHeight + window.pageYOffset);
-  const height = document.documentElement.scrollHeight;
-  if (bottom >= height - 100) {
-    fetchStores();
-  }
-}, 200);
-
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll);
-  if (cartStore.items.length === 0) {
-    cartStore.fetchCart();
-  }
-});
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll);
-});
+  buildQuery: (skip) => ({
+    address: deliveryAddress.value,
+    search: searchQuery.value,
+    limit,
+    skip,
+  }),
+  immediate: true,
+})
 
 // 初次載入與條件變更
 watch(
@@ -241,7 +177,7 @@ watch(
   () => {
     const validationResult = validateAddress(debouncedAddressInput.value);
     if (validationResult === true) {
-      fetchStores({ reset: true });
+      fetchItems({ reset: true });
     }
   },
   { immediate: true }

@@ -51,7 +51,7 @@
 
 <script setup lang="ts">
 import { useCartStore } from '@stores/cart';
-import { createCartImageAnimator } from '@app/utils/cartAnimation';
+import { createCartImageAnimator } from '@utils/cartAnimation';
 
 interface MenuItem {
   _id: string
@@ -99,7 +99,7 @@ const quantity = ref(1);
 const cartStore = useCartStore();
 const isInCart = computed(() => {
   if (!props.item) return false;
-  return cartStore.items?.some(i => i._id === props.item!._id) ?? false;
+  return cartStore.items?.some(i => i.menuItemId === props.item!._id) ?? false;
 });
 const hintText = computed(() => isInCart.value ? '冰箱內已有該餐點' : '此餐點還沒冰入購物冰箱');
 const hintIcon = computed(() => isInCart.value ? 'mdi-check-circle-outline' : 'mdi-information-outline');

@@ -10,7 +10,7 @@ export default defineNuxtPlugin((nuxtApp: any) => {
     } catch { /* ignore */ }
 
     // localStorage 持久化與還原
-    const publicPaths = new Set(['/login', '/forgot-password', '/register'])
+    const publicPaths = new Set(['/login', '/forgot-password', '/register', '/favicon.ico', '/robots.txt'])
     const roleHome: Record<string, string> = {
         admin: '/admin/stores',
         customer: '/customer/stores',
@@ -68,6 +68,12 @@ export default defineNuxtPlugin((nuxtApp: any) => {
     // 全域路由守衛
     addRouteMiddleware('auth', (to) => {
         try {
+            // 忽略後端的路由 /api/*, /ws/*
+            if (to.path.startsWith('/api') || to.path.startsWith('/ws')) return
+
+            // 忽略靜態資源 /static/*
+            if (to.path.startsWith('/static')) return
+
             // 取得目前角色
             let token = userStore.token
             let role: string | null = null

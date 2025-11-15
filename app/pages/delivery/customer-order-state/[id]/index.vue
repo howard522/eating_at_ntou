@@ -197,7 +197,6 @@ const userStore = useUserStore();
 const isUpdating = ref(false);
 const isConfirmDialogVisible = ref(false);
 
-
 const { data: orderResponse, pending, error } = await useFetch(
     `/api/orders/${orderId}`,
     {
@@ -229,13 +228,14 @@ const restaurantsWithItems = computed(() => {
         id: restaurant.id,
         name: restaurant.name,
         phone: restaurant.phone,
-        items: []
+        address: restaurant.address,
+        items: [],
       });
     }
     restaurantMap.get(restaurant.id).items.push({
       _id: item._id,
       name: item.name,
-      quantity: item.quantity
+      quantity: item.quantity,
     });
   }
   return Array.from(restaurantMap.values());
@@ -312,9 +312,6 @@ const updateDeliveryStatus = async () => {
   const requestBody: { deliveryStatus: string; customerStatus?: string } = {
     deliveryStatus: nextDeliveryStatus.value
   };
-  if (nextDeliveryStatus.value === 'on_the_way') {
-    requestBody.customerStatus = 'on_the_way';
-  }
 
   isUpdating.value = true;
   try {

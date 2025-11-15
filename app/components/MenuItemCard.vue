@@ -69,22 +69,24 @@ const onAddClick = () => {
 };
 
 const cartStore = useCartStore();
-const isInCart = computed(() => cartStore.items?.some(i => i._id === props.item._id) ?? false);
+const isInCart = computed(() => cartStore.items?.some(i => i.menuItemId === props.item._id) ?? false);
 </script>
 
 <style scoped>
 .item-name {
+  display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 80%;
+  max-width: 200px;
 }
 
 .item-info {
+  display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 80%;
+  max-width: 200px;
 }
 
 .menu-item-card {

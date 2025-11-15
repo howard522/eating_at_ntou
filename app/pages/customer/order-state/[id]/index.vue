@@ -120,16 +120,16 @@
           </v-card>
 
           <v-btn
-              color="success"
+              :color="currentStep === 1 ? 'error' : 'success'"
               block
               size="x-large"
               class="mt-4"
               :disabled="currentStep >= 3 || isUpdating"
               :loading="isUpdating"
-              @click="openConfirmDialog"
+              @click="currentStep === 1 ? cancelOrder() : openConfirmDialog"
           >
             <span class="text-h6 font-weight-bold">
-              {{ currentStep < 3 ? '我已收到餐點' : '已接收' }}
+              {{ currentStep === 1 ? '取消訂單' : (currentStep < 3 ? '我已收到餐點' : '已接收') }}
             </span>
           </v-btn>
 
@@ -167,8 +167,8 @@
 import { useUserStore } from '@stores/user';
 
 const steps = ref([
-  { id: 1, title: '準備中' },
-  { id: 2, title: '在路上' },
+  { id: 1, title: '沒人接QAQ' },
+  { id: 2, title: '準備中' },
   { id: 3, title: '已接收' },
   { id: 4, title: '已完成' },
 ]);
@@ -198,6 +198,33 @@ const { data: orderResponse, pending, error } = await useFetch(
 );
 
 const orderData = ref(orderResponse.value);
+if (orderData.value && orderData.value.deliveryPerson && orderData.value.customerStatus === 'preparing') {
+  isUpdating.value = true;
+  try {
+    const response: any = await $fetch(
+        `/api/orders/${orderId}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${userStore.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: { customerStatus: 'on_the_way' },
+        }
+    );
+
+    if (response.success && orderData.value) {
+      orderData.value.customerStatus = response.data.customerStatus;
+      orderData.value.deliveryStatus = response.data.deliveryStatus;
+    } else {
+      console.error('Failed to auto-update status to on_the_way', response);
+    }
+  } catch (err) {
+    console.error('Error auto-updating status to on_the_way', err);
+  } finally {
+    isUpdating.value = false;
+  }
+}
 
 const currentStep = computed(() => {
   return statusToStepMap[orderData.value.customerStatus];
@@ -208,14 +235,14 @@ const deliver = computed(() => {
     const deliveryStatus = orderData.value.deliveryStatus;
     let statusText = '外送員正在處理您的訂單';
     if (deliveryStatus === 'on_the_way') {
-      statusText = '正在為您配送中...';
+      statusText = '預計送達時間：' + new Date(orderData.value.arriveTime).toLocaleString();
     } else if (deliveryStatus === 'delivered') {
       statusText = '已送達指定地點';
     }
     return {
       name: `外送員：${orderData.value.deliveryPerson.name}`,
       phone: orderData.value.deliveryPerson.phone,
-      img: orderData.value.deliveryPerson.image,
+      img: orderData.value.deliveryPerson.img,
       status: statusText,
     };
   } else {
@@ -230,6 +257,38 @@ const deliver = computed(() => {
 
 const openConfirmDialog = () => {
   isConfirmDialogVisible.value = true;
+};
+
+const cancelOrder = async () => {
+  if (currentStep.value !== 1) return;
+  isUpdating.value = true;
+  try {
+    const response: any = await $fetch(
+      `/api/orders/${orderId}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${userStore.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: {
+          customerStatus: 'received',
+          deliveryStatus: 'delivered',
+        },
+      }
+    );
+
+    if (response.success && orderData.value) {
+      orderData.value.customerStatus = response.data.customerStatus;
+      orderData.value.deliveryStatus = response.data.deliveryStatus;
+    } else {
+      console.error('Failed to cancel order', response);
+    }
+  } catch (err) {
+    console.error('Error cancelling order', err);
+  } finally {
+    isUpdating.value = false;
+  }
 };
 
 const markAsReceived = async () => {

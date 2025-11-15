@@ -119,7 +119,8 @@ export const components = {
                             id: { type: 'string' },
                             name: { type: 'string' }
                             ,
-                            phone: { type: 'string' }
+                            phone: { type: 'string' },
+                            address: { type: 'string' }
                         }
                     }
                 }
@@ -155,6 +156,17 @@ export const components = {
                     },
                     createdAt: { type: 'string', format: 'date-time' },
                     updatedAt: { type: 'string', format: 'date-time' }
+                }
+            },
+            ChatMessage: {
+                type: 'object',
+                properties: {
+                    _id: { type: 'string' },
+                    order: { type: 'string' },
+                    sender: { $ref: '#/components/schemas/UserPublic' },
+                    senderRole: { type: 'string', enum: ['customer', 'delivery'] },
+                    content: { type: 'string' },
+                    timestamp: { type: 'string', format: 'date-time' }
                 }
             }
 

@@ -80,12 +80,34 @@
     <v-main style="background-color: #f1f2f6;">
       <slot />
     </v-main>
+
+    <!-- 全局 Snackbar -->
+    <v-snackbar v-model="snackbarStore.show" :color="snackbarStore.color" :timeout="snackbarStore.timeout">
+      {{ snackbarStore.text }}
+    </v-snackbar>
+
+    <!-- 全局廣告彈窗 -->
+    <v-dialog v-model="showAd" max-width="400px" persistent>
+      <v-card>
+        <v-card-title class="text-h6 font-weight-bold text-center">廣告</v-card-title>
+        <v-card-text class="text-center py-4">
+          應徵廣告欄位
+        </v-card-text>
+        <v-card-actions class="justify-center">
+          <v-btn color="primary" @click="closeAd">關閉</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
 <script setup lang="ts">
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
+import { useSnackbarStore } from '@utils/snackbar';
+import { useAdPopup } from '@composable/useAdPopup'
+
+const { showAd, closeAd } = useAdPopup()
 
 interface link {
   title: string;
@@ -103,6 +125,7 @@ provide('cartIconEl', fridgeIconEl);
 
 const cartStore = useCartStore();
 const userStore = useUserStore();
+const snackbarStore = useSnackbarStore();
 
 const role = computed(() => {
   if (userStore?.info?.role === 'admin') {
