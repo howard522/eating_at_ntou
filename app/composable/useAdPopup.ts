@@ -1,4 +1,21 @@
 import { useRouter } from 'vue-router'
+export interface AdPopupOptions {
+    /** minutes before starting to ramp up probability (default 3) */
+    rampStartMinutes?: number
+    /** ramp duration in minutes from rampStart to reach 100% (default 5) */
+    rampDurationMinutes?: number
+    /** how often to check probability, ms (default 30_000) */
+    checkIntervalMs?: number
+    /** silence duration after certain events, ms (default 5_000) */
+    silenceMs?: number
+}
+
+const defaultOptions: Required<AdPopupOptions> = {
+    rampStartMinutes: 3,
+    rampDurationMinutes: 5,
+    checkIntervalMs: 30 * 1000,
+    silenceMs: 5000,
+}
 
 const showAd = ref(false)
 const startTime = ref(Date.now())
@@ -6,6 +23,7 @@ const silenceUntil = ref(0)
 const intervalId = ref<number | null>(null)
 let initialized = false
 let routerBound = false
+let config: Required<AdPopupOptions> = { ...defaultOptions }
 
 const checkAdProbability = () => {
     if (showAd.value) return
@@ -14,12 +32,15 @@ const checkAdProbability = () => {
     if (now < silenceUntil.value) return
 
     const elapsedMinutes = (now - startTime.value) / (1000 * 60)
+    const rampStart = config.rampStartMinutes
+    const rampDuration = config.rampDurationMinutes
+    const rampEnd = rampStart + rampDuration
     let probability = 0
 
-    if (elapsedMinutes >= 8) {
+    if (elapsedMinutes >= rampEnd) {
         probability = 1
-    } else if (elapsedMinutes >= 3) {
-        probability = (elapsedMinutes - 3) / 5
+    } else if (elapsedMinutes >= rampStart) {
+        probability = (elapsedMinutes - rampStart) / rampDuration
     }
 
     if (Math.random() < probability) {
@@ -29,7 +50,7 @@ const checkAdProbability = () => {
 
 const resetTimer = () => {
     startTime.value = Date.now()
-    silenceUntil.value = Date.now() + 5000
+    silenceUntil.value = Date.now() + config.silenceMs
 }
 
 const closeAd = () => {
@@ -44,7 +65,7 @@ function init() {
     if (intervalId.value) {
         clearInterval(intervalId.value)
     }
-    intervalId.value = window.setInterval(checkAdProbability, 60 * 1000)
+    intervalId.value = window.setInterval(checkAdProbability, config.checkIntervalMs)
 
     if (import.meta && import.meta.hot) {
         import.meta.hot.dispose(() => {
@@ -67,14 +88,16 @@ function bindRouterGuard() {
     router.afterEach(() => {
         showAd.value = false
         resetTimer()
-        silenceUntil.value = Date.now() + 5000
+        silenceUntil.value = Date.now() + config.silenceMs
     })
     routerBound = true
 }
 
-export function useAdPopup() {
+export function useAdPopup(options?: AdPopupOptions) {
+    config = { ...config, ...(options || {}) }
     init()
     bindRouterGuard()
+
     return {
         showAd,
         closeAd,
