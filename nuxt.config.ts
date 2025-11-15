@@ -31,4 +31,9 @@ export default defineNuxtConfig({
     '@composable': path.resolve(__dirname, './app/composable'),
     '@types': path.resolve(__dirname, './app/types')
   },
+  nitro: {
+    experimental: {
+        websocket: true
+    }
+  }
 })
