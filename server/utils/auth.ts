@@ -11,13 +11,13 @@ export type JwtPayload = { id: string; role?: string; iat?: number; exp?: number
 
 
 export function verifyJwt(token: string): JwtPayload | null {
-    try {
-        const payload = jwt.verify(token, JWT_SECRET);
-        return payload as JwtPayload;
-    } catch (err) {
-        console.error("JWT verification error:", err);
-        return null;
-    }
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    return payload as JwtPayload;
+  } catch (err) {
+    console.error("JWT verification error:", err);
+    return null;
+  }
 }
 
 /**
@@ -53,6 +53,7 @@ export async function getUserFromEvent(event: H3Event) {
   await connectDB()
   const user = await User.findById(payload.id)
   if (!user) throw createError({ statusCode: 401, statusMessage: '找不到使用者' })
+  if (user.role === 'banned') throw createError({ statusCode: 403, statusMessage: '帳號已被封鎖' })
   return user
 }
 
@@ -61,12 +62,19 @@ export function toPublicUser(u: any) {
     id: String(u._id),
     name: u.name,
     email: u.email,
-    role: u.role,            // admin | multi
+    role: u.role,            // admin | multi | banned
     img: u.img || '',
     address: u.address || '',
     phone: u.phone || '',
     //activeRole: u.activeRole ?? null,
     createdAt: u.createdAt,
     updatedAt: u.updatedAt
+  }
+}
+
+// 檢查 payload 是否被封鎖
+export function assertNotBanned(payload: JwtPayload) {
+  if (payload.role === 'banned') {
+    throw createError({ statusCode: 403, statusMessage: '帳號已被封鎖' })
   }
 }

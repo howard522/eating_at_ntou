@@ -64,12 +64,13 @@ import { createError, defineEventHandler, getQuery, getRouterParam } from "h3";
 import ChatMessage from "@server/models/chatMessage.model";
 import Order from "@server/models/order.model";
 import connectDB from "@server/utils/db";
-import { verifyJwtFromEvent } from "@server/utils/auth";
+import { verifyJwtFromEvent, assertNotBanned } from "@server/utils/auth";
 
 export default defineEventHandler(async (event) => {
     await connectDB();
 
     const payload = await verifyJwtFromEvent(event);
+    assertNotBanned(payload); // 確保使用者未被封鎖
     const userId = payload.id;
     if (!event.context.params?.id) throw createError({ statusCode: 400, statusMessage: "Missing order id" });
 

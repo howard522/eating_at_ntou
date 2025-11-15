@@ -1,7 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
 import connectDB from '@server/utils/db'
 import Order from '@server/models/order.model'
-import { verifyJwtFromEvent } from '@server/utils/auth'
+import { verifyJwtFromEvent, assertNotBanned } from '@server/utils/auth'
 
 /**
  * 前端請注意：
@@ -49,6 +49,7 @@ export default defineEventHandler(async (event) => {
     await connectDB()
 
     const payload = await verifyJwtFromEvent(event)
+    assertNotBanned(payload) // 確保使用者未被封鎖
     const userId = payload.id
     const orderId = event.context.params?.id
     if (!orderId) throw createError({ statusCode: 400, statusMessage: 'Missing order id' })
