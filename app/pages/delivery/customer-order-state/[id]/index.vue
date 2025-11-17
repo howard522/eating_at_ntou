@@ -203,7 +203,9 @@
 <script setup lang="ts">
 import { useUserStore } from "@stores/user";
 import DeliveryMap from "@/components/DeliveryMap.vue";
-import simpleMap from "@/components/SimpleMap.vue";
+import { useOrderTracking } from "@app/composable/useOrderTracking";
+
+type LatLng = [number, number];
 
 const steps = ref([
   { id: 1, title: "準備中" },
@@ -237,7 +239,93 @@ const {
 });
 
 const orderData = ref(orderResponse.value);
+const toLatLng = (
+  location?: { lat?: number; lng?: number } | null
+): LatLng | null => {
+  if (!location) return null;
+  if (typeof location.lat === "number" && typeof location.lng === "number") {
+    return [location.lat, location.lng];
+  }
+  return null;
+};
+const customerPosition = computed<LatLng | null>(() =>
+  toLatLng(orderData.value?.deliveryInfo?.location)
+);
+const restaurantPositions = computed<LatLng[]>(() => {
+  if (!orderData.value?.items) return [];
+  const seen = new Set<string>();
+  const positions: LatLng[] = [];
+  orderData.value.items.forEach((item: any) => {
+    const loc = toLatLng(item.restaurant?.location);
+    if (loc) {
+      const key = loc.join(",");
+      if (!seen.has(key)) {
+        seen.add(key);
+        positions.push(loc);
+      }
+    }
+  });
+  return positions;
+});
+const {
+  driverPosition: courierPosition,
+  sendLocation,
+  disconnect: stopTrackingSocket,
+} = useOrderTracking(orderId);
+const geolocationWatchId = ref<number | null>(null);
+const shouldShareLocation = computed(
+  () =>
+    userStore.currentRole === "delivery" &&
+    orderData.value?.deliveryPerson?._id === userStore.info?.id
+);
 
+const startSharingLocation = () => {
+  if (
+    typeof window === "undefined" ||
+    typeof navigator === "undefined" ||
+    !navigator.geolocation
+  ) {
+    return;
+  }
+  if (geolocationWatchId.value !== null) return;
+
+  geolocationWatchId.value = navigator.geolocation.watchPosition(
+    (position) => {
+      sendLocation(position.coords.latitude, position.coords.longitude);
+    },
+    (error) => {
+      console.error("Failed to retrieve courier location", error);
+    },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+  );
+};
+
+const stopSharingLocation = () => {
+  if (
+    typeof window === "undefined" ||
+    typeof navigator === "undefined" ||
+    !navigator.geolocation
+  ) {
+    geolocationWatchId.value = null;
+    return;
+  }
+  if (geolocationWatchId.value !== null) {
+    navigator.geolocation.clearWatch(geolocationWatchId.value);
+    geolocationWatchId.value = null;
+  }
+};
+
+watch(
+  shouldShareLocation,
+  (share) => {
+    if (share) {
+      startSharingLocation();
+    } else {
+      stopSharingLocation();
+    }
+  },
+  { immediate: true }
+);
 const currentStep = computed(() => {
   if (!orderData.value) return 1;
   return deliveryStatusToStepMap[orderData.value.deliveryStatus] || 1;
@@ -366,7 +454,10 @@ const updateDeliveryStatus = async () => {
     isConfirmDialogVisible.value = false;
   }
 };
-
+onBeforeUnmount(() => {
+  stopSharingLocation();
+  stopTrackingSocket();
+});
 useHead({
   title: "外送任務狀態",
 });

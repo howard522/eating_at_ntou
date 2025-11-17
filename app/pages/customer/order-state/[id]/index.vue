@@ -176,7 +176,9 @@
 
 <script setup lang="ts">
 import { useUserStore } from '@stores/user';
+import { useOrderTracking } from '@app/composable/useOrderTracking';
 
+type LatLng = [number, number]
 const steps = ref([
   { id: 1, title: '沒人接QAQ' },
   { id: 2, title: '準備中' },
@@ -196,14 +198,15 @@ const orderId = route.params.id as string;
 const userStore = useUserStore();
 
 const isUpdating = ref(false);
+
+// const courierStartPosition = ref<LatLng>([25.152, 121.770])
+// const courierPosition = ref<LatLng | null>(courierStartPosition.value)
+// const customerPosition = ref<LatLng>([25.1508, 121.7730])
+// const restaurantPositions = ref<LatLng[]>([
+//   [25.155, 121.775],
+//   [25.148, 121.770],
+// ])
 const isConfirmDialogVisible = ref(false); 
-type LatLng = [number, number]
-const customerPosition = ref<LatLng>([25.1508, 121.7730])
-const courierPosition = ref<LatLng | null>([25.152, 121.770])
-const restaurantPositions = ref<LatLng[]>([
-  [25.155, 121.775],
-  [25.148, 121.770],
-])
 
 const { data: orderResponse, pending, error } = await useFetch(
     `/api/orders/${orderId}`,
@@ -216,6 +219,31 @@ const { data: orderResponse, pending, error } = await useFetch(
 );
 
 const orderData = ref(orderResponse.value);
+const toLatLng = (location?: { lat?: number; lng?: number } | null): LatLng | null => {
+  if (!location) return null
+  if (typeof location.lat === 'number' && typeof location.lng === 'number') {
+    return [location.lat, location.lng]
+  }
+  return null
+}
+const customerPosition = computed<LatLng | null>(() => toLatLng(orderData.value?.deliveryInfo?.location))
+const restaurantPositions = computed<LatLng[]>(() => {
+  if (!orderData.value?.items) return []
+  const seen = new Set<string>()
+  const positions: LatLng[] = []
+  orderData.value.items.forEach((item: any) => {
+    const loc = toLatLng(item.restaurant?.location)
+    if (loc) {
+      const key = loc.join(',')
+      if (!seen.has(key)) {
+        seen.add(key)
+        positions.push(loc)
+      }
+    }
+  })
+  return positions
+})
+const { driverPosition: courierPosition } = useOrderTracking(orderId)
 if (orderData.value && orderData.value.deliveryPerson && orderData.value.customerStatus === 'preparing') {
   isUpdating.value = true;
   try {

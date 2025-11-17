@@ -27,15 +27,15 @@ let customerMarker: any = null
 let restaurantMarkers: any[] = []
 let routePolyline: any = null
 
-const fallbackCenter: LatLng = [25.15081780087686, 121.77303369797978] // 海洋大學附近
+const fallbackCenter: LatLng = [25.15081780087686, 121.77303369797978] // 海洋大學
 const initialZoom = 15
 
 onMounted(async () => {
-  console.log('[DeliveryMap] onMounted, props =', {
-    driverPosition: props.driverPosition,
-    customerPosition: props.customerPosition,
-    restaurantPositions: props.restaurantPositions,
-  })
+  // console.log('[DeliveryMap] onMounted, props =', {
+  //   driverPosition: props.driverPosition,
+  //   customerPosition: props.customerPosition,
+  //   restaurantPositions: props.restaurantPositions,
+  // })
 
   await nextTick()
 
@@ -60,7 +60,7 @@ onMounted(async () => {
     attribution: '© OpenStreetMap contributors',
   }).addTo(map)
 
-  console.log('[DeliveryMap] 地圖已建立，中心點 =', center)
+  // console.log('[DeliveryMap] 地圖已建立，中心點 =', center)
 
   // 一開始就畫一次 marker + 路線
   updateMarkersAndRoute()
