@@ -59,11 +59,7 @@ onMounted(async () => {
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors',
   }).addTo(map)
-
-  // console.log('[DeliveryMap] 地圖已建立，中心點 =', center)
-
-  // 一開始就畫一次 marker + 路線
-  updateMarkersAndRoute()
+  await updateMarkersAndRoute()
 })
 
 // 監聽座標變化（外送員移動、資料更新時會觸發）
@@ -73,9 +69,9 @@ watch(
     customer: props.customerPosition,
     restaurants: props.restaurantPositions,
   }),
-  () => {
+  async () => {
     if (!map || !L) return
-    updateMarkersAndRoute()
+    await updateMarkersAndRoute()
   },
   { deep: true }
 )
@@ -99,7 +95,47 @@ function clearMarkersAndRoute() {
   }
 }
 
-function updateMarkersAndRoute() {
+/**
+ * 呼叫 OSRM Route API，根據實際道路回傳 polyline
+ * @param points 路線途經點，格式為 [lat, lng]
+ * @returns 轉成 Leaflet 可用的 LatLng[]（[lat, lng]），失敗回傳 null
+ */
+async function fetchRouteFromOSRM(points: LatLng[]): Promise<LatLng[] | null> {
+  if (points.length < 2) return null
+
+  // OSRM 要經緯度順序為 lng,lat
+  const coordsStr = points
+    .map(([lat, lng]) => `${lng},${lat}`)
+    .join(';')
+
+  const url = `https://router.project-osrm.org/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`
+
+  try {
+    const res = await fetch(url)
+    if (!res.ok) {
+      console.warn('[DeliveryMap] OSRM 請求失敗', res.status, await res.text())
+      return null
+    }
+
+    const data = await res.json()
+    if (!data.routes || !data.routes[0] || !data.routes[0].geometry) {
+      console.warn('[DeliveryMap] OSRM 回傳格式異常', data)
+      return null
+    }
+
+    const coordinates: [number, number][] = data.routes[0].geometry.coordinates
+
+    // OSRM 回傳 [lng, lat]，轉為 Leaflet 的 [lat, lng]
+    const latLngs: LatLng[] = coordinates.map(([lng, lat]) => [lat, lng])
+
+    return latLngs
+  } catch (err) {
+    console.error('[DeliveryMap] OSRM 呼叫錯誤', err)
+    return null
+  }
+}
+
+async function updateMarkersAndRoute() {
   if (!map || !L) return
 
   clearMarkersAndRoute()
@@ -156,13 +192,25 @@ function updateMarkersAndRoute() {
     routePoints.push(props.customerPosition)
   }
 
-  // 4) 畫出「外送員 ➜ 餐廳們 ➜ 顧客」的簡單路線
+  // 4) 畫出「外送員 ➜ 餐廳們 ➜ 顧客」的路線（優先用 OSRM，失敗則退回直線）
   if (routePoints.length >= 2) {
-    routePolyline = L.polyline(routePoints, {
-      weight: 4,
-      opacity: 0.8,
-      dashArray: '6 4',   // 虛線，看起來像路線示意
-    }).addTo(map)
+    const osrmRoute = await fetchRouteFromOSRM(routePoints)
+
+    if (osrmRoute && osrmRoute.length >= 2) {
+      // 用 OSRM 回傳的實際道路 polyline
+      routePolyline = L.polyline(osrmRoute, {
+        weight: 4,
+        opacity: 0.9,
+        
+      }).addTo(map)
+    } else {
+      // OSRM 呼叫失敗時，回到原本的直線示意
+      routePolyline = L.polyline(routePoints, {
+        weight: 4,
+        opacity: 0.8,
+        dashArray: '6 4',   // 虛線，看起來像路線示意
+      }).addTo(map)
+    }
   }
 
   // 5) 自動縮放到剛好包含所有點
