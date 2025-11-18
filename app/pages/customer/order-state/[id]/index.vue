@@ -137,7 +137,7 @@
               class="mt-4"
               :disabled="currentStep >= 3 || isUpdating"
               :loading="isUpdating"
-              @click="currentStep === 1 ? cancelOrder() : openConfirmDialog"
+              @click="currentStep === 1 ? cancelOrder() : openConfirmDialog()"
           >
             <span class="text-h6 font-weight-bold">
               {{ currentStep === 1 ? '取消訂單' : (currentStep < 3 ? '我已收到餐點' : '已接收') }}
@@ -338,8 +338,8 @@ const cancelOrder = async () => {
 };
 
 const markAsReceived = async () => {
+  
   if (currentStep.value >= 3) return;
-
   isUpdating.value = true;
   try {
     const response: any = await $fetch(
