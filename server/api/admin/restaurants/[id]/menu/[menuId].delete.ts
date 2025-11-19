@@ -1,3 +1,5 @@
+// server/api/admin/restaurants/[id]/menu/[menuId].delete.ts
+
 import { defineEventHandler, createError } from 'h3'
 import Restaurant from '@server/models/restaurant.model'
 
@@ -6,7 +8,7 @@ import Restaurant from '@server/models/restaurant.model'
  * /api/admin/restaurants/{id}/menu/{menuId}:
  *   delete:
  *     summary: 刪除指定餐廳的菜單項目
- *     description: >
+ *     description: |
  *       僅限管理員使用。  
  *       會從該餐廳的 `menu` 陣列中移除指定的項目。  
  *       若該餐廳或菜單項目不存在，則回傳 404。
@@ -52,8 +54,6 @@ import Restaurant from '@server/models/restaurant.model'
  *       500:
  *         description: 伺服器內部錯誤
  */
-
-
 export default defineEventHandler(async (event) => {
     const restaurantId = event.context.params?.id as string
     const menuId = event.context.params?.menuId as string

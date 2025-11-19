@@ -1,3 +1,5 @@
+// server/api/restaurants/near.get.ts
+
 import Restaurant from '@server/models/restaurant.model'
 import connectDB from '@server/utils/db';
 import { getQuery } from 'h3'
@@ -7,7 +9,7 @@ import { geocodeAddress } from '@server/utils/nominatim';
  * @openapi
  * /api/restaurants/near:
  *   get:
- *     summary: 依距離搜尋附近餐廳 (geoNear)
+ *     summary: 依距離搜尋附近餐廳（geoNear）
  *     description: |
  *       以給定的座標為中心，回傳依距離排序的餐廳清單。若資料中某些餐廳缺少地理座標，
  *       此 endpoint 會對最多 20 筆缺少座標的餐廳嘗試一次 Nominatim geocode（best-effort），並將結果寫回 DB。
@@ -15,33 +17,33 @@ import { geocodeAddress } from '@server/utils/nominatim';
  *     tags:
  *       - Restaurants
  *     parameters:
- *       - in: query
- *         name: address
+ *       - name: address
+ *         in: query
+ *         required: true
+ *         description: 地址字串（前端僅需傳 address），伺服器會使用 Nominatim geocode 取得中心座標並以該座標搜尋附近餐廳。
  *         schema:
  *           type: string
  *           example: "基隆市中正區北寧路2號"
- *         required: true
- *         description: 地址字串（前端僅需傳 address），伺服器會使用 Nominatim geocode 取得中心座標並以該座標搜尋附近餐廳。
- *       - in: query
- *         name: search
+ *       - name: search
+ *         in: query
+ *         description: 搜尋關鍵字（支援用雙引號包住的精準片語，例如 "炸雞 便當"；未包引號會以空白拆詞），會比對 name/info/address/menu.name/tags/phone
  *         schema:
  *           type: string
- *         description: 搜尋關鍵字（支援用雙引號包住的精準片語，例如 "炸雞 便當"；未包引號會以空白拆詞），會比對 name/info/address/menu.name/tags/phone
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
+ *       - name: limit
+ *         in: query
  *         description: 最大回傳筆數（預設 20）
- *       - in: query
- *         name: skip
  *         schema:
  *           type: integer
+ *       - name: skip
+ *         in: query
  *         description: 跳過筆數（分頁用）
- *       - in: query
- *         name: maxDistance
+ *         schema:
+ *           type: integer
+ *       - name: maxDistance
+ *         in: query
+ *         description: 最大搜尋距離（公尺），選填
  *         schema:
  *           type: number
- *         description: 最大搜尋距離（公尺），選填
  *     responses:
  *       200:
  *         description: 成功回傳附近餐廳清單，包含 distance 欄位（單位：公尺）

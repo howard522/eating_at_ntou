@@ -1,14 +1,16 @@
-// api/admin/restaurants/[id]/menu.post.ts
+// server/api/admin/restaurants/[id]/menu/index.post.ts
+
 import { defineEventHandler, readMultipartFormData } from 'h3'
 import Restaurant from '@server/models/restaurant.model'
+
 /**
  * @openapi
  * /api/admin/restaurants/{id}/menu:
  *   post:
  *     summary: 為指定餐廳新增菜單項目（支援圖片上傳）
- *     description: >
+ *     description: |
  *       僅限管理員使用。  
- *       可新增一個菜單項目，若上傳圖片，系統會自動上傳至 Imgbb 並儲存其 URL。
+ *       可新增一個菜單項目，若上傳圖片，系統會自動上傳至 ImgBB 並儲存其 URL。
  *     tags:
  *       - Admin
  *     security:
@@ -43,7 +45,7 @@ import Restaurant from '@server/models/restaurant.model'
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: 上傳圖片檔案，會自動上傳至 Imgbb 並回傳 URL
+ *                 description: 上傳圖片檔案，會自動上傳至 ImgBB 並回傳 URL
  *     responses:
  *       201:
  *         description: 成功建立新菜單項目
@@ -68,8 +70,6 @@ import Restaurant from '@server/models/restaurant.model'
  *       500:
  *         description: 伺服器內部錯誤
  */
-
-
 export default defineEventHandler(async (event) => {
 
     const restaurantId = event.context.params?.id as string

@@ -1,4 +1,5 @@
-// api/admin/restaurants/[id]/menu/[menuId].patch.ts
+// server/api/admin/restaurants/[id]/menu/[menuId].patch.ts
+
 import { defineEventHandler, readMultipartFormData } from 'h3'
 import Restaurant from '@server/models/restaurant.model'
 
@@ -7,10 +8,10 @@ import Restaurant from '@server/models/restaurant.model'
  * /api/admin/restaurants/{id}/menu/{menuId}:
  *   patch:
  *     summary: 更新餐廳菜單項目（支援圖片上傳）
- *     description: >
+ *     description: |
  *       僅限管理員使用。  
  *       允許部分欄位更新，未提供的欄位將保持不變。  
- *       若上傳圖片檔案，系統會自動上傳至 Imgbb 並更新該項目的 `image` URL。
+ *       若上傳圖片檔案，系統會自動上傳至 ImgBB 並更新該項目的 `image` URL。
  *     tags:
  *       - Admin
  *     security:
@@ -49,7 +50,7 @@ import Restaurant from '@server/models/restaurant.model'
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: 新圖片檔案，會自動上傳至 Imgbb 並更新 URL
+ *                 description: 新圖片檔案，會自動上傳至 ImgBB 並更新 URL
  *     responses:
  *       200:
  *         description: 成功更新菜單項目
@@ -74,8 +75,6 @@ import Restaurant from '@server/models/restaurant.model'
  *       500:
  *         description: 伺服器內部錯誤
  */
-
-
 export default defineEventHandler(async (event) => {
     const restaurantId = event.context.params?.id as string
     const menuId = event.context.params?.menuId
