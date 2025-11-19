@@ -3,19 +3,108 @@
         <v-row justify="center">
             <v-col cols="12" md="8">
                 <div class="messages">
-                    <div v-for="msg in messages" :key="msg.id">
-                        <p>
-                            <strong>{{ getSenderName(msg) }} [{{ msg.senderRole }}] ({{ formatTimestamp(msg.timestamp) }}):</strong>
-                            {{ msg.content }}
+                    <div
+                        v-for="msg in messages"
+                        :key="msg.id"
+                        :class="['message', msg.senderRole === 'customer' ? 'customer' : 'delivery']"
+                    >
+                        <p class="message-header">
+                            <strong>{{ getSenderName(msg) }} [{{ msg.senderRole }}]</strong>
+                            <span class="timestamp">({{ formatTimestamp(msg.timestamp) }})</span>
                         </p>
+                        <p class="message-content">{{ msg.content }}</p>
                     </div>
                 </div>
-                <v-text-field v-model="newMessage" label="輸入訊息" outlined dense class="mt-4"></v-text-field>
-                <v-btn color="primary" class="mt-2" @click="handleSend">送出</v-btn>
+                <div class="input-area">
+                    <v-text-field
+                        v-model="newMessage"
+                        label="輸入訊息"
+                        outlined
+                        dense
+                        class="message-input"
+                    ></v-text-field>
+                    <v-btn color="primary" class="send-button" @click="handleSend">送出</v-btn>
+                </div>
             </v-col>
         </v-row>
     </v-container>
 </template>
+
+<style scoped>
+.messages {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 1rem;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.message {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.message.customer {
+    background-color: #e3f2fd;
+    text-align: left;
+    border: 1px solid #bbdefb;
+}
+
+.message.delivery {
+    background-color: #ede7f6;
+    text-align: right;
+    border: 1px solid #d1c4e9;
+}
+
+.message-header {
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+    font-weight: bold;
+    color: #424242;
+}
+
+.timestamp {
+    font-size: 0.8rem;
+    color: #9e9e9e;
+}
+
+.message-content {
+    font-size: 1rem;
+    margin: 0;
+    color: #212121;
+}
+
+.input-area {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.message-input {
+    flex: 1;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+}
+
+.send-button {
+    flex-shrink: 0;
+    background-color: #1976d2;
+    color: #ffffff;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.send-button:hover {
+    background-color: #1565c0;
+}
+</style>
 
 <script setup lang="ts">
 import { useUserStore } from "@stores/user";
