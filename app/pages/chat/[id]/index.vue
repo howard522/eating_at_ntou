@@ -160,48 +160,12 @@ const route = useRoute();
 const orderId = route.params.id as string;
 const userStore = useUserStore();
 
-const {
-    data: orderResponse,
-    pending,
-    error,
-} = await useFetch(`/api/orders/${orderId}`, {
+const { data: orderData } = await useFetch(`/api/orders/${orderId}`, {
     transform: (response: any) => response.data,
-    headers: {
-        Authorization: `Bearer ${userStore.token}`,
-    },
+    headers: { Authorization: `Bearer ${userStore.token}` },
 });
 
-// 訂單資料
-const orderData = ref(orderResponse.value);
-
-// 顧客資料
-const customer = orderData.value.user;
-
-// 外送員資料
-const deliver = computed(() => {
-    if (orderData.value?.deliveryPerson) {
-        const deliveryStatus = orderData.value.deliveryStatus;
-        let statusText = "外送員正在處理您的訂單";
-        if (deliveryStatus === "on_the_way") {
-            statusText = "正在為您配送中...";
-        } else if (deliveryStatus === "delivered") {
-            statusText = "已送達指定地點";
-        }
-        return {
-            name: `外送員：${orderData.value.deliveryPerson.name}`,
-            phone: orderData.value.deliveryPerson.phone,
-            img: orderData.value.deliveryPerson.image,
-            status: statusText,
-        };
-    } else {
-        return {
-            name: "等待外送員接單",
-            phone: "未知",
-            img: "",
-            status: "正在為您尋找附近的外送員...",
-        };
-    }
-});
+const customer = computed(() => orderData.value?.user);
 
 interface ChatPayload {
     id: string; // 訊息 ID
@@ -222,35 +186,28 @@ function formatTimestamp(timestamp: Date | string | undefined): string {
 function getSenderName(msg: ChatPayload): string {
     if (!msg) return "未知使用者";
     if (msg.senderRole === "customer") {
-        return customer.name;
-    } else if (msg.senderRole === "delivery" && orderData.value.deliveryPerson) {
+        return customer.value?.name || "未知使用者";
+    } else if (msg.senderRole === "delivery" && orderData.value?.deliveryPerson) {
         return orderData.value.deliveryPerson.name;
-    } else {
-        return "未知使用者";
     }
+    return "未知使用者";
 }
 
 // 聊天訊息列表
 const messages = ref<ChatPayload[]>([]);
 
-// 抓取歷史訊息
 const { data: history } = await useFetch(`/api/orders/${orderId}/chats`, {
     transform: (response: any) => response.data,
-    headers: {
-        Authorization: `Bearer ${userStore.token}`,
-    },
+    headers: { Authorization: `Bearer ${userStore.token}` },
 });
 
-// 將歷史訊息加入 messages 陣列
-for (const msg of history.value) {
-    messages.value.unshift({
-        id: msg._id,
-        sender: msg.sender._id,
-        senderRole: msg.senderRole,
-        content: msg.content,
-        timestamp: msg.timestamp,
-    });
-}
+messages.value = history.value.map((msg: any) => ({
+    id: msg._id,
+    sender: msg.sender._id,
+    senderRole: msg.senderRole,
+    content: msg.content,
+    timestamp: msg.timestamp,
+}));
 
 // 建立聊天室連線
 const { send, disconnect } = useChat(orderId, messages);
@@ -282,10 +239,9 @@ watch(() => messages.value.length, () => {
 
 // 發送訊息
 function handleSend() {
-    let msg = newMessage.value.trim();
-    if (msg !== "") {
+    const msg = newMessage.value.trim();
+    if (msg) {
         send(msg);
-        console.log("Sent message:", msg);
         newMessage.value = "";
         scrollToBottom();
     }
