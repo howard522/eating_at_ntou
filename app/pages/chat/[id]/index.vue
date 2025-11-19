@@ -6,11 +6,14 @@
                     <div
                         v-for="msg in messages"
                         :key="msg.id"
-                        :class="['message', msg.senderRole === 'customer' ? 'customer' : 'delivery']"
+                        :class="['message', msg.senderRole === 'customer' ? 'left' : 'right']"
                     >
-                        <p class="message-header">
-                            <strong>{{ getSenderName(msg) }} [{{ msg.senderRole }}]</strong>
-                            <span class="timestamp">({{ formatTimestamp(msg.timestamp) }})</span>
+                        <p class="message-header" :class="msg.senderRole === 'customer' ? 'align-left' : 'align-right'">
+                            <span class="sender-role" :class="msg.senderRole">
+                                {{ msg.senderRole === 'customer' ? '顧客' : '外送員' }}
+                            </span>
+                            <strong class="sender-name">{{ getSenderName(msg) }}</strong>
+                            <span class="timestamp">{{ formatTimestamp(msg.timestamp) }}</span>
                         </p>
                         <p class="message-content">{{ msg.content }}</p>
                     </div>
@@ -32,7 +35,10 @@
 
 <style scoped>
 .messages {
-    max-height: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 600px;
     overflow-y: auto;
     padding: 1rem;
     background-color: #ffffff;
@@ -43,35 +49,74 @@
 }
 
 .message {
-    margin-bottom: 1rem;
+    display: inline-block;
+    margin-bottom: 0;
     padding: 0.75rem;
     border-radius: 8px;
     line-height: 1.5;
     word-wrap: break-word;
+    max-width: 70%;
+    width: auto;
 }
 
-.message.customer {
+.message.left {
     background-color: #e3f2fd;
     text-align: left;
     border: 1px solid #bbdefb;
+    margin-right: auto;
 }
 
-.message.delivery {
+.message.right {
     background-color: #ede7f6;
     text-align: right;
     border: 1px solid #d1c4e9;
+    margin-left: auto;
 }
 
 .message-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-size: 0.9rem;
     margin-bottom: 0.3rem;
     font-weight: bold;
     color: #424242;
 }
 
+.message-header.align-left {
+    justify-content: flex-start;
+}
+
+.message-header.align-right {
+    justify-content: flex-end;
+}
+
+.sender-role {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #ffffff;
+}
+
+.sender-role.customer {
+    background-color: #42a5f5;
+}
+
+.sender-role.delivery {
+    background-color: #7e57c2;
+}
+
+.sender-name {
+    font-size: 1rem;
+    color: #1e88e5;
+}
+
 .timestamp {
     font-size: 0.8rem;
-    color: #9e9e9e;
+    color: #757575;
+    font-style: italic;
+    margin-left: 0.5rem;
 }
 
 .message-content {
