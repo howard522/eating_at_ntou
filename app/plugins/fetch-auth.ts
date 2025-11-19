@@ -10,7 +10,7 @@ export default defineNuxtPlugin((nuxtApp: any) => {
     } catch { /* ignore */ }
 
     // localStorage 持久化與還原
-    const publicPaths = new Set(['/login', '/forgot-password', '/register', '/favicon.ico', '/robots.txt'])
+    const publicPaths = new Set(['/login', '/forgot-password', '/register', '/favicon.ico', '/robots.txt', '/introduction'])
     const roleHome: Record<string, string> = {
         admin: '/admin/stores',
         customer: '/customer/stores',
@@ -88,6 +88,7 @@ export default defineNuxtPlugin((nuxtApp: any) => {
             }
 
             const isPublic = publicPaths.has(to.path)
+            const isIntroduction = to.path === '/introduction'
 
             // 未登入：只能進入公開頁
             if (!token || !role || !roleHome[role] || !rolePrefix[role]) {
@@ -101,7 +102,7 @@ export default defineNuxtPlugin((nuxtApp: any) => {
 
             // 已登入：
             // 進入根路由或公開頁，一律導向各自首頁
-            if (to.path === '/' || isPublic) {
+            if (to.path === '/' || (isPublic && !isIntroduction)) {
                 if (to.path !== home) return navigateTo(home)
                 return
             }
@@ -111,7 +112,7 @@ export default defineNuxtPlugin((nuxtApp: any) => {
                 return navigateTo(home)
             }
             // 跑到身份範圍外 → 導回各自首頁
-            if (!to.path.startsWith(allowedPrefix)) {
+            if (!isIntroduction && !to.path.startsWith(allowedPrefix)) {
                 return navigateTo(home)
             }
         } catch { /* ignore */ }

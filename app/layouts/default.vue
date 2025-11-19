@@ -3,7 +3,7 @@
     <v-app>
     <v-app-bar app color="white" flat border>
       <v-btn
-          to="/"
+          to="/introduction"
           variant="tonal"
           color="#27187E"
           class="font-weight-bold ml-2"
