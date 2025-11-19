@@ -1,6 +1,6 @@
 <template>
   <div class="black-screen" @click="goBack">
-    <div class="scrolling-text">
+    <div class="scrolling-text" ref="scrollingText">
       <p style="font-size: 28px; margin-bottom: 16px;">感謝您使用本系統</p>
       <p>我們致力於打造一個</p>
       <p>專屬於海大學生的餐飲外送平台</p>
@@ -8,21 +8,20 @@
       <p>系統能維護訂單流程完整，確保穩定無錯誤</p>
       <br /> 
       <br /> 
-      <br /> 
       <p style="font-size: 28px; margin-bottom: 16px;">— 製作團隊 Production Team —</p> 
       <p>前端技術總監（Front-End Director）</p> 
       <p>前端大大大姐頭 KarryLin 林津瑄</p> 
 <br /> 
       <p>前端工程師（Front-End Developer）</p> 
-      <p>前端小弟兼首席組員溝通師 JosephLiu 劉俊麟</p> 
+      <p>前端小弟 兼 首席組員溝通師 JosephLiu 劉俊麟</p> 
 <br /> 
       <p>後端技術總監（Back-End Director）</p>
       <p>後端老大 aka 傲嬌阿修羅 94SungLa 宋辰星</p> 
 <br /> 
       <p>後端工程師（Back-End Developer）</p> 
-      <p>後端小弟兼文件風格管理員 YuanOwO 黃俊源</p> 
-      <p>後端老弟兼荷包蛋 Howard 郭浩</p> 
-      <br /> <br /> <br /> 
+      <p>後端小弟 兼 文件風格管理員 YuanOwO 黃俊源</p> 
+      <p>後端老弟 兼 荷包蛋 Howard 郭浩</p> 
+      <br /> <br />
       <p>這個系統的誕生，就像拍攝一部電影</p> 
       <p>一路走來有劇本的修改、有鏡頭的重來、有突發的插曲</p> 
       <p>也有靈感閃現時像燈光打亮的瞬間</p> 
@@ -38,14 +37,41 @@
 </template>
 
 <script>
-definePageMeta({layout: false,})
+definePageMeta({ layout: false });
 export default {
   methods: {
     goBack() {
       this.$router.go(-1);
+    },
+    resetAnimation() {
+      const scrollingText = this.$refs.scrollingText;
+      scrollingText.style.animation = "none";
+      void scrollingText.offsetHeight;
+      scrollingText.style.animation = "";
+    },
+    calculateStartPosition() {
+      const scrollingText = this.$refs.scrollingText;
+      const containerHeight = this.$el.offsetHeight;
+      const contentHeight = scrollingText.scrollHeight;
+      return Math.max(containerHeight, contentHeight);
+    },
+    calculateAnimationDuration() {
+      const containerHeight = this.$el.offsetHeight;
+      const baseHeight = 800;
+      const baseDuration = 45;
+      return (containerHeight / baseHeight) * baseDuration;
     }
+  },
+  mounted() {
+    this.resetAnimation();
+    const startPosition = this.calculateStartPosition();
+    const scrollingText = this.$refs.scrollingText;
+    scrollingText.style.setProperty("--start-position", `${startPosition}px`);
+
+    const animationDuration = this.calculateAnimationDuration();
+    scrollingText.style.setProperty("--animation-duration", `${animationDuration}s`);
   }
-}
+};
 </script>
 
 <style scoped>
@@ -66,7 +92,7 @@ export default {
   color: white;
   font-size: 24px;
   text-align: center;
-  animation: scrollUp 37s linear infinite;
+  animation: scrollUp var(--animation-duration) linear infinite;
   animation-delay: 0s;
 }
 
@@ -76,7 +102,7 @@ export default {
 
 @keyframes scrollUp {
   from {
-    transform: translateY(240vh);
+    transform: translateY(var(--start-position));
   }
   to {
     transform: translateY(-100vh);
