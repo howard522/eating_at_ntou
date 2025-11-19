@@ -195,20 +195,31 @@
                 <thead>
                 <tr class="bg-grey-lighten-4">
                   <th class="text-left pl-8 py-4 text-h6 font-weight-bold">品項</th>
-                  <th class="text-left py-4 text-h6 font-weight-bold">餐廳</th>
+                  <th class="text-left py-4 text-h6 font-weight-bold">餐廳資訊</th>
                   <th class="text-right pr-8 py-4 text-h6 font-weight-bold">價格</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr v-for="item in orderData.items" :key="item._id">
-                  <td class="pl-8 py-4">
-                    <div class="text-h6 font-weight-bold text-high-emphasis">{{ item.name }}</div>
-                    <div class="text-subtitle-1 text-grey-darken-1 mt-1">x {{ item.quantity }}</div>
+                  <td class="pl-8 py-4" style="vertical-align: top;">
+                    <div class="text-h6 font-weight-bold text-high-emphasis">{{ item.name }}
+                      <span class="text-subtitle-1 text-grey-darken-1 mt-1">x {{ item.quantity }}</span>
+                    </div>
                   </td>
-                  <td class="text-h6 text-grey-darken-3">
-                    {{ item.restaurant?.name }}
+
+                  <td class="py-4" style="vertical-align: top;">
+                    <div class="text-h6 font-weight-bold text-grey-darken-3">
+                      {{ item.restaurant?.name }}
+                    </div>
+                    <div class="text-subtitle-1 text-grey-darken-2 mt-1 d-flex align-center">
+                      <v-icon size="small" class="mr-2 mt-1" color="grey">mdi-map-marker</v-icon>
+                      {{ item.restaurant?.address }} &nbsp;
+                      <v-icon size="small" class="mr-2" color="grey">mdi-phone</v-icon>
+                      {{ item.restaurant?.phone }}
+                    </div>
                   </td>
-                  <td class="text-right pr-8 font-weight-bold text-h6">
+
+                  <td class="text-right pr-8 py-4 font-weight-bold text-h6" style="vertical-align: top;">
                     ${{ item.price * item.quantity }}
                   </td>
                 </tr>
