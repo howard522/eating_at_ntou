@@ -6,9 +6,9 @@ export function normalizeAddress(addr: string): string {
     if (!addr) return addr;
     let s = addr.trim();
     // 將常見分隔符改成空白
-    s = s.replace(/[，,、\/\\]+/g, ' ');
+    s = s.replace(/[，,、\/\\]+/g, " ");
     //71-7號 -> 71之7號
-    s = s.replace(/(\d+)[\-\–](\d+)/g, '$1之$2');
+    s = s.replace(/(\d+)[\-\–](\d+)/g, "$1之$2");
     // 在常見地址後綴（市/區/路/街/段/巷/弄/號等）後面若接中文，通常插入空白。
     // 但若接續的是路段形式（例如：西園路二段 / 中山路三段），不要在「路」與「二段」之間插空白。
     s = s.replace(/(縣|市|區|鄉|鎮|里|路|街|段|巷|弄|號)(?=[\p{Script=Han}])/gu, (match, suffix, offset, full) => {
@@ -18,25 +18,25 @@ export function normalizeAddress(addr: string): string {
         if (/^[\p{Script=Han}0-9之\-–]*段/u.test(look)) {
             return match;
         }
-        return match + ' ';
+        return match + " ";
     });
     // 若有「號」，只保留到第一個「號」，去掉後面的樓層/房號等（例如：242號1樓 -> 242號），
     // 再把末尾的「號」字移除以增加 Nominatim 的命中率（例如: 242號 -> 242）
-    s = s.replace(/^(.+?號).*/u, '$1');
-    s = s.replace(/號$/u, '');
+    s = s.replace(/^(.+?號).*/u, "$1");
+    s = s.replace(/號$/u, "");
 
     // 若地址沒有號，但有樓層/室等附加資訊，移除這些部分（例如：某路 3樓 -> 某路）
-    s = s.replace(/(樓層|樓|F|f|層|室|房|之樓|之F|之層).*$/u, '');
+    s = s.replace(/(樓層|樓|F|f|層|室|房|之樓|之F|之層).*$/u, "");
 
     // 在中文與數字之間插入空格（例如 北寧路2號 -> 北寧路 2號）
-    s = s.replace(/([\p{Script=Han}])(\d)/gu, '$1 $2');
-    s = s.replace(/(\d)([\p{Script=Han}])/gu, '$1 $2');
+    s = s.replace(/([\p{Script=Han}])(\d)/gu, "$1 $2");
+    s = s.replace(/(\d)([\p{Script=Han}])/gu, "$1 $2");
     // 在中文與英文字母之間插入空格
-    s = s.replace(/([\p{Script=Han}])([A-Za-z])/gu, '$1 $2');
-    s = s.replace(/([A-Za-z])([\p{Script=Han}])/gu, '$1 $2');
+    s = s.replace(/([\p{Script=Han}])([A-Za-z])/gu, "$1 $2");
+    s = s.replace(/([A-Za-z])([\p{Script=Han}])/gu, "$1 $2");
     // 合併多個空白為一個，並 trim
-    s = s.replace(/\s+/g, ' ').trim();
-    console.log('Normalized address:', s);
+    s = s.replace(/\s+/g, " ").trim();
+    console.log("Normalized address:", s);
     return s;
 }
 
@@ -54,9 +54,9 @@ export async function geocodeAddress(address: string) {
     const res = await fetch(url, {
         headers: {
             // Nominatim 要求必須提供有效的 User-Agent 與 Referer
-            'User-Agent': 'eating_at_ntou/1.0',
-            'Referer': 'https://github.com/howard522/eating_at_ntou'
-        }
+            "User-Agent": "eating_at_ntou/1.0",
+            Referer: "https://github.com/howard522/eating_at_ntou",
+        },
     });
     if (!res.ok) return null;
     const data = await res.json();
@@ -86,7 +86,7 @@ export async function getGeocodeFromAddress(address: string): Promise<IGeoPoint 
 }
 
 export function sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
