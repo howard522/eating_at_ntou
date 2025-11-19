@@ -15,11 +15,17 @@ interface Message {
     content: string; // 訊息內容
     timestamp?: Date; // 時間戳記
 }
+interface LocationPayload {
+    sender?: string;
+    lat: number;
+    lng: number;
+    timestamp?: Date;
+}
 
 interface Payload {
     type: string; // 資料類型
     message?: string; // 錯誤或系統訊息
-    data?: Message; // 訊息資料
+    data?: any; // 訊息或位置資料
 }
 
 interface PeerContext {
@@ -30,6 +36,7 @@ interface PeerContext {
 }
 
 const chatRooms: Map<string, Map<string, PeerContext>> = new Map(); // orderId -> peers
+const driverLocations: Map<string, LocationPayload> = new Map(); // orderId -> latest location
 /**
  * 從 ws 的 URL 中取得 orderId
  *
@@ -58,7 +65,9 @@ function broadcastToOrder(orderId: string, payload: Payload) {
         peer.send(message);
     });
 }
-
+function broadcastLocation(orderId: string, data: LocationPayload) {
+    broadcastToOrder(orderId, { type: "location", data });
+}
 /**
  * 簡化訊息物件的建立
  */
@@ -66,7 +75,34 @@ function shortMessage(_type: string, _message: string): string {
     const msg: Payload = { type: _type, message: _message };
     return JSON.stringify(msg);
 }
+function isValidCoordinate(value: unknown): value is number {
+    return typeof value === "number" && Number.isFinite(value);
+}
 
+function dispatchLocationUpdate(peer: Peer<AdapterInternal>, data: { lat: number; lng: number }) {
+    const orderId = getOrderIdFromURL(peer.request.url)!;
+    const ctx = chatRooms.get(orderId)?.get(peer.id);
+
+    if (!ctx || ctx.role !== "delivery") {
+        peer.send(shortMessage("error", "Only assigned delivery users can send location updates."));
+        return;
+    }
+
+    if (!isValidCoordinate(data.lat) || !isValidCoordinate(data.lng)) {
+        peer.send(shortMessage("error", "Invalid coordinates."));
+        return;
+    }
+
+    const payload: LocationPayload = {
+        sender: ctx.userId,
+        lat: data.lat,
+        lng: data.lng,
+        timestamp: new Date(),
+    };
+
+    driverLocations.set(orderId, payload);
+    broadcastLocation(orderId, payload);
+}
 /**
  * 從聊天室移除 peer
  */
@@ -84,6 +120,7 @@ function disconnectClient(peer: Peer<AdapterInternal>) {
         // 如果聊天室沒人了，就刪除聊天室
         if (room.size === 0) {
             chatRooms.delete(orderId);
+            driverLocations.delete(orderId);
             return;
         }
 
@@ -170,6 +207,10 @@ async function authorizeClient(peer: Peer<AdapterInternal>, data: Message) {
 
     // 廣播加入訊息給該訂單的所有連線的 peer
     broadcastToOrder(orderId, sendPayload);
+    const latestLocation = driverLocations.get(orderId);
+    if (latestLocation) {
+        peer.send(JSON.stringify({ type: "location", data: latestLocation }));
+    }
 }
 
 async function dispatchChatMessage(peer: Peer<AdapterInternal>, data: Message) {
@@ -220,6 +261,10 @@ export default defineWebSocketHandler({
         } else if (payload.type === "send") {
             // 處理傳送給其他 peer
             dispatchChatMessage(peer, data);
+        } else if (payload.type === "location") {
+            if (payload.data) {
+                dispatchLocationUpdate(peer, payload.data as { lat: number; lng: number });
+            }
         } else {
             peer.send(shortMessage("error", "Unknown message type."));
         }
