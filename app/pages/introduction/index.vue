@@ -13,7 +13,7 @@
       <p>前端技術總監（Front-End Director）</p> 
       <p>前端大大大姐頭 KarryLin 林津瑄</p> 
 <br /> 
-      <p>前端開發（Front-End Developer）</p> 
+      <p>前端工程師（Front-End Developer）</p> 
       <p>前端小弟兼首席組員溝通師 JosephLiu 劉俊麟</p> 
 <br /> 
       <p>後端技術總監（Back-End Director）</p>
@@ -21,8 +21,6 @@
 <br /> 
       <p>後端工程師（Back-End Developer）</p> 
       <p>後端小弟兼文件風格管理員 YuanOwO 黃俊源</p> 
-<br /> 
-      <p>後端工程師（Back-End Developer）</p> 
       <p>後端老弟兼荷包蛋 Howard 郭浩</p> 
       <br /> <br /> <br /> 
       <p>這個系統的誕生，就像拍攝一部電影</p> 
