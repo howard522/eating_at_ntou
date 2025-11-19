@@ -5,11 +5,7 @@
                 <div class="messages">
                     <div v-for="msg in messages" :key="msg.id">
                         <p>
-                            <strong
-                                >{{ getSenderName(msg) }} [{{ msg.senderRole }}] ({{
-                                    formatTimestamp(msg.timestamp)
-                                }}):</strong
-                            >
+                            <strong>{{ getSenderName(msg) }} [{{ msg.senderRole }}] ({{ formatTimestamp(msg.timestamp) }}):</strong>
                             {{ msg.content }}
                         </p>
                     </div>
@@ -24,8 +20,6 @@
 <script setup lang="ts">
 import { useUserStore } from "@stores/user";
 import { useChat } from "@app/composable/useChat";
-
-/* 以下是從 `index.vue` 複製過來的，請優化他們 */
 
 const route = useRoute();
 const orderId = route.params.id as string;
@@ -74,8 +68,6 @@ const deliver = computed(() => {
     }
 });
 
-/* 以上是從 `index.vue` 複製過來的，請優化他們 */
-
 interface ChatPayload {
     id: string; // 訊息 ID
     sender: string; // 使用者 ID
@@ -103,13 +95,10 @@ function getSenderName(msg: ChatPayload): string {
     }
 }
 
-///////
-
 // 聊天訊息列表
 const messages = ref<ChatPayload[]>([]);
 
-
-// TODO: 抓取歷史訊息（預設最多 50 筆），還沒實現繼續往前抓取分頁的功能
+// 抓取歷史訊息
 const { data: history } = await useFetch(`/api/orders/${orderId}/chats`, {
     transform: (response: any) => response.data,
     headers: {
@@ -149,3 +138,4 @@ onUnmounted(() => {
     disconnect();
 });
 </script>
+
