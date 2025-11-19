@@ -2,7 +2,7 @@
     <v-container>
         <v-row justify="center">
             <v-col cols="12" md="8">
-                <div class="messages">
+                <div class="messages" ref="messagesContainer">
                     <div
                         v-for="msg in messages"
                         :key="msg.id"
@@ -257,6 +257,28 @@ const { send, disconnect } = useChat(orderId, messages);
 // 輸入訊息的綁定變數
 const newMessage = ref("");
 
+// 加入容器 ref 以控制捲動
+const messagesContainer = ref<HTMLElement | null>(null);
+
+// 捲到最底部
+function scrollToBottom() {
+    nextTick(() => {
+        if (messagesContainer.value) {
+            messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+        }
+    });
+}
+
+// 載入後捲到底
+onMounted(() => {
+    scrollToBottom();
+});
+
+// 訊息數量改變（歷史載入、收到新訊息）時捲到底
+watch(() => messages.value.length, () => {
+    scrollToBottom();
+});
+
 // 發送訊息
 function handleSend() {
     let msg = newMessage.value.trim();
@@ -264,6 +286,7 @@ function handleSend() {
         send(msg);
         console.log("Sent message:", msg);
         newMessage.value = "";
+        scrollToBottom();
     }
 }
 
