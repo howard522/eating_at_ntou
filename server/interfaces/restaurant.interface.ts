@@ -1,16 +1,13 @@
 // server/interfaces/restaurant.interface.ts
 
+import type { IGeoPoint } from "@server/interfaces/geoPoint.interface";
+
 // 菜單項目介面
 export interface IMenuItem {
     name: string;
     price: number;
     image: string;
     info: string;
-}
-
-export interface IGeoPoint {
-    type: "Point";
-    coordinates: [number, number]; // [lon, lat]
 }
 
 // 餐廳介面

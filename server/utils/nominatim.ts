@@ -1,3 +1,7 @@
+// server/utils/nominatim.ts
+
+import type { IGeoPoint } from "@server/interfaces/geoPoint.interface";
+
 export function normalizeAddress(addr: string): string {
     if (!addr) return addr;
     let s = addr.trim();
@@ -61,9 +65,58 @@ export async function geocodeAddress(address: string) {
     return { lat: parseFloat(lat), lon: parseFloat(lon) };
 }
 
+/**
+ * 透過地址取得經緯度，若成功回傳 GeoJSON Point 格式
+ *
+ * @param address 地址字串
+ * @returns 經緯度資料或 undefined（若無法取得）
+ */
+export async function getGeocodeFromAddress(address: string): Promise<IGeoPoint | undefined> {
+    try {
+        const coords = await geocodeAddress(address);
+        if (coords) {
+            return {
+                type: "Point",
+                coordinates: [coords.lon, coords.lat],
+            };
+        }
+    } catch (err) {
+        console.error("Geocoding failed:", err);
+    }
+}
+
 export function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+/**
+ * 驗證經緯度資料是否有效
+ *
+ * @param coords 經緯度資料
+ * @returns 是否有效
+ */
+export function validateGeocode(coords: IGeoPoint | null | undefined): boolean {
+    // 基本檢查
+    if (!coords || coords.type !== "Point" || !Array.isArray(coords.coordinates)) {
+        return false;
+    }
+    if (coords.coordinates.length !== 2) {
+        return false;
+    }
+
+    // 經度與緯度範圍檢查
+    const [lon, lat] = coords.coordinates;
+    if (typeof lon !== "number" || typeof lat !== "number") {
+        return false;
+    }
+    if (lon < -180 || lon > 180 || lat < -90 || lat > 90) {
+        return false;
+    }
+
+    // 全部通過，回傳 true
+    return true;
+}
+
 //for testing
 //npx tsx server/utils/nominatim.ts
 // (async () => {
