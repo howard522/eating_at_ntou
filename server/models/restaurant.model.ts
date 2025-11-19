@@ -1,39 +1,44 @@
-import mongoose from "mongoose";
+// server/models/restaurant.model.ts
 
-const menuItemSchema = new mongoose.Schema({
+import mongoose from "mongoose";
+import type { Model } from "mongoose";
+import type { IMenuItem, IRestaurant } from "@server/interfaces/restaurant.interface";
+
+const { Schema, model } = mongoose;
+
+const menuItemSchema = new Schema<IMenuItem>({
     name: String,
     price: Number,
     image: String,
-    info: String
-})
+    info: String,
+});
 
-
-const restaurantSchema = new mongoose.Schema({
+const restaurantSchema = new Schema<IRestaurant>({
     name: String,
     address: String,
     phone: String,
     image: String,
     info: String,
-    tags: [String],
-    menu: [menuItemSchema],
+    tags: { type: [String], default: [] },
+    menu: { type: [menuItemSchema], default: [] },
 
     // status: 營業狀態
     isActive: {
         type: Boolean,
         default: true, // 預設上架中
-        index: true,   // 常用查詢 index
+        index: true, // 常用查詢 index
     },
-})
+});
 
 // GeoJSON location for geospatial queries. Keep separate to avoid breaking existing code.
 restaurantSchema.add({
     locationGeo: {
-        type: { type: String, enum: ['Point'] },
-        coordinates: { type: [Number] } // [lon, lat]
-    }
+        type: { type: String, enum: ["Point"] },
+        coordinates: { type: [Number] }, // [lon, lat]
+    },
 });
 
 // 2dsphere index for geospatial queries
-restaurantSchema.index({ locationGeo: '2dsphere' });
+restaurantSchema.index({ locationGeo: "2dsphere" });
 
-export default mongoose.models.Restaurant || mongoose.model('Restaurant', restaurantSchema);
+export default (mongoose.models.Restaurant as Model<IRestaurant>) || model<IRestaurant>("Restaurant", restaurantSchema);
