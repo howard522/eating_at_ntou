@@ -25,6 +25,7 @@
                         outlined
                         dense
                         class="message-input"
+                        @keydown.enter.prevent="handleSend"
                     ></v-text-field>
                     <v-btn color="primary" class="send-button" @click="handleSend">送出</v-btn>
                 </div>
