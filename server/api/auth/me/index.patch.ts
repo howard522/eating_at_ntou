@@ -28,7 +28,7 @@ import { defineEventHandler, readBody } from 'h3'
 import { getUserFromEvent, toPublicUser } from '@server/utils/auth'
 import connectDB from '@server/utils/db'
 import User from '@server/models/user.model'
-import { uploadImageToImageBB } from '@server/utils/imageUploader'
+import { uploadImageToImageBB } from '@server/utils/uploadImage'
 
 export default defineEventHandler(async (event) => {
   const me = await getUserFromEvent(event)// 取得目前使用者，11/15更新後會檔掉被封鎖的使用者
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
   const imgPart = parts.find(p => p.name === 'img' && p.filename && p.data)
   if (imgPart) {
     // 為什麼：上傳到 ImageBB 取得可公開訪問的 URL，再寫入使用者文件
-    const url = await uploadImageToImageBB({ data: imgPart.data, name: imgPart.filename })
+    const url = await uploadImageToImageBB({ data: imgPart.data, filename: imgPart.filename })
     if (url) patch.img = url
   }
 
