@@ -22,14 +22,11 @@ export function useChat(orderId: string, messages: Ref<ChatPayload[]>) {
         const message = JSON.parse(event.data);
         if (message.type === "message") {
             messages.value.push(message.data);
-        } else if (message.type === "join") {
-            messages.value.push(message.data);
-        } else if (message.type === "leave") {
-            messages.value.push(message.data);
         } else if (message.type === "error") {
             console.error("WebSocket error:", message.message);
         } else {
-            console.warn("Unknown WebSocket message type:", message);
+            // join/leave 類型不再加入 messages
+            // console.debug("Ignored WebSocket message type:", message.type);
         }
     };
 

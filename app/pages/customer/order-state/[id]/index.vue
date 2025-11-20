@@ -131,6 +131,16 @@
           </v-card>
 
           <v-btn
+              color="primary"
+              block
+              size="large"
+              class="mt-4"
+              @click="navigateTo(`/chat/${orderId}`)"
+          >
+            <span class="text-h6 font-weight-bold">聯絡外送員</span>
+          </v-btn>
+
+          <v-btn
               :color="currentStep === 1 ? 'error' : 'success'"
               block
               size="x-large"
