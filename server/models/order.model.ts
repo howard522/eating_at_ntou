@@ -28,15 +28,10 @@ const orderItemSchema = new Schema<IOrderItem>({
 
     // 餐廳快照
     restaurant: {
-        id: {
-            type: Schema.Types.ObjectId,
-            ref: "Restaurant",
-            required: false,
-            index: true,
-        }, //index方便查詢某餐廳的訂單
-        name: String,
-        phone: String,
-        address: String, // 新增 address 欄位
+        id: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant", required: false, index: true }, //index方便查詢某餐廳的訂單
+        name: { type: String },
+        phone: { type: String },
+        address: { type: String }, // 新增 address 欄位
     },
 });
 
@@ -77,6 +72,10 @@ const orderSchema = new Schema<IOrder>(
             contactName: String,
             contactPhone: String,
             note: String,
+            location: {
+                lat: { type: Number },
+                lng: { type: Number },
+            },
         },
 
         // 訂單雙角色狀態

@@ -80,7 +80,18 @@
               </template>
             </v-list-item>
           </v-card>
-
+          <v-card flat border rounded="lg" class="mb-6">
+            <v-card-title class="text-h6 font-weight-bold">
+              外送地圖（示意）
+            </v-card-title>
+            <v-card-text>
+              <DeliveryMap
+                  :driver-position="courierPosition"
+                  :customer-position="customerPosition"
+                  :restaurant-positions="restaurantPositions"
+              />
+            </v-card-text>
+          </v-card>
           <v-card flat border rounded="lg" class="mb-6">
             <v-card-text class="pa-6">
               <v-row>
@@ -118,6 +129,16 @@
               </div>
             </v-card-text>
           </v-card>
+
+          <v-btn
+              color="primary"
+              block
+              size="large"
+              class="mt-4"
+              @click="navigateTo(`/chat/${orderId}`)"
+          >
+            <span class="text-h6 font-weight-bold">聯絡外送員</span>
+          </v-btn>
 
           <v-btn
               :color="currentStep === 1 ? 'error' : 'success'"
@@ -165,7 +186,9 @@
 
 <script setup lang="ts">
 import { useUserStore } from '@stores/user';
+import { useOrderTracking } from '@app/composable/useOrderTracking';
 
+type LatLng = [number, number]
 const steps = ref([
   { id: 1, title: '沒人接QAQ' },
   { id: 2, title: '準備中' },
@@ -185,7 +208,15 @@ const orderId = route.params.id as string;
 const userStore = useUserStore();
 
 const isUpdating = ref(false);
-const isConfirmDialogVisible = ref(false);
+
+// const courierStartPosition = ref<LatLng>([25.152, 121.770])
+// const courierPosition = ref<LatLng | null>(courierStartPosition.value)
+// const customerPosition = ref<LatLng>([25.1508, 121.7730])
+// const restaurantPositions = ref<LatLng[]>([
+//   [25.155, 121.775],
+//   [25.148, 121.770],
+// ])
+const isConfirmDialogVisible = ref(false); 
 
 const { data: orderResponse, pending, error } = await useFetch(
     `/api/orders/${orderId}`,
@@ -198,6 +229,31 @@ const { data: orderResponse, pending, error } = await useFetch(
 );
 
 const orderData = ref(orderResponse.value);
+const toLatLng = (location?: { lat?: number; lng?: number } | null): LatLng | null => {
+  if (!location) return null
+  if (typeof location.lat === 'number' && typeof location.lng === 'number') {
+    return [location.lat, location.lng]
+  }
+  return null
+}
+const customerPosition = computed<LatLng | null>(() => toLatLng(orderData.value?.deliveryInfo?.location))
+const restaurantPositions = computed<LatLng[]>(() => {
+  if (!orderData.value?.items) return []
+  const seen = new Set<string>()
+  const positions: LatLng[] = []
+  orderData.value.items.forEach((item: any) => {
+    const loc = toLatLng(item.restaurant?.location)
+    if (loc) {
+      const key = loc.join(',')
+      if (!seen.has(key)) {
+        seen.add(key)
+        positions.push(loc)
+      }
+    }
+  })
+  return positions
+})
+const { driverPosition: courierPosition } = useOrderTracking(orderId)
 if (orderData.value && orderData.value.deliveryPerson && orderData.value.customerStatus === 'preparing') {
   isUpdating.value = true;
   try {
@@ -292,8 +348,8 @@ const cancelOrder = async () => {
 };
 
 const markAsReceived = async () => {
+  
   if (currentStep.value >= 3) return;
-
   isUpdating.value = true;
   try {
     const response: any = await $fetch(

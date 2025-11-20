@@ -3,42 +3,47 @@
     <v-row justify="center">
       <v-col cols="12" md="10" lg="8">
         <div v-if="pending" key="loading" class="text-center pa-10">
-          <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+          <v-progress-circular
+            indeterminate
+            color="primary"
+            size="64"
+          ></v-progress-circular>
           <p class="text-h6 mt-4">正在載入任務資訊...</p>
         </div>
 
         <v-alert
-            v-else-if="error || !orderData"
-            key="error"
-            type="error"
-            title="載入失敗"
-            text="無法讀取訂單資訊，請稍後再試或檢查訂單 ID。"
-            variant="outlined"
-            prominent
-            class="mt-10"
+          v-else-if="error || !orderData"
+          key="error"
+          type="error"
+          title="載入失敗"
+          text="無法讀取訂單資訊，請稍後再試或檢查訂單 ID。"
+          variant="outlined"
+          prominent
+          class="mt-10"
         ></v-alert>
 
         <template v-else key="content">
           <div class="text-center mt-4 mb-8">
             <h1 class="text-h3 font-weight-bold mb-2">外送任務詳情</h1>
-            <p class="text-h6 text-medium-emphasis">
-              請依據下列資訊完成配送
-            </p>
+            <p class="text-h6 text-medium-emphasis">請依據下列資訊完成配送</p>
           </div>
 
-          <v-stepper
-              v-model="currentStep"
-              alt-labels
-              flat
-              class="my-10"
-          >
+          <v-stepper v-model="currentStep" alt-labels flat class="my-10">
             <v-stepper-header>
               <template v-for="(step, index) in steps" :key="step.id">
                 <v-stepper-item
-                    :title="step.title"
-                    :value="step.id"
-                    :complete="step.id < currentStep || currentStep === 4"
-                    :color="currentStep === 4 ? 'success' : (step.id === currentStep) ? 'primary' : (step.id < currentStep ? 'success' : undefined)"
+                  :title="step.title"
+                  :value="step.id"
+                  :complete="step.id < currentStep || currentStep === 4"
+                  :color="
+                    currentStep === 4
+                      ? 'success'
+                      : step.id === currentStep
+                      ? 'primary'
+                      : step.id < currentStep
+                      ? 'success'
+                      : undefined
+                  "
                 >
                 </v-stepper-item>
                 <v-divider v-if="index < steps.length - 1"></v-divider>
@@ -46,32 +51,39 @@
             </v-stepper-header>
           </v-stepper>
 
-          <template v-for="(restaurant, index) in restaurantsWithItems" :key="restaurant.id">
+          <template
+            v-for="(restaurant, index) in restaurantsWithItems"
+            :key="restaurant.id"
+          >
             <v-card flat border rounded="lg" class="mb-6">
               <v-card-title class="d-flex align-center bg-blue-grey-lighten-5">
                 <v-icon color="info" start>mdi-store-outline</v-icon>
-                <span class="text-h6 font-weight-bold">取餐點 {{ index + 1 }}：{{ restaurant.name }}</span>
+                <span class="text-h6 font-weight-bold"
+                  >取餐點 {{ index + 1 }}：{{ restaurant.name }}</span
+                >
               </v-card-title>
 
               <v-list class="py-0">
                 <v-list-item
-                    :title="restaurant.address || '地址未提供'"
-                    subtitle="餐廳地址"
+                  :title="restaurant.address || '地址未提供'"
+                  subtitle="餐廳地址"
                 >
                 </v-list-item>
                 <v-divider inset></v-divider>
-                <v-list-item
-                    :title="restaurant.phone"
-                    subtitle="餐廳電話"
-                >
+                <v-list-item :title="restaurant.phone" subtitle="餐廳電話">
                 </v-list-item>
               </v-list>
 
               <v-divider></v-divider>
 
               <v-card-text>
-                <h3 class="text-subtitle-1 font-weight-bold mb-2">取餐品項：</h3>
-                <div v-for="(item, itemIndex) in restaurant.items" :key="item._id">
+                <h3 class="text-subtitle-1 font-weight-bold mb-2">
+                  取餐品項：
+                </h3>
+                <div
+                  v-for="(item, itemIndex) in restaurant.items"
+                  :key="item._id"
+                >
                   <v-row class="py-2 align-center">
                     <v-col cols="8">
                       <div class="text-body-1 font-weight-medium">
@@ -79,12 +91,12 @@
                       </div>
                     </v-col>
                     <v-col cols="4" class="text-right">
-                      <div class="text-body-1">
-                        x {{ item.quantity }}
-                      </div>
+                      <div class="text-body-1">x {{ item.quantity }}</div>
                     </v-col>
                   </v-row>
-                  <v-divider v-if="itemIndex < restaurant.items.length - 1"></v-divider>
+                  <v-divider
+                    v-if="itemIndex < restaurant.items.length - 1"
+                  ></v-divider>
                 </div>
               </v-card-text>
             </v-card>
@@ -97,33 +109,47 @@
             <v-divider></v-divider>
             <v-list class="py-0">
               <v-list-item
-                  :title="orderData.deliveryInfo.address"
-                  subtitle="外送地址"
+                :title="orderData.deliveryInfo.address"
+                subtitle="外送地址"
               >
               </v-list-item>
               <v-divider inset></v-divider>
               <v-list-item
-                  :title="orderData.deliveryInfo.contactName"
-                  subtitle="顧客暱稱"
+                :title="orderData.deliveryInfo.contactName"
+                subtitle="顧客暱稱"
               ></v-list-item>
               <v-divider inset></v-divider>
               <v-list-item
-                  :title="orderData.deliveryInfo.contactPhone"
-                  subtitle="顧客電話"
+                :title="orderData.deliveryInfo.contactPhone"
+                subtitle="顧客電話"
               >
               </v-list-item>
               <v-divider v-if="orderData.deliveryInfo.note" inset></v-divider>
               <v-list-item
-                  v-if="orderData.deliveryInfo.note"
-                  :title="orderData.deliveryInfo.note"
-                  subtitle="顧客備註"
+                v-if="orderData.deliveryInfo.note"
+                :title="orderData.deliveryInfo.note"
+                subtitle="顧客備註"
               ></v-list-item>
             </v-list>
+          </v-card>
+          <v-card flat border rounded="lg" class="mb-6">
+            <v-card-title class="text-h6 font-weight-bold">
+              外送地圖（示意）
+            </v-card-title>
+            <v-card-text>
+              <DeliveryMap
+                :driver-position="courierPosition"
+                :customer-position="customerPosition"
+                :restaurant-positions="restaurantPositions"
+              />
+            </v-card-text>
           </v-card>
 
           <v-card flat border rounded="lg" class="mb-6">
             <v-card-text class="pa-5">
-              <div class="text-h6 font-weight-bold d-flex justify-space-between">
+              <div
+                class="text-h6 font-weight-bold d-flex justify-space-between"
+              >
                 <span>外送費</span>
                 <span>${{ orderData.deliveryFee }}</span>
               </div>
@@ -131,13 +157,23 @@
           </v-card>
 
           <v-btn
-              :color="actionButtonColor"
-              block
-              size="x-large"
-              class="mt-4"
-              :disabled="isActionDisabled"
-              :loading="isUpdating"
-              @click="openConfirmDialog"
+            color="primary"
+            block
+            size="large"
+            class="mt-4"
+            @click="navigateTo(`/chat/${orderId}`)"
+          >
+            <span class="text-h6 font-weight-bold">聯絡顧客</span>
+          </v-btn>
+
+          <v-btn
+            :color="actionButtonColor"
+            block
+            size="x-large"
+            class="mt-4"
+            :disabled="isActionDisabled"
+            :loading="isUpdating"
+            @click="openConfirmDialog"
           >
             <span class="text-h6 font-weight-bold">
               {{ actionButtonText }}
@@ -155,15 +191,15 @@
               <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn
-                    text="取消"
-                    :disabled="isUpdating"
-                    @click="isConfirmDialogVisible = false"
+                  text="取消"
+                  :disabled="isUpdating"
+                  @click="isConfirmDialogVisible = false"
                 ></v-btn>
                 <v-btn
-                    :color="actionButtonColor"
-                    text="確認"
-                    :loading="isUpdating"
-                    @click="updateDeliveryStatus"
+                  :color="actionButtonColor"
+                  text="確認"
+                  :loading="isUpdating"
+                  @click="updateDeliveryStatus"
                 ></v-btn>
               </v-card-actions>
             </v-card>
@@ -175,20 +211,24 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '@stores/user';
+import { useUserStore } from "@stores/user";
+import DeliveryMap from "@/components/DeliveryMap.vue";
+import { useOrderTracking } from "@app/composable/useOrderTracking";
+
+type LatLng = [number, number];
 
 const steps = ref([
-  { id: 1, title: '準備中' },
-  { id: 2, title: '配送中' },
-  { id: 3, title: '已送達' },
-  { id: 4, title: '已完成' },
+  { id: 1, title: "準備中" },
+  { id: 2, title: "配送中" },
+  { id: 3, title: "已送達" },
+  { id: 4, title: "已完成" },
 ]);
 
 const deliveryStatusToStepMap: Record<string, number> = {
-  'preparing': 1,
-  'on_the_way': 2,
-  'delivered': 3,
-  'completed': 4,
+  preparing: 1,
+  on_the_way: 2,
+  delivered: 3,
+  completed: 4,
 };
 
 const route = useRoute();
@@ -197,18 +237,105 @@ const userStore = useUserStore();
 const isUpdating = ref(false);
 const isConfirmDialogVisible = ref(false);
 
-const { data: orderResponse, pending, error } = await useFetch(
-    `/api/orders/${orderId}`,
-    {
-      transform: (response: any) => response.data,
-      headers: {
-        'Authorization': `Bearer ${userStore.token}`
-      }
-    }
-);
+const {
+  data: orderResponse,
+  pending,
+  error,
+} = await useFetch(`/api/orders/${orderId}`, {
+  transform: (response: any) => response.data,
+  headers: {
+    Authorization: `Bearer ${userStore.token}`,
+  },
+});
 
 const orderData = ref(orderResponse.value);
+const toLatLng = (
+  location?: { lat?: number; lng?: number } | null
+): LatLng | null => {
+  if (!location) return null;
+  if (typeof location.lat === "number" && typeof location.lng === "number") {
+    return [location.lat, location.lng];
+  }
+  return null;
+};
+const customerPosition = computed<LatLng | null>(() =>
+  toLatLng(orderData.value?.deliveryInfo?.location)
+);
+const restaurantPositions = computed<LatLng[]>(() => {
+  if (!orderData.value?.items) return [];
+  const seen = new Set<string>();
+  const positions: LatLng[] = [];
+  orderData.value.items.forEach((item: any) => {
+    const loc = toLatLng(item.restaurant?.location);
+    if (loc) {
+      const key = loc.join(",");
+      if (!seen.has(key)) {
+        seen.add(key);
+        positions.push(loc);
+      }
+    }
+  });
+  return positions;
+});
+const {
+  driverPosition: courierPosition,
+  sendLocation,
+  disconnect: stopTrackingSocket,
+} = useOrderTracking(orderId);
+const geolocationWatchId = ref<number | null>(null);
+const shouldShareLocation = computed(
+  () =>
+    userStore.currentRole === "delivery" &&
+    orderData.value?.deliveryPerson?._id === userStore.info?.id
+);
 
+const startSharingLocation = () => {
+  if (
+    typeof window === "undefined" ||
+    typeof navigator === "undefined" ||
+    !navigator.geolocation
+  ) {
+    return;
+  }
+  if (geolocationWatchId.value !== null) return;
+
+  geolocationWatchId.value = navigator.geolocation.watchPosition(
+    (position) => {
+      sendLocation(position.coords.latitude, position.coords.longitude);
+    },
+    (error) => {
+      console.error("Failed to retrieve courier location", error);
+    },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+  );
+};
+
+const stopSharingLocation = () => {
+  if (
+    typeof window === "undefined" ||
+    typeof navigator === "undefined" ||
+    !navigator.geolocation
+  ) {
+    geolocationWatchId.value = null;
+    return;
+  }
+  if (geolocationWatchId.value !== null) {
+    navigator.geolocation.clearWatch(geolocationWatchId.value);
+    geolocationWatchId.value = null;
+  }
+};
+
+watch(
+  shouldShareLocation,
+  (share) => {
+    if (share) {
+      startSharingLocation();
+    } else {
+      stopSharingLocation();
+    }
+  },
+  { immediate: true }
+);
 const currentStep = computed(() => {
   if (!orderData.value) return 1;
   return deliveryStatusToStepMap[orderData.value.deliveryStatus] || 1;
@@ -244,9 +371,9 @@ const restaurantsWithItems = computed(() => {
 const nextDeliveryStatus = computed(() => {
   switch (currentStep.value) {
     case 1:
-      return 'on_the_way';
+      return "on_the_way";
     case 2:
-      return 'delivered';
+      return "delivered";
     default:
       return null;
   }
@@ -255,26 +382,26 @@ const nextDeliveryStatus = computed(() => {
 const actionButtonText = computed(() => {
   switch (currentStep.value) {
     case 1:
-      return '已取餐';
+      return "已取餐";
     case 2:
-      return '已送達';
+      return "已送達";
     case 3:
-      return '等待顧客確認';
+      return "等待顧客確認";
     case 4:
-      return '已完成';
+      return "已完成";
     default:
-      return '狀態不明';
+      return "狀態不明";
   }
 });
 
 const actionButtonColor = computed(() => {
   switch (currentStep.value) {
     case 1:
-      return 'info';
+      return "info";
     case 2:
-      return 'success';
+      return "success";
     default:
-      return 'grey';
+      return "grey";
   }
 });
 
@@ -283,23 +410,23 @@ const isActionDisabled = computed(() => {
 });
 
 const dialogTitle = computed(() => {
-  if (nextDeliveryStatus.value === 'on_the_way') {
-    return '確認取餐？';
+  if (nextDeliveryStatus.value === "on_the_way") {
+    return "確認取餐？";
   }
-  if (nextDeliveryStatus.value === 'delivered') {
-    return '確認送達？';
+  if (nextDeliveryStatus.value === "delivered") {
+    return "確認送達？";
   }
-  return '確認';
+  return "確認";
 });
 
 const dialogText = computed(() => {
-  if (nextDeliveryStatus.value === 'on_the_way') {
-    return '按下確認後，系統將通知顧客您已前往取餐，請確認所有餐廳的餐點都已取齊！';
+  if (nextDeliveryStatus.value === "on_the_way") {
+    return "按下確認後，系統將通知顧客您已前往取餐，請確認所有餐廳的餐點都已取齊！";
   }
-  if (nextDeliveryStatus.value === 'delivered') {
-    return '按下確認後，將會通知顧客您已送達，請確認餐點有確實送到顧客手中！';
+  if (nextDeliveryStatus.value === "delivered") {
+    return "按下確認後，將會通知顧客您已送達，請確認餐點有確實送到顧客手中！";
   }
-  return '';
+  return "";
 });
 
 const openConfirmDialog = () => {
@@ -310,38 +437,38 @@ const openConfirmDialog = () => {
 const updateDeliveryStatus = async () => {
   if (!nextDeliveryStatus.value) return;
   const requestBody: { deliveryStatus: string; customerStatus?: string } = {
-    deliveryStatus: nextDeliveryStatus.value
+    deliveryStatus: nextDeliveryStatus.value,
   };
 
   isUpdating.value = true;
   try {
-    const response: any = await $fetch(
-        `/api/orders/${orderId}/status`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${userStore.token}`,
-            'Content-Type': 'application/json',
-          },
-          body: requestBody,
-        }
-    );
+    const response: any = await $fetch(`/api/orders/${orderId}/status`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${userStore.token}`,
+        "Content-Type": "application/json",
+      },
+      body: requestBody,
+    });
 
     if (response.success && orderData.value) {
       orderData.value.customerStatus = response.data.customerStatus;
       orderData.value.deliveryStatus = response.data.deliveryStatus;
     } else {
-      console.error('Failed to update status', response);
+      console.error("Failed to update status", response);
     }
   } catch (err) {
-    console.error('Error updating status', err);
+    console.error("Error updating status", err);
   } finally {
     isUpdating.value = false;
     isConfirmDialogVisible.value = false;
   }
 };
-
+onBeforeUnmount(() => {
+  stopSharingLocation();
+  stopTrackingSocket();
+});
 useHead({
-  title: '外送任務狀態',
+  title: "外送任務狀態",
 });
 </script>
