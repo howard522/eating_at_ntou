@@ -1,8 +1,6 @@
 // server/utils/parseForm.ts
 
-import { getGeocodeFromAddress } from "@server/utils/nominatim";
 import { uploadImageToImageBB } from "@server/utils/uploadImage";
-import type { UpdateRestaurantBody } from "@server/interfaces/restaurant.interface";
 
 /**
  * 解析表單欄位，將 JSON 字串轉換為物件、陣列或字串
@@ -23,38 +21,37 @@ export function parseFormField(field: string): any {
 }
 
 /**
- * 解析餐廳更新表單，處理圖片上傳與地理編碼
+ * 解析 multipart/form-data 表單資料，並處理圖片上傳
+ * 支援泛型 T 以符合不同的資料結構
  *
- * @param form 請求傳入的 multipart/form-data 表單資料
- * @returns 餐廳更新資料物件
+ * @param form 表單資料
+ * @returns 解析後的資料物件
  */
-export async function parseRestaurantForm(
+export async function parseForm<T extends Record<string, any>>(
     form: Awaited<ReturnType<typeof readMultipartFormData>>
-): Promise<UpdateRestaurantBody> {
-    const data: UpdateRestaurantBody = {};
+): Promise<T> {
+    const data: Partial<T> = {};
 
     for (const field of form ?? []) {
-        // 餐廳封面圖
-        if (field.name === "image" && typeof field.type === "string" && field.type.startsWith("image/")) {
+        // 圖片欄位要上傳到 ImgBB
+        if (field.name === "image" && field.type?.startsWith("image/")) {
             const imageURL = await uploadImageToImageBB({
                 type: field.type,
                 data: field.data,
+                filename: field.filename,
             });
+
             if (imageURL) {
-                data.image = imageURL;
+                data["image" as keyof T] = imageURL as any;
             }
+
             continue;
         }
 
         // 文字欄位
         let val = field.data.toString();
-        data[field.name as keyof UpdateRestaurantBody] = parseFormField(val);
+        data[field.name as keyof T] = parseFormField(val);
     }
 
-    // 自動地理編碼
-    if (data.address) {
-        data.locationGeo = await getGeocodeFromAddress(data.address);
-    }
-
-    return data;
+    return data as T;
 }

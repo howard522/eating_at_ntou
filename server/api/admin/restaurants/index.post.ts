@@ -1,7 +1,8 @@
 // server/api/admin/restaurants/index.post.ts
 
 import { createRestaurant } from "@server/services/restaurants.service";
-import { parseRestaurantForm } from "@server/utils/parseForm";
+import { getGeocodeFromAddress } from "@server/utils/nominatim";
+import { parseForm } from "@server/utils/parseForm";
 import type { CreateRestaurantBody } from "@server/interfaces/restaurant.interface";
 
 /**
@@ -79,7 +80,7 @@ import type { CreateRestaurantBody } from "@server/interfaces/restaurant.interfa
 
 export default defineEventHandler(async (event) => {
     const form = await readMultipartFormData(event);
-    const data = await parseRestaurantForm(form);
+    const data = await parseForm<CreateRestaurantBody>(form);
 
     // 檢查必填欄位
     if (!data.name || !data.address || !data.phone) {
@@ -89,8 +90,12 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const restaurant = await createRestaurant(data as CreateRestaurantBody);
+    // 自動地理編碼
+    data.locationGeo = await getGeocodeFromAddress(data.address);
 
+    const restaurant = await createRestaurant(data);
+
+    setResponseStatus(event, 201); // 201 Created
     return {
         success: true,
         restaurant,

@@ -1,9 +1,10 @@
 // server/interfaces/restaurant.interface.ts
 
+import type { Document, Types } from "mongoose";
 import type { IGeoPoint } from "@server/interfaces/geoPoint.interface";
 
 // 菜單項目介面
-export interface IMenuItem {
+export interface IMenuItem extends Document {
     name: string;
     price: number;
     image: string;
@@ -18,17 +19,20 @@ export interface IRestaurant {
     image: string;
     info: string;
     tags: string[];
-    menu: IMenuItem[];
+    menu: Types.DocumentArray<IMenuItem>;
     isActive: boolean;
     locationGeo?: IGeoPoint;
 }
 
-// 更新菜單項目用（新 API 用）
+// 新增菜單項目資料
+export type CreateMenuItemBody = Pick<IMenuItem, "name" | "price"> & Partial<Omit<IMenuItem, "name" | "price">>;
+
+// 更新菜單項目資料
 export type UpdateMenuItemBody = Partial<IMenuItem>;
 
-// 更新餐廳資訊用
-export type UpdateRestaurantBody = Partial<IRestaurant>;
-
-// 建立餐廳用
+// 新增餐廳資料
 export type CreateRestaurantBody = Pick<IRestaurant, "name" | "address" | "phone"> &
     Partial<Omit<IRestaurant, "name" | "address" | "phone">>;
+
+// 更新餐廳資料
+export type UpdateRestaurantBody = Partial<IRestaurant>;

@@ -13,7 +13,7 @@ const IMAGEBB_API_KEY = process.env.IMAGEBB_API_KEY || "";
 export async function uploadImageToImageBB(file: IImageFile): Promise<string | null> {
     const blob = new Blob([new Uint8Array(file.data)], { type: file.type ?? "image/jpeg" });
     const formData = new FormData();
-    formData.append("image", blob, file.filename ?? "upload.jpg");
+    formData.append("image", blob, file.filename ?? "image.jpg");
 
     const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMAGEBB_API_KEY}`, {
         method: "POST",

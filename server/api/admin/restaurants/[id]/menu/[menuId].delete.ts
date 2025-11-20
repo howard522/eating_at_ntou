@@ -1,7 +1,6 @@
 // server/api/admin/restaurants/[id]/menu/[menuId].delete.ts
 
-import { defineEventHandler, createError } from 'h3'
-import Restaurant from '@server/models/restaurant.model'
+import { deleteMenuItemById } from "@server/services/restaurants.service";
 
 /**
  * @openapi
@@ -9,8 +8,8 @@ import Restaurant from '@server/models/restaurant.model'
  *   delete:
  *     summary: 刪除指定餐廳的菜單項目
  *     description: |
- *       僅限管理員使用。  
- *       會從該餐廳的 `menu` 陣列中移除指定的項目。  
+ *       僅限管理員使用。
+ *       會從該餐廳的 `menu` 陣列中移除指定的項目。
  *       若該餐廳或菜單項目不存在，則回傳 404。
  *     tags:
  *       - Admin
@@ -55,30 +54,13 @@ import Restaurant from '@server/models/restaurant.model'
  *         description: 伺服器內部錯誤
  */
 export default defineEventHandler(async (event) => {
-    const restaurantId = event.context.params?.id as string
-    const menuId = event.context.params?.menuId as string
+    const restaurantId = getRouterParam(event, "id") as string;
+    const menuId = getRouterParam(event, "menuId") as string;
 
-    try {
-        const restaurant = await Restaurant.findById(restaurantId)
-        if (!restaurant)
-            throw createError({ statusCode: 404, message: 'Restaurant not found' })
+    await deleteMenuItemById(restaurantId, menuId);
 
-        const menuItem = restaurant.menu.id(menuId)
-        if (!menuItem)
-            throw createError({ statusCode: 404, message: 'Menu item not found' })
-
-        menuItem.deleteOne() // 從陣列中移除該項目
-        await restaurant.save()
-
-        return {
-            success: true,
-            message: 'Menu item deleted successfully',
-        }
-    } catch (err) {
-        console.error('Delete menu item failed:', err)
-        throw createError({
-            statusCode: 500,
-            message: 'Failed to delete menu item',
-        })
-    }
-})
+    return {
+        success: true,
+        message: "Menu item deleted successfully",
+    };
+});

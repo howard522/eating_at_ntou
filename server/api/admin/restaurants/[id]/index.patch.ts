@@ -1,7 +1,9 @@
 // server/api/admin/restaurants/[id]/index.patch.ts
 
 import { updateRestaurantById } from "@server/services/restaurants.service";
-import { parseRestaurantForm } from "@server/utils/parseForm";
+import { getGeocodeFromAddress } from "@server/utils/nominatim";
+import { parseForm } from "@server/utils/parseForm";
+import type { UpdateRestaurantBody } from "@server/interfaces/restaurant.interface";
 
 /**
  * @openapi
@@ -79,7 +81,12 @@ import { parseRestaurantForm } from "@server/utils/parseForm";
 export default defineEventHandler(async (event) => {
     const id = getRouterParam(event, "id") as string;
     const form = await readMultipartFormData(event);
-    const data = await parseRestaurantForm(form);
+    const data = await parseForm<UpdateRestaurantBody>(form);
+
+    // 自動地理編碼
+    if (data.address) {
+        data.locationGeo = await getGeocodeFromAddress(data.address);
+    }
 
     const restaurant = await updateRestaurantById(id, data);
 
