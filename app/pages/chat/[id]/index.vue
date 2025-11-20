@@ -6,10 +6,10 @@
                     <div
                         v-for="msg in messages"
                         :key="msg.id"
-                        :class="['message', msg.senderRole === 'customer' ? 'left' : 'right']"
+                        :class="['message', msg.senderRole === userStore.currentRole ? 'left' : 'right']"
                     >
-                        <p class="message-header" :class="msg.senderRole === 'customer' ? 'align-left' : 'align-right'">
-                            <span class="sender-role" :class="msg.senderRole">
+                        <p class="message-header" :class="msg.senderRole === userStore.currentRole ? 'align-left' : 'align-right'">
+                            <span class="sender-role" :class="msg.senderRole === userStore.currentRole ? 'left' : 'right'">
                                 {{ msg.senderRole === 'customer' ? '顧客' : '外送員' }}
                             </span>
                             <strong class="sender-name">{{ getSenderName(msg) }}</strong>
@@ -19,14 +19,17 @@
                     </div>
                 </div>
                 <div class="input-area">
-                    <v-text-field
+                    <v-combobox
                         v-model="newMessage"
+                        item-title="title"
+                        item-value="title"
                         label="輸入訊息"
-                        outlined
-                        dense
-                        class="message-input"
+                        variant="solo"
+                        prepend-inner-icon="mdi-message-text-outline"
+                        clearable
+                        style="max-width: 700px;"
                         @keydown.enter.prevent="handleSend"
-                    ></v-text-field>
+                    ></v-combobox>
                     <v-btn color="primary" class="send-button" @click="handleSend">送出</v-btn>
                 </div>
             </v-col>
@@ -100,11 +103,11 @@
     color: #ffffff;
 }
 
-.sender-role.customer {
+.sender-role.left {
     background-color: #42a5f5;
 }
 
-.sender-role.delivery {
+.sender-role.right {
     background-color: #7e57c2;
 }
 
@@ -129,14 +132,8 @@
 .input-area {
     display: flex;
     gap: 0.5rem;
-    align-items: center;
+    align-items: flex-start;
     margin-top: 1rem;
-}
-
-.message-input {
-    flex: 1;
-    background-color: #f5f5f5;
-    border-radius: 8px;
 }
 
 .send-button {
@@ -145,6 +142,8 @@
     color: #ffffff;
     font-weight: bold;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    height: 56px;
+    width: 80px;
 }
 
 .send-button:hover {
@@ -207,7 +206,7 @@ messages.value = history.value.map((msg: any) => ({
     senderRole: msg.senderRole,
     content: msg.content,
     timestamp: msg.timestamp,
-}));
+})).reverse();
 
 // 建立聊天室連線
 const { send, disconnect } = useChat(orderId, messages);
