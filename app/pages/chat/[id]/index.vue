@@ -2,6 +2,7 @@
     <v-container>
         <v-row justify="center">
             <v-col cols="12" md="8">
+                <v-btn @click="goBack" color="secondary" class="mb-4">返回上一頁</v-btn>
                 <div class="messages" ref="messagesContainer">
                     <div
                         v-for="msg in messages"
@@ -42,7 +43,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    max-height: 600px;
+    max-height: 550px;
     overflow-y: auto;
     padding: 1rem;
     background-color: #ffffff;
@@ -155,6 +156,7 @@
 import { useUserStore } from "@stores/user";
 import { useChat } from "@app/composable/useChat";
 
+const router = useRouter();
 const route = useRoute();
 const orderId = route.params.id as string;
 const userStore = useUserStore();
@@ -219,15 +221,20 @@ const messagesContainer = ref<HTMLElement | null>(null);
 
 // 捲到最底部
 function scrollToBottom() {
-    nextTick(() => {
-        if (messagesContainer.value) {
-            messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-        }
-    });
+        nextTick(() => {
+            if (messagesContainer.value) {
+                messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+            }
+        });
 }
 
 // 載入後捲到底
 onMounted(() => {
+    scrollToBottom();
+});
+
+// 若頁面被 keep-alive，啟用時也捲到底
+onActivated(() => {
     scrollToBottom();
 });
 
@@ -244,6 +251,11 @@ function handleSend() {
         newMessage.value = "";
         scrollToBottom();
     }
+}
+
+// 返回上一頁
+function goBack() {
+    router.back();
 }
 
 // 離開頁面時斷開連線
