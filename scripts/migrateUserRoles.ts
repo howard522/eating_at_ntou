@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-import connectDB from './db'
+import connectDB from '@server/utils/db'
 import User from '@server/models/user.model'
 import dotenv from 'dotenv'
 import mongoose from 'mongoose'
