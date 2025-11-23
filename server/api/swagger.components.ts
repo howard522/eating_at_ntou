@@ -168,6 +168,30 @@ export const components = {
                     content: { type: 'string' },
                     timestamp: { type: 'string', format: 'date-time' }
                 }
+            },
+            Review: {
+                type: 'object',
+                properties: {
+                    _id: { type: 'string' },
+                    user: {
+                        oneOf: [
+                            { type: 'string', description: 'User ID' },
+                            {
+                                type: 'object',
+                                properties: {
+                                    _id: { type: 'string' },
+                                    name: { type: 'string' },
+                                    img: { type: 'string' }
+                                }
+                            }
+                        ]
+                    },
+                    restaurant: { type: 'string', description: 'Restaurant ID' },
+                    rating: { type: 'number', minimum: 1, maximum: 5 },
+                    content: { type: 'string' },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    updatedAt: { type: 'string', format: 'date-time' }
+                }
             }
 
         },
