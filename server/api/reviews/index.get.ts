@@ -25,11 +25,11 @@ import Review from '@server/models/review.model'
  *           default: newest
  *         description: "排序方式 (newest: 最新, highest: 最高分, lowest: 最低分)"
  *       - in: query
- *         name: page
+ *         name: skip
  *         schema:
  *           type: integer
- *           default: 1
- *         description: 頁碼
+ *           default: 0
+ *         description: 跳過筆數
  *       - in: query
  *         name: limit
  *         schema:
@@ -58,11 +58,9 @@ import Review from '@server/models/review.model'
  *                       properties:
  *                         total:
  *                           type: integer
- *                         page:
+ *                         skip:
  *                           type: integer
  *                         limit:
- *                           type: integer
- *                         pages:
  *                           type: integer
  *       400:
  *         description: 缺少餐廳 ID
@@ -71,7 +69,7 @@ export default defineEventHandler(async (event: H3Event) => {
     await connectDB()
     const query = getQuery(event)
     const restaurantId = query.restaurantId
-    const page = parseInt(query.page as string) || 1
+    const skip = parseInt(query.skip as string) || 0
     const limit = parseInt(query.limit as string) || 10
     const sort = query.sort as string || 'newest'
 
@@ -89,8 +87,6 @@ export default defineEventHandler(async (event: H3Event) => {
         sortOptions = { rating: 1, createdAt: -1 }
     }
 
-    const skip = (page - 1) * limit
-
     const total = await (Review as any).countDocuments({ restaurant: restaurantId })
     const reviews = await (Review as any).find({ restaurant: restaurantId })
         .populate('user', 'name img')
@@ -104,9 +100,8 @@ export default defineEventHandler(async (event: H3Event) => {
             items: reviews,
             pagination: {
                 total,
-                page,
-                limit,
-                pages: Math.ceil(total / limit)
+                skip,
+                limit
             }
         }
     }
