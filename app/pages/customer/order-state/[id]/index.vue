@@ -294,6 +294,8 @@ const deliver = computed(() => {
       statusText = '預計送達時間：' + new Date(orderData.value.arriveTime).toLocaleString();
     } else if (deliveryStatus === 'delivered') {
       statusText = '已送達指定地點';
+    } else if (deliveryStatus === 'completed') {
+      statusText = '訂單已完成';
     }
     return {
       name: `外送員：${orderData.value.deliveryPerson.name}`,
