@@ -30,6 +30,8 @@
                         clearable
                         style="max-width: 700px;"
                         @keydown.enter.prevent="handleSend"
+                        @compositionstart="isComposing = true"
+                        @compositionend="isComposing = false"
                     ></v-combobox>
                     <v-btn color="primary" class="send-button" @click="handleSend">送出</v-btn>
                 </div>
@@ -216,6 +218,9 @@ const { send, disconnect } = useChat(orderId, messages);
 // 輸入訊息的綁定變數
 const newMessage = ref("");
 
+// 跟踪是否正在組合輸入（中文輸入）
+const isComposing = ref(false);
+
 // 加入容器 ref 以控制捲動
 const messagesContainer = ref<HTMLElement | null>(null);
 
@@ -245,6 +250,7 @@ watch(() => messages.value.length, () => {
 
 // 發送訊息
 function handleSend() {
+    if (isComposing.value) return;
     const msg = newMessage.value.trim();
     if (msg) {
         send(msg);

@@ -163,6 +163,12 @@ watch(links, (newLinks) => {
     activeNav.value = '';
   }
 }, { immediate: true });
+
+onMounted(async () => {
+  if (role.value === 'customer') {
+    await cartStore.fetchCart();
+  }
+});
 </script>
 
 <style scoped>

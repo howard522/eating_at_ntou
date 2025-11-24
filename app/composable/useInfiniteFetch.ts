@@ -1,5 +1,6 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import debounce from 'lodash-es/debounce'
+import { useUserStore } from '@stores/user'
 
 // 使用範例請見 app/pages/customer/stores/index.vue
 interface UseInfiniteFetchOptions<T> {
@@ -23,6 +24,8 @@ export function useInfiniteFetch<T>(options: UseInfiniteFetchOptions<T>) {
         scrollDelay = 200,
         immediate = true
     } = options
+
+    const userStore = useUserStore()
 
     const allItems = ref<T[]>([])
     const offset = ref(0)
@@ -48,7 +51,11 @@ export function useInfiniteFetch<T>(options: UseInfiniteFetchOptions<T>) {
 
         try {
             const query = buildQuery(offset.value)
-            const response = await $fetch<{ data: T[]; count?: number }>(api, { query })
+            const headers: Record<string, string> = {}
+            if (userStore.token) {
+                headers.Authorization = `Bearer ${userStore.token}`
+            }
+            const response = await $fetch<{ data: T[]; count?: number }>(api, { query, headers })
             const items = response.data ?? []
 
             if (reset) {

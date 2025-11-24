@@ -33,7 +33,7 @@
         載入餐廳資料時發生錯誤，請稍後再試。
       </v-alert>
 
-      <v-row v-if="allStores.length > 0">
+      <v-row v-if="stores.length > 0">
         <v-col
             v-for="store in stores"
             :key="store._id"
@@ -61,24 +61,16 @@
 
 <script setup lang="ts">
 import debounce from 'lodash-es/debounce';
+import { useInfiniteFetch } from '~/composable/useInfiniteFetch';
 
 interface menuItem { _id: string; name: string; price: number; image: string; info: string; }
 interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; menu: menuItem[]; }
-interface apiResponse { success: boolean; data: store[]; count: number; }
 
 const searchTerm = ref('');
 const debouncedSearchTerm = ref<string>(searchTerm.value);
 const searchQuery = computed(() => debouncedSearchTerm.value.trim());
 
 const limit = 28;
-const offset = ref(0);
-const allStores = ref<store[]>([]);
-const loadingMore = ref(false);
-const hasMore = ref(true);
-const pending = ref(false);
-const error = ref<Error | null>(null);
-const stores = computed(() => allStores.value);
-
 const buildQuery = (skip: number) => ({
   address: '基隆市中正區北寧路2號',
   search: searchQuery.value,
@@ -86,59 +78,11 @@ const buildQuery = (skip: number) => ({
   skip,
 });
 
-const fetchStores = async (opts: { reset?: boolean } = {}) => {
-  const reset = !!opts.reset;
-  if (pending.value || loadingMore.value) return;
-
-  if (reset) {
-    hasMore.value = true;
-    offset.value = 0;
-    pending.value = true;
-  } else {
-    loadingMore.value = true;
-  }
-
-  error.value = null;
-
-  try {
-    const response = await $fetch<apiResponse>('/api/restaurants', {
-      query: buildQuery(reset ? 0 : offset.value + limit),
-    });
-
-    const items = response.data ?? [];
-
-    if (reset) {
-      allStores.value = items;
-      offset.value = 0;
-    } else {
-      allStores.value.push(...items);
-      offset.value += limit;
-    }
-
-    hasMore.value = items.length >= limit;
-  } catch (e) {
-    console.error('取得店家資料失敗:', e);
-    error.value = e;
-  } finally {
-    pending.value = false;
-    loadingMore.value = false;
-  }
-};
-
-const handleScroll = debounce(() => {
-  if (!hasMore.value || loadingMore.value) return;
-  const bottom = Math.ceil(window.innerHeight + window.pageYOffset);
-  const height = document.documentElement.scrollHeight;
-  if (bottom >= height - 100) {
-    fetchStores();
-  }
-}, 200);
-
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll);
-});
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll);
+const { items: stores, pending, loadingMore, error, fetchItems } = useInfiniteFetch<store>({
+  api: '/api/restaurants',
+  limit,
+  buildQuery,
+  immediate: true,
 });
 
 watch(searchTerm, debounce((newValue: string) => {
@@ -148,14 +92,10 @@ watch(searchTerm, debounce((newValue: string) => {
 watch(
     searchQuery,
     () => {
-      fetchStores({ reset: true });
+      fetchItems({ reset: true });
     },
     { immediate: true }
 );
-
-onActivated(() => {
-  fetchStores({ reset: true });
-});
 
 useHead({ title: '管理店家' });
 </script>
