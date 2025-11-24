@@ -1,6 +1,7 @@
 import { defineEventHandler, getQuery, createError, type H3Event } from 'h3'
 import connectDB from '@server/utils/db'
 import Review from '@server/models/review.model'
+import { count } from 'console'
 
 /**
  * @openapi
@@ -94,15 +95,23 @@ export default defineEventHandler(async (event: H3Event) => {
         .skip(skip)
         .limit(limit)
 
+    const data = reviews.map((review: any) => ({
+        _id: review._id,
+        restaurantId: review.restaurant,
+        user: {
+            _id: review.user?._id,
+            name: review.user?.name,
+            img: review.user?.img
+        },
+        rating: review.rating,
+        content: review.content,
+        createdAt: review.createdAt,
+        updatedAt: review.updatedAt
+    }))
+
     return {
         success: true,
-        data: {
-            items: reviews,
-            pagination: {
-                total,
-                skip,
-                limit
-            }
-        }
+        count: reviews.length,
+        data
     }
 })
