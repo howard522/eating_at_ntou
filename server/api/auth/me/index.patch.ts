@@ -31,7 +31,7 @@ import User from '@server/models/user.model'
 import { uploadImageToImageBB } from '@server/utils/imageUploader'
 
 export default defineEventHandler(async (event) => {
-  const me = await getUserFromEvent(event)
+  const me = await getUserFromEvent(event)// 取得目前使用者，11/15更新後會檔掉被封鎖的使用者
   await connectDB()
   const parts = await readMultipartFormData(event)
   if (!parts) {
@@ -43,8 +43,14 @@ export default defineEventHandler(async (event) => {
   for (const key of ['name', 'address', 'phone'] as const) {
     const part = parts.find(p => p.name === key && !p.filename)
     if (part?.data) {
-      const value = Buffer.from(part.data).toString('utf8').trim()
-      if (value.length) patch[key] = value
+      //判斷name是否為空字串，若不是才加入patch
+      if (key === 'name') {
+        const value = Buffer.from(part.data).toString('utf8').trim()
+        if (value.length) patch[key] = value
+      } else {
+        const value = Buffer.from(part.data).toString('utf8').trim()
+        if (value.length) patch[key] = value
+      }
     }
   }
 

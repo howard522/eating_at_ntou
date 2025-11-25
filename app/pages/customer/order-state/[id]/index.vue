@@ -80,7 +80,18 @@
               </template>
             </v-list-item>
           </v-card>
-
+          <v-card flat border rounded="lg" class="mb-6">
+            <v-card-title class="text-h6 font-weight-bold">
+              外送地圖（示意）
+            </v-card-title>
+            <v-card-text>
+              <DeliveryMap
+                  :driver-position="courierPosition"
+                  :customer-position="customerPosition"
+                  :restaurant-positions="restaurantPositions"
+              />
+            </v-card-text>
+          </v-card>
           <v-card flat border rounded="lg" class="mb-6">
             <v-card-text class="pa-6">
               <v-row>
@@ -120,16 +131,26 @@
           </v-card>
 
           <v-btn
-              color="success"
+              color="primary"
+              block
+              size="large"
+              class="mt-4"
+              @click="navigateTo(`/chat/${orderId}`)"
+          >
+            <span class="text-h6 font-weight-bold">聯絡外送員</span>
+          </v-btn>
+
+          <v-btn
+              :color="currentStep === 1 ? 'error' : 'success'"
               block
               size="x-large"
               class="mt-4"
               :disabled="currentStep >= 3 || isUpdating"
               :loading="isUpdating"
-              @click="openConfirmDialog"
+              @click="currentStep === 1 ? cancelOrder() : openConfirmDialog()"
           >
             <span class="text-h6 font-weight-bold">
-              {{ currentStep < 3 ? '我已收到餐點' : '已接收' }}
+              {{ currentStep === 1 ? '取消訂單' : (currentStep < 3 ? '我已收到餐點' : '已接收') }}
             </span>
           </v-btn>
 
@@ -165,10 +186,12 @@
 
 <script setup lang="ts">
 import { useUserStore } from '@stores/user';
+import { useOrderTracking } from '@app/composable/useOrderTracking';
 
+type LatLng = [number, number]
 const steps = ref([
-  { id: 1, title: '準備中' },
-  { id: 2, title: '在路上' },
+  { id: 1, title: '沒人接QAQ' },
+  { id: 2, title: '準備中' },
   { id: 3, title: '已接收' },
   { id: 4, title: '已完成' },
 ]);
@@ -185,7 +208,15 @@ const orderId = route.params.id as string;
 const userStore = useUserStore();
 
 const isUpdating = ref(false);
-const isConfirmDialogVisible = ref(false);
+
+// const courierStartPosition = ref<LatLng>([25.152, 121.770])
+// const courierPosition = ref<LatLng | null>(courierStartPosition.value)
+// const customerPosition = ref<LatLng>([25.1508, 121.7730])
+// const restaurantPositions = ref<LatLng[]>([
+//   [25.155, 121.775],
+//   [25.148, 121.770],
+// ])
+const isConfirmDialogVisible = ref(false); 
 
 const { data: orderResponse, pending, error } = await useFetch(
     `/api/orders/${orderId}`,
@@ -198,6 +229,31 @@ const { data: orderResponse, pending, error } = await useFetch(
 );
 
 const orderData = ref(orderResponse.value);
+const toLatLng = (location?: { lat?: number; lng?: number } | null): LatLng | null => {
+  if (!location) return null
+  if (typeof location.lat === 'number' && typeof location.lng === 'number') {
+    return [location.lat, location.lng]
+  }
+  return null
+}
+const customerPosition = computed<LatLng | null>(() => toLatLng(orderData.value?.deliveryInfo?.location))
+const restaurantPositions = computed<LatLng[]>(() => {
+  if (!orderData.value?.items) return []
+  const seen = new Set<string>()
+  const positions: LatLng[] = []
+  orderData.value.items.forEach((item: any) => {
+    const loc = toLatLng(item.restaurant?.location)
+    if (loc) {
+      const key = loc.join(',')
+      if (!seen.has(key)) {
+        seen.add(key)
+        positions.push(loc)
+      }
+    }
+  })
+  return positions
+})
+const { driverPosition: courierPosition } = useOrderTracking(orderId)
 if (orderData.value && orderData.value.deliveryPerson && orderData.value.customerStatus === 'preparing') {
   isUpdating.value = true;
   try {
@@ -238,6 +294,8 @@ const deliver = computed(() => {
       statusText = '預計送達時間：' + new Date(orderData.value.arriveTime).toLocaleString();
     } else if (deliveryStatus === 'delivered') {
       statusText = '已送達指定地點';
+    } else if (deliveryStatus === 'completed') {
+      statusText = '訂單已完成';
     }
     return {
       name: `外送員：${orderData.value.deliveryPerson.name}`,
@@ -259,9 +317,41 @@ const openConfirmDialog = () => {
   isConfirmDialogVisible.value = true;
 };
 
-const markAsReceived = async () => {
-  if (currentStep.value >= 3) return;
+const cancelOrder = async () => {
+  if (currentStep.value !== 1) return;
+  isUpdating.value = true;
+  try {
+    const response: any = await $fetch(
+      `/api/orders/${orderId}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${userStore.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: {
+          customerStatus: 'received',
+          deliveryStatus: 'delivered',
+        },
+      }
+    );
 
+    if (response.success && orderData.value) {
+      orderData.value.customerStatus = response.data.customerStatus;
+      orderData.value.deliveryStatus = response.data.deliveryStatus;
+    } else {
+      console.error('Failed to cancel order', response);
+    }
+  } catch (err) {
+    console.error('Error cancelling order', err);
+  } finally {
+    isUpdating.value = false;
+  }
+};
+
+const markAsReceived = async () => {
+  
+  if (currentStep.value >= 3) return;
   isUpdating.value = true;
   try {
     const response: any = await $fetch(

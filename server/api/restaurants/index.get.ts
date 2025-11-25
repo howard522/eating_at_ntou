@@ -95,7 +95,8 @@ export default defineEventHandler(async (event) => {
     limit = Math.min(limit, MAX_LIMIT);
     const skip = Number(query.skip) || 0;
 
-    const restaurants = await Restaurant.find(mongoQuery).skip(skip).limit(limit);
+    // 只回傳上架的餐廳
+    const restaurants = await Restaurant.find(Object.assign({}, mongoQuery, { isActive: true })).skip(skip).limit(limit);
     // 若帶 ?geocode=true，嘗試把沒有座標的餐廳更新到 DB（測試用）
     if (query.geocode === 'true') {
         for (const r of restaurants) {
@@ -117,8 +118,8 @@ export default defineEventHandler(async (event) => {
                 await sleep(1100);
             }
         }
-        // 重新抓一次包含更新後的資料
-        const updated = await Restaurant.find(mongoQuery).skip(skip).limit(limit);
+        // 重新抓一次包含更新後的資料（只取上架餐廳）
+        const updated = await Restaurant.find(Object.assign({}, mongoQuery, { isActive: true })).skip(skip).limit(limit);
         return {
             success: true,
             count: updated.length,

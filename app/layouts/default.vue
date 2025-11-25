@@ -1,8 +1,9 @@
 <template>
-  <v-app>
+  <AdLayout>
+    <v-app>
     <v-app-bar app color="white" flat border>
       <v-btn
-          to="/"
+          to="/introduction"
           variant="tonal"
           color="#27187E"
           class="font-weight-bold ml-2"
@@ -80,12 +81,24 @@
     <v-main style="background-color: #f1f2f6;">
       <slot />
     </v-main>
-  </v-app>
+
+    <!-- 全局 Snackbar -->
+    <v-snackbar v-model="snackbarStore.show" :color="snackbarStore.color" :timeout="snackbarStore.timeout">
+      {{ snackbarStore.text }}
+    </v-snackbar>
+
+    </v-app>
+  </AdLayout>
 </template>
 
 <script setup lang="ts">
+import AdLayout from './AdLayout.vue'
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
+import { useSnackbarStore } from '@utils/snackbar';
+import { useAdPopup } from '@composable/useAdPopup'
+
+const { showAd, closeAd } = useAdPopup()
 
 interface link {
   title: string;
@@ -103,6 +116,7 @@ provide('cartIconEl', fridgeIconEl);
 
 const cartStore = useCartStore();
 const userStore = useUserStore();
+const snackbarStore = useSnackbarStore();
 
 const role = computed(() => {
   if (userStore?.info?.role === 'admin') {
@@ -132,7 +146,7 @@ const links = computed<link[]>(() => {
     return [
       { title: '管理店家', to: '/admin/stores', value: 'admin-stores' },
       { title: '查看訂單', to: '/admin/orders', value: 'admin-orders' },
-      { title: '管理會員', to: '/admin/accounts', value: 'admin-accounts' },
+      { title: '管理會員', to: '/admin/users', value: 'admin-users' },
     ];
   }
   else {
@@ -149,6 +163,12 @@ watch(links, (newLinks) => {
     activeNav.value = '';
   }
 }, { immediate: true });
+
+onMounted(async () => {
+  if (role.value === 'customer') {
+    await cartStore.fetchCart();
+  }
+});
 </script>
 
 <style scoped>

@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
     password: { type: String, required: true },
-    role: { type: String, enum: ["admin", "multi"], default: "multi" },
+    role: { type: String, enum: ["admin", "multi", "banned"], default: "multi" },
     img: { type: String, default: "" },
     address: { type: String, default: "" },
     phone: { type: String, default: "" },

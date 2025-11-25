@@ -23,6 +23,7 @@ export const components = {
                     tags: { type: 'array', items: { type: 'string' } },
                     menu: { type: 'array', items: { $ref: '#/components/schemas/MenuItem' } }
                     ,
+                    isActive: { type: 'boolean', description: '是否上架/營業（預設 true）', example: true, default: true },
                     locationGeo: {
                         type: 'object',
                         description: 'GeoJSON Point: { type: "Point", coordinates: [lon, lat] }',
@@ -118,7 +119,8 @@ export const components = {
                             id: { type: 'string' },
                             name: { type: 'string' }
                             ,
-                            phone: { type: 'string' }
+                            phone: { type: 'string' },
+                            address: { type: 'string' }
                         }
                     }
                 }
@@ -152,6 +154,41 @@ export const components = {
                         type: 'string',
                         enum: ['preparing', 'on_the_way', 'delivered', 'completed']
                     },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    updatedAt: { type: 'string', format: 'date-time' }
+                }
+            },
+            ChatMessage: {
+                type: 'object',
+                properties: {
+                    _id: { type: 'string' },
+                    order: { type: 'string' },
+                    sender: { $ref: '#/components/schemas/UserPublic' },
+                    senderRole: { type: 'string', enum: ['customer', 'delivery'] },
+                    content: { type: 'string' },
+                    timestamp: { type: 'string', format: 'date-time' }
+                }
+            },
+            Review: {
+                type: 'object',
+                properties: {
+                    _id: { type: 'string' },
+                    user: {
+                        oneOf: [
+                            { type: 'string', description: 'User ID' },
+                            {
+                                type: 'object',
+                                properties: {
+                                    _id: { type: 'string' },
+                                    name: { type: 'string' },
+                                    img: { type: 'string' }
+                                }
+                            }
+                        ]
+                    },
+                    restaurant: { type: 'string', description: 'Restaurant ID' },
+                    rating: { type: 'number', minimum: 1, maximum: 5 },
+                    content: { type: 'string' },
                     createdAt: { type: 'string', format: 'date-time' },
                     updatedAt: { type: 'string', format: 'date-time' }
                 }

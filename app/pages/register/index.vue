@@ -88,12 +88,7 @@
               </v-btn>
             </v-form>
 
-            <!-- Snackbar 提示 -->
-            <v-snackbar v-model="snack.show" :color="snack.color" timeout="2500">
-              {{ snack.text }}
-            </v-snackbar>
-
-            <div class="text-center mt-3">
+                        <div class="text-center mt-3">
               <NuxtLink to="/login" class="text-primary text-body-2">已有帳號？前往登入</NuxtLink>
             </div>
           </v-card-text>
@@ -105,6 +100,7 @@
 
 <script setup lang="ts">
 import { useUserStore } from '@stores/user'
+import { useSnackbarStore } from '@utils/snackbar'
 
 const router = useRouter()
 const formRef = ref()
@@ -113,13 +109,7 @@ const loading = ref(false)
 const showPwd = ref(false)
 
 const userStore = useUserStore()
-
-// snackbar 狀態
-const snack = reactive({
-  show: false,
-  text: '',
-  color: 'success' as 'success' | 'error'
-})
+const snackbarStore = useSnackbarStore()
 
 const formData = ref({
   name: '',
@@ -167,9 +157,7 @@ async function onSubmit() {
       imageFile.value,
     )
 
-    snack.text = '註冊成功，請登入'
-    snack.color = 'success'
-    snack.show = true
+    snackbarStore.showSnackbar('註冊成功，請登入', 'success')
     setTimeout(() => router.push('/login'), 600)
   } catch (err: any) {
     let msg = err?.message || err?.data?.message || '註冊失敗，請稍後再試'
@@ -180,9 +168,7 @@ async function onSubmit() {
       msg = '註冊失敗，該電子郵件已被註冊'
     }
     console.error(err)
-    snack.text = msg
-    snack.color = 'error'
-    snack.show = true
+    snackbarStore.showSnackbar(msg, 'error')
   } finally {
     loading.value = false
   }

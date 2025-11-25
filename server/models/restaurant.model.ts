@@ -15,7 +15,14 @@ const restaurantSchema = new mongoose.Schema({
     image: String,
     info: String,
     tags: [String],
-    menu: [menuItemSchema]
+    menu: [menuItemSchema],
+
+    // status: 營業狀態
+    isActive: {
+        type: Boolean,
+        default: true, // 預設上架中
+        index: true,   // 常用查詢 index
+    },
 })
 
 // GeoJSON location for geospatial queries. Keep separate to avoid breaking existing code.

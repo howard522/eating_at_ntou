@@ -12,6 +12,7 @@ export default defineNuxtConfig({
   css: [
     'vuetify/styles',
     '@mdi/font/css/materialdesignicons.min.css',
+    'leaflet/dist/leaflet.css'
   ],
   plugins: ['~/plugins/vuetify.ts', '~/plugins/fetch-auth.ts'],
   devServer: {
@@ -26,5 +27,13 @@ export default defineNuxtConfig({
     '@stores': path.resolve(__dirname, './stores'),
     '@app': path.resolve(__dirname, './app'),
     '@server': path.resolve(__dirname, './server'),
+    '@utils': path.resolve(__dirname, './app/utils'),
+    '@composable': path.resolve(__dirname, './app/composable'),
+    '@types': path.resolve(__dirname, './app/types')
   },
+  nitro: {
+    experimental: {
+        websocket: true
+    }
+  }
 })

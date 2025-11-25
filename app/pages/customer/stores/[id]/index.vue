@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!--圖片區-->
     <v-img
       :src="store?.image"
       height="400px"
@@ -19,7 +18,6 @@
       </template>
     </v-img>
 
-    <!--懸浮資訊卡-->
     <v-container class="px-4">
       <v-card
         class="info-card mx-auto px-6 py-5"
@@ -37,35 +35,47 @@
           <v-icon class="mr-2" color="grey-darken-1">mdi-phone-outline</v-icon>
           <span>{{ store?.phone }}</span>
         </div>
+
+        <v-divider class="my-4"></v-divider>
+        <v-btn
+          block
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-comment-text-outline"
+          :to="`/customer/stores/${storeId}/reviews`"
+          height="45"
+        >
+          查看評論 / 撰寫評論
+        </v-btn>
+
       </v-card>
     </v-container>
 
-    <!--菜單內容-->
     <v-container class="menu-info pt-0 mt-n10">
       <h2 class="text-h4 font-weight-bold mb-4">菜單</h2>
 
       <v-row>
         <v-col
-            v-for="item in store?.menu"
-            :key="item._id"
-            cols="12"
-            sm="6"
-            md="4"
-            lg="4"
-            class = "pa-2"
+          v-for="item in store?.menu"
+          :key="item._id"
+          cols="12"
+          sm="6"
+          md="4"
+          lg="4"
+          class = "pa-2"
         >
           <MenuItemCard
-              :item="item"
-              @open-add-dialog="openDialog"
+            :item="item"
+            @open-add-dialog="openDialog"
           />
         </v-col>
       </v-row>
     </v-container>
 
     <AddToCartDialog
-        v-model="isDialogOpen"
-        :item="selectedItem"
-        @add-to-cart="handleAddToCart"
+      v-model="isDialogOpen"
+      :item="selectedItem"
+      @add-to-cart="handleAddToCart"
     />
   </div>
 </template>
@@ -111,15 +121,15 @@ const openDialog = (item: MenuItem) => {
 
 const handleAddToCart = (payload: { item, quantity: number }) => {
   cartStore.addItem(
-      {
-        menuItemId: payload.item._id,
-        name: payload.item.name,
-        price: payload.item.price,
-        image: payload.item.image,
-        info: payload.item.info
-      },
-      payload.quantity,
-      { id: store.value._id, name: store.value.name }
+    {
+      menuItemId: payload.item._id,
+      name: payload.item.name,
+      price: payload.item.price,
+      image: payload.item.image,
+      info: payload.item.info
+    },
+    payload.quantity,
+    { id: store.value._id, name: store.value.name }
   );
 };
 
@@ -131,7 +141,7 @@ useHead({
 <style scoped>
 .position-relative {
   position: relative;
-  
+
 }
 
 .info-card {

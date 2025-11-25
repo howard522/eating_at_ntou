@@ -65,6 +65,7 @@ export default defineEventHandler(async (event) => {
   if (!user) throw createError({ statusCode: 401, statusMessage: '帳號不存在' })
   const isMatch = await bcrypt.compare(password, user.password)
   if (!isMatch) throw createError({ statusCode: 401, statusMessage: '密碼錯誤' })
+  if (user.role === 'banned') throw createError({ statusCode: 403, statusMessage: '帳號已被封鎖' })
   const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' })
   return {
     success: true,
