@@ -1,9 +1,11 @@
 // server/api/restaurants/near.get.ts
 
-import Restaurant from '@server/models/restaurant.model'
-import connectDB from '@server/utils/db';
-import { getQuery } from 'h3'
-import { geocodeAddress } from '@server/utils/nominatim';
+import {
+    getRestaurantsByQuery,
+    updateRestaurantGeocodeById,
+    searchRestaurantsNearByAddress,
+} from "@server/services/restaurants.service";
+import { parseInteger } from "@server/utils/parseNumber";
 
 /**
  * @openapi
@@ -68,103 +70,44 @@ import { geocodeAddress } from '@server/utils/nominatim';
  *                             description: 距離（公尺）
  */
 export default defineEventHandler(async (event) => {
-    await connectDB();
-    const q = getQuery(event);
-    const address = (q.address as string) || '';
-    const raw = (q.search as string) || '';
-    if (!address) {
-        return { success: false, message: 'address query parameter is required' };
-    }
-    const center = await geocodeAddress(address);
-    if (!center) {
-        return { success: false, message: 'unable to geocode provided address' };
-    }
-    const lat = center.lat;
-    const lon = center.lon;
+    // 防止過長造成效能問題
+    const DEFAULT_LIMIT = 50;
+    const MAX_LIMIT = 100;
 
-    let limit = Number(q.limit) || 20;
-    const skip = Number(q.skip) || 0;
-    const maxDistance = q.maxDistance ? Number(q.maxDistance) : undefined; // meters
+    const query = getQuery(event);
+    const address = query.address?.toString() ?? "";
+    const search = query.search?.toString() ?? "";
 
-    // 搜尋參數：支援 "phrase" 精準片語與一般空白拆詞
-    const MAX_TERMS = 5;
-    const MAX_TERM_LEN = 50;
-    const phraseMatches: string[] = [];
-    const phraseRegex = /"([^"]+)"/g;
-    let m: RegExpExecArray | null;
-    while ((m = phraseRegex.exec(raw)) !== null) {
-        phraseMatches.push(m[1].trim());
-    }
-    const withoutPhrases = raw.replace(phraseRegex, ' ');
-    const terms = withoutPhrases.split(/\s+/).map(t => t.trim()).filter(Boolean).slice(0, MAX_TERMS);
-    const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-    // 如果有關鍵字，準備 $or regex 條件並附加到 $geoNear.query
-    const orClauses: any[] = [];
-    for (const t of terms) {
-        const term = t.substring(0, MAX_TERM_LEN);
-        const re = new RegExp(escapeRegex(term), 'i');
-        orClauses.push({ name: { $regex: re } });
-        orClauses.push({ info: { $regex: re } });
-        orClauses.push({ address: { $regex: re } });
-        orClauses.push({ 'menu.name': { $regex: re } });
-        orClauses.push({ tags: { $regex: re } });
-        orClauses.push({ phone: { $regex: re } });
-    }
-    for (const p of phraseMatches.slice(0, MAX_TERMS)) {
-        const phrase = p.substring(0, MAX_TERM_LEN);
-        const reP = new RegExp(escapeRegex(phrase), 'i');
-        orClauses.push({ name: { $regex: reP } });
-        orClauses.push({ info: { $regex: reP } });
-        orClauses.push({ address: { $regex: reP } });
-        orClauses.push({ 'menu.name': { $regex: reP } });
-        orClauses.push({ tags: { $regex: reP } });
-        orClauses.push({ phone: { $regex: reP } });
-    }
-
-    // First, try to find nearby using aggregation with $geoNear
-    const geoNearStage: any = {
-        $geoNear: {
-            near: { type: 'Point', coordinates: [lon, lat] },
-            distanceField: 'distance',
-            spherical: true,
-            distanceMultiplier: 1, // distance in meters when using $geoNear with meters depends on coords
-        }
-    };
-    if (typeof maxDistance === 'number' && !Number.isNaN(maxDistance)) {
-        geoNearStage.$geoNear.maxDistance = maxDistance;
-    }
-
-    // 如果有關鍵字條件，將它附加在 $geoNear.query，讓地理搜尋同時做關鍵字過濾
-    if (orClauses.length > 0) {
-        geoNearStage.$geoNear.query = Object.assign({}, { $or: orClauses }, { isActive: true });
-    }
+    // 分頁參數
+    const limit = parseInteger(query.limit, DEFAULT_LIMIT, 1, MAX_LIMIT);
+    const skip = parseInteger(query.skip, 0, 0);
+    const maxDistance = query.maxDistance ? Number(query.maxDistance) : undefined; // meters
 
     // Attempt aggregation. But before that, ensure that documents missing locationGeo are attempted geocode-once.
     // We'll find a small set of restaurants that have no locationGeo and try to geocode them (best-effort, limited to 20 per request)
-    const missing = await Restaurant.find(Object.assign({}, { $or: [{ locationGeo: { $exists: false } }, { 'locationGeo.coordinates': { $exists: false } }, { 'locationGeo.coordinates': null }] }, { isActive: true })).limit(20);
-    for (const r of missing) {
-        if (r.address) {
-            try {
-                const coords = await geocodeAddress(r.address);
-                if (coords) {
-                    // update locationGeo only
-                    const lonv = coords.lon;
-                    const latv = coords.lat;
-                    await Restaurant.findByIdAndUpdate(r._id, { $set: { locationGeo: { type: 'Point', coordinates: [lonv, latv] } } });
-                }
-            } catch (e) {
-                // ignore
-            }
+    const missing = await getRestaurantsByQuery(
+        {
+            $or: [
+                { locationGeo: { $exists: false } },
+                { "locationGeo.coordinates": { $exists: false } },
+                { "locationGeo.coordinates": null },
+            ],
+            isActive: true,
+        },
+        {
+            limit: limit,
         }
-    }
+    );
 
-    const pipeline: any[] = [geoNearStage, { $skip: skip }, { $limit: limit }];
-    const results = await Restaurant.aggregate(pipeline);
+    missing.forEach(async (r) => {
+        await updateRestaurantGeocodeById(r._id.toString());
+    });
+
+    const results = await searchRestaurantsNearByAddress(address, search, true, { limit, skip, maxDistance });
 
     return {
         success: true,
         count: results.length,
-        data: results
-    }
+        data: results,
+    };
 });

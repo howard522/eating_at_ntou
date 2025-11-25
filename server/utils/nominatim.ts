@@ -4,6 +4,7 @@ import type { IGeoPoint } from "@server/interfaces/geoPoint.interface";
 
 import geoCache from "@server/models/geoCache.model";
 import KeelongAddressMap from "@server/models/KeelongAddressMap";
+
 export function normalizeAddress(addr: string): string {
     if (!addr) return addr;
     let s = addr.trim();
@@ -101,7 +102,7 @@ export async function geocodeAddress(address: string) {
  * @param address 地址字串
  * @returns 經緯度資料或 undefined（若無法取得）
  */
-export async function getGeocodeFromAddress(address: string): Promise<IGeoPoint | undefined> {
+export async function getGeocodeFromAddress(address: string): Promise<IGeoPoint | null> {
     try {
         const coords = await geocodeAddress(address);
         if (coords) {
@@ -113,6 +114,8 @@ export async function getGeocodeFromAddress(address: string): Promise<IGeoPoint 
     } catch (err) {
         console.error("Geocoding failed:", err);
     }
+
+    return null;
 }
 
 export function sleep(ms: number) {

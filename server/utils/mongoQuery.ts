@@ -7,6 +7,9 @@ const escapeRegex = (text: string) => {
     return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
+// 支援 "phrase" 精準片語的正則表達式
+const phraseRegex = /"([^"]+)"/g;
+
 /**
  * 根據搜尋字串建立 MongoDB 查詢物件
  *
@@ -26,8 +29,17 @@ export function buildRestaurantSearchQuery(
     const MAX_TERMS = options?.maxTerms ?? 5;
     const MAX_TERM_LEN = options?.maxTermLength ?? 50;
 
+    // 先抽出精準片語
+    const phrases: string[] = [];
+    let m: RegExpExecArray | null;
+
+    while ((m = phraseRegex.exec(search)) !== null) {
+        if (m[1]) phrases.push(m[1].trim().slice(0, MAX_TERM_LEN));
+    }
+
     // 以空白拆詞（支援多個關鍵字），並限制數量與長度
     const terms = search
+        .replace(phraseRegex, " ")
         .trim()
         .split(/\s+/)
         .map((t) => t.trim().slice(0, MAX_TERM_LEN))
@@ -35,23 +47,37 @@ export function buildRestaurantSearchQuery(
         .slice(0, MAX_TERMS);
 
     // 若沒有關鍵字，回傳空查詢
-    if (terms.length === 0) {
+    if (terms.length === 0 && phrases.length === 0) {
         return {};
     }
 
     // 若任一關鍵字符合即可：把每個欄位的 match 都放入同一個 $or，
     // 使用者輸入多個關鍵字時，任何一個詞匹配就會被回傳。
-    const orClauses = terms.flatMap((term) => {
-        const re = new RegExp(escapeRegex(term), "i");
-        return [
-            { name: { $regex: re } },
-            { info: { $regex: re } },
-            { address: { $regex: re } },
-            { "menu.name": { $regex: re } },
-            // { tags: { $regex: re } },
-            // { phone: { $regex: re } },
-        ];
-    });
+    const orClauses = terms
+        .flatMap((term) => {
+            const re = new RegExp(escapeRegex(term), "i");
+            return [
+                { name: { $regex: re } },
+                { info: { $regex: re } },
+                { address: { $regex: re } },
+                { "menu.name": { $regex: re } },
+                { tags: { $regex: re } },
+                { phone: { $regex: re } },
+            ];
+        })
+        .concat(
+            phrases.flatMap((phrase) => {
+                const re = new RegExp(escapeRegex(phrase), "i");
+                return [
+                    { name: { $regex: re } },
+                    { info: { $regex: re } },
+                    { address: { $regex: re } },
+                    { "menu.name": { $regex: re } },
+                    { tags: { $regex: re } },
+                    { phone: { $regex: re } },
+                ];
+            })
+        );
 
     return { $or: orClauses };
 }

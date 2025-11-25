@@ -2,7 +2,7 @@
 
 import Restaurant from "@server/models/restaurant.model";
 import { cleanObject } from "@server/utils/cleanObject";
-import type { FilterQuery } from "mongoose";
+import type { FilterQuery, PipelineStage } from "mongoose";
 import type {
     CreateMenuItemBody,
     CreateRestaurantBody,
@@ -11,6 +11,8 @@ import type {
     UpdateMenuItemBody,
     UpdateRestaurantBody,
 } from "@server/interfaces/restaurant.interface";
+import { buildRestaurantSearchQuery } from "@server/utils/mongoQuery";
+import { getGeocodeFromAddress, sleep, validateGeocode } from "@server/utils/nominatim";
 
 /**
  * 新增餐廳
@@ -65,6 +67,97 @@ export async function getRestaurantsByQuery(
 }
 
 /**
+ * 透過提供的關鍵字搜尋餐廳，支援分頁
+ *
+ * @param search 關鍵字搜尋字串
+ * @param isActive 是否只搜尋上架的餐廳，預設為 true
+ * @param options.limit 最大回傳筆數（預設 50）
+ * @param options.skip 跳過筆數（預設 0）
+ */
+export async function searchRestaurants(
+    search: string,
+    isActive: boolean,
+    options?: { limit?: number; skip?: number }
+) {
+    const limit = options?.limit ?? 50;
+    const skip = options?.skip ?? 0;
+    const maxTerms = 5;
+    const maxTermLength = 50;
+
+    isActive ??= true; // 預設只搜尋上架的餐廳
+
+    // 關鍵字查詢條件
+    const mongoQuery = buildRestaurantSearchQuery(search, { maxTerms, maxTermLength });
+    mongoQuery.isActive = isActive;
+    const restaurants = await getRestaurantsByQuery(mongoQuery, { limit, skip });
+
+    return restaurants;
+}
+
+/**
+ * 透過提供的地址、關鍵字等條件搜尋餐廳，支援分頁
+ *
+ * @param address 地址字串，用於地理編碼
+ * @param search 關鍵字搜尋字串
+ * @param isActive 是否只搜尋上架的餐廳，預設為 true
+ * @param options.limit 最大回傳筆數（預設 50）
+ * @param options.skip 跳過筆數（預設 0）
+ * @param options.maxDistance 最大搜尋距離（公尺），選填
+ * @returns 符合條件的餐廳列表，包含 distance 欄位（單位：公尺）
+ */
+export async function searchRestaurantsNearByAddress(
+    address: string,
+    search: string,
+    isActive: boolean,
+    options?: { limit?: number; skip?: number; maxDistance?: number }
+) {
+    const limit = options?.limit ?? 50;
+    const skip = options?.skip ?? 0;
+    const maxDistance = options?.maxDistance;
+    const maxTerms = 5;
+    const maxTermLength = 50;
+
+    isActive ??= true; // 預設只搜尋上架的餐廳
+
+    const geocode = await getGeocodeFromAddress(address);
+
+    if (!geocode) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Failed to geocode the provided address",
+        });
+    }
+
+    // 關鍵字查詢條件
+    const mongoQuery = buildRestaurantSearchQuery(search, { maxTerms, maxTermLength });
+    mongoQuery.isActive = isActive;
+
+    // First, try to find nearby using aggregation with $geoNear
+    const geoNearStage: PipelineStage = {
+        $geoNear: {
+            near: geocode,
+            distanceField: "distance",
+            spherical: true,
+            distanceMultiplier: 1, // distance in meters when using $geoNear with meters depends on coords
+        },
+    };
+
+    if (Number.isFinite(maxDistance)) {
+        geoNearStage.$geoNear.maxDistance = maxDistance;
+    }
+
+    if (mongoQuery.$or?.length) {
+        geoNearStage.$geoNear.query = mongoQuery;
+    }
+
+    const pipeline: PipelineStage[] = [geoNearStage, { $skip: skip }, { $limit: limit }];
+
+    const results = await Restaurant.aggregate(pipeline);
+
+    return results;
+}
+
+/**
  * 更新指定的餐廳，會自動忽略 `null`、`undefined`、空字串、空陣列
  *
  * @param id 餐廳的 MongoDB ObjectId
@@ -86,6 +179,40 @@ export async function updateRestaurantById(id: string, data: UpdateRestaurantBod
             statusCode: 404,
             statusMessage: "Restaurant not found",
         });
+    }
+
+    return restaurant;
+}
+
+/**
+ * 更新指定餐廳的經緯度資料（若地址存在且經緯度無效）
+ *
+ * @param id 餐廳的 MongoDB ObjectId
+ * @returns 更新後的餐廳
+ */
+export async function updateRestaurantGeocodeById(id: string) {
+    const restaurant = await getRestaurantById(id);
+
+    if (!restaurant) {
+        throw createError({
+            statusCode: 404,
+            statusMessage: "Restaurant not found",
+        });
+    }
+
+    // 檢查是否需要更新經緯度
+    if (restaurant.address && !validateGeocode(restaurant.locationGeo)) {
+        try {
+            const geocode = await getGeocodeFromAddress(restaurant.address);
+            if (geocode) {
+                await restaurant.updateOne({ locationGeo: geocode });
+            }
+        } catch (e) {
+            // ignore individual errors
+            // console.error(e);
+        }
+        // 節流：Nominatim 建議每秒不要超過 1 次，這裡設 1.1 秒
+        await sleep(1100);
     }
 
     return restaurant;

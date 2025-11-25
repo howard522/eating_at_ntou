@@ -1,8 +1,7 @@
 // server/api/restaurants/index.get.ts
 
-import { getRestaurantsByQuery, updateRestaurantById } from "@server/services/restaurants.service";
-import { getGeocodeFromAddress, sleep, validateGeocode } from "@server/utils/nominatim";
-import { buildRestaurantSearchQuery } from "@server/utils/mongoQuery";
+import { searchRestaurants, updateRestaurantGeocodeById } from "@server/services/restaurants.service";
+import { parseInteger } from "@server/utils/parseNumber";
 
 /**
  * @openapi
@@ -58,47 +57,28 @@ import { buildRestaurantSearchQuery } from "@server/utils/mongoQuery";
  *                     $ref: '#/components/schemas/Restaurant'
  */
 export default defineEventHandler(async (event) => {
-    // 防止過長或過多關鍵字造成效能問題
-    const MAX_TERMS = 5;
-    const MAX_TERM_LEN = 50;
+    // 防止過長造成效能問題
     const DEFAULT_LIMIT = 50;
     const MAX_LIMIT = 100;
 
     const query = getQuery(event);
-    const raw_search = query.search?.toString() ?? "";
-
-    // MongoDB 查詢物件
-    const mongoQuery = buildRestaurantSearchQuery(raw_search, { maxTerms: MAX_TERMS, maxTermLength: MAX_TERM_LEN });
-    mongoQuery.isActive = true; // 只搜尋上架的餐廳
+    const search = query.search?.toString() ?? "";
 
     // 分頁參數
-    const limit = Math.min(Number(query.limit) ?? DEFAULT_LIMIT, MAX_LIMIT);
-    const skip = Number(query.skip) ?? 0;
+    const limit = parseInteger(query.limit, DEFAULT_LIMIT, 1, MAX_LIMIT);
+    const skip = parseInteger(query.skip, 0, 0);
 
     // 查詢餐廳
-    let restaurants = await getRestaurantsByQuery(mongoQuery, { limit, skip });
+    let restaurants = await searchRestaurants(search, true, { limit, skip });
 
     // 若帶 ?geocode=true，嘗試把沒有座標的餐廳更新到 DB（測試用）
     if (query.geocode === "true") {
-        for (const r of restaurants) {
-            // 檢查 locationGeo 是否存在或含 coordinates
-            if (r.address && !validateGeocode(r.locationGeo)) {
-                try {
-                    const geocode = await getGeocodeFromAddress(r.address);
-                    if (geocode) {
-                        await updateRestaurantById(r._id.toString(), { locationGeo: geocode });
-                    }
-                } catch (e) {
-                    // ignore individual errors, 繼續下個
-                    console.error(e);
-                }
-                // 節流：Nominatim 建議每秒不要超過 1 次，這裡設 1.1 秒
-                await sleep(1100);
-            }
-        }
+        restaurants.forEach(async (r) => {
+            await updateRestaurantGeocodeById(r._id.toString());
+        });
 
         // 重新抓一次包含更新後的資料（只取上架餐廳）
-        restaurants = await getRestaurantsByQuery(mongoQuery, { limit, skip });
+        restaurants = await searchRestaurants(search, true, { limit, skip });
     }
 
     return {

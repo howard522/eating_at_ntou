@@ -12,7 +12,7 @@ export interface IMenuItem extends Document {
 }
 
 // 餐廳介面
-export interface IRestaurant {
+export interface IRestaurant extends Document {
     name: string;
     address: string;
     phone: string;
