@@ -1,8 +1,9 @@
 <template>
-  <v-app>
+  <AdLayout>
+    <v-app>
     <v-app-bar app color="white" flat border>
       <v-btn
-          to="/"
+          to="/introduction"
           variant="tonal"
           color="#27187E"
           class="font-weight-bold ml-2"
@@ -37,30 +38,95 @@
 
       <v-spacer></v-spacer>
 
-      <v-btn icon to="/cart">
-        <v-icon>mdi-cart-outline</v-icon>
-      </v-btn>
+      <v-tooltip v-if="role === 'customer'" text="購物冰箱" location="bottom">
+        <template #activator="{ props: act }">
+          <v-btn
+            icon
+            to="/customer/cart"
+            v-bind="{ ...act, ref: setFridgeIcon }"
+          >
+            <v-badge
+                :content="cartStore.totalItemsCount"
+                :model-value="cartStore.totalItemsCount > 0"
+                color="red"
+                floating
+            >
+              <v-icon>mdi-fridge-outline</v-icon>
+            </v-badge>
+          </v-btn>
+        </template>
+      </v-tooltip>
 
-      <v-btn icon to="/profile" class="mr-2">
-        <v-icon>mdi-account-outline</v-icon>
-      </v-btn>
+      <v-tooltip v-if="role !== 'admin'" text="我的帳戶" location="bottom">
+        <template #activator="{ props }">
+          <v-btn icon to="/profile" v-bind="props" class="md-4 mr-8">
+            <v-icon>mdi-account-outline</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
+      <v-tooltip
+          v-else
+          text="登出"
+          location="bottom"
+      >
+        <template #activator="{ props }">
+          <v-btn icon v-bind="props" class="md-4 mr-8" @click="userStore.logout()" to="/login">
+            <v-icon>mdi-logout</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
+
     </v-app-bar>
 
     <v-main style="background-color: #f1f2f6;">
       <slot />
     </v-main>
-  </v-app>
+
+    <!-- 全局 Snackbar -->
+    <v-snackbar v-model="snackbarStore.show" :color="snackbarStore.color" :timeout="snackbarStore.timeout">
+      {{ snackbarStore.text }}
+    </v-snackbar>
+
+    </v-app>
+  </AdLayout>
 </template>
 
 <script setup lang="ts">
+import AdLayout from './AdLayout.vue'
+import { useCartStore } from '@stores/cart';
+import { useUserStore } from '@stores/user';
+import { useSnackbarStore } from '@utils/snackbar';
+import { useAdPopup } from '@composable/useAdPopup'
+
+const { showAd, closeAd } = useAdPopup()
+
 interface link {
   title: string;
   to: string;
   value: string;
 }
 
-// 未來會改用store判斷
-const role = ref<string>('customer');
+// 提供購物車圖示元素給 AddToCartDialog 使用 ---
+const fridgeIcon = ref<HTMLElement | null>(null);
+const setFridgeIcon = (el: any) => {
+  fridgeIcon.value = el?.$el || el || null;
+};
+const fridgeIconEl = computed(() => fridgeIcon.value?.$el || fridgeIcon.value);
+provide('cartIconEl', fridgeIconEl);
+
+const cartStore = useCartStore();
+const userStore = useUserStore();
+const snackbarStore = useSnackbarStore();
+
+const role = computed(() => {
+  if (userStore?.info?.role === 'admin') {
+    return 'admin';
+  }
+  if (userStore?.currentRole === 'delivery') {
+    return 'delivery';
+  }
+  return 'customer';
+});
 const activeNav = ref<string>('');
 const links = computed<link[]>(() => {
   if (role.value === 'customer')
@@ -80,7 +146,7 @@ const links = computed<link[]>(() => {
     return [
       { title: '管理店家', to: '/admin/stores', value: 'admin-stores' },
       { title: '查看訂單', to: '/admin/orders', value: 'admin-orders' },
-      { title: '管理會員', to: '/admin/accounts', value: 'admin-accounts' },
+      { title: '管理會員', to: '/admin/users', value: 'admin-users' },
     ];
   }
   else {
@@ -97,6 +163,12 @@ watch(links, (newLinks) => {
     activeNav.value = '';
   }
 }, { immediate: true });
+
+onMounted(async () => {
+  if (role.value === 'customer') {
+    await cartStore.fetchCart();
+  }
+});
 </script>
 
 <style scoped>
@@ -116,5 +188,23 @@ watch(links, (newLinks) => {
 
 .v-btn--active {
   background-color: #e0e0e0 !important;
+}
+
+.cart-shake {
+  animation: cart-shake-anim 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes cart-shake-anim {
+  0%   { transform: rotate(0deg) translateX(0); }
+  10%  { transform: rotate(-5deg) translateX(-1px); }
+  20%  { transform: rotate(4deg) translateX(2px); }
+  30%  { transform: rotate(-4deg) translateX(-3px); }
+  40%  { transform: rotate(3deg) translateX(3px); }
+  50%  { transform: rotate(-3deg) translateX(-3px); }
+  60%  { transform: rotate(2deg) translateX(2px); }
+  70%  { transform: rotate(-2deg) translateX(-1px); }
+  80%  { transform: rotate(1deg) translateX(1px); }
+  90%  { transform: rotate(-1deg) translateX(-1px); }
+  100% { transform: rotate(0deg) translateX(0); }
 }
 </style>

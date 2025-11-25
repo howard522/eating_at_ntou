@@ -26,7 +26,7 @@
       {{ name }}
     </v-card-title>
 
-    <v-card-subtitle class="">
+    <v-card-subtitle class="mt-1 mb-1 store-info-subtitle">
       {{ info }}
     </v-card-subtitle>
   </v-card>
@@ -57,6 +57,9 @@ defineProps({
 .store-card {
   transition: transform 0.3s ease !important;
   background-color: #FFFFFF !important;
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
 }
 
 .store-card:hover {
@@ -73,5 +76,15 @@ defineProps({
 
 .store-card:hover .store-image {
   transform: scale(1.05);
+}
+
+.store-info-subtitle {
+  min-height: 24px;
+  display: block;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 </style>

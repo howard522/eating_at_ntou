@@ -1,0 +1,177 @@
+import { defineEventHandler, readBody, createError } from 'h3'
+import connectDB from '@server/utils/db'
+import Order from '@server/models/order.model'
+import Cart from '@server/models/cart.model'
+import { clearUserCart } from '@server/utils/cart'
+import { assertNotBanned, getUserFromEvent } from '@server/utils/auth'
+import { geocodeAddress } from '@server/utils/nominatim'
+import { verifyJwtFromEvent } from '@server/utils/auth'
+
+
+/**
+ * @openapi
+ * /api/orders:
+ *   post:
+ *     summary: 建立新訂單
+ *     description: 根據購物車內容建立訂單，會自動補全菜單快照並計算外送費。
+ *     tags:
+ *       - Order
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               deliveryInfo:
+ *                 type: object
+ *                 properties:
+ *                   address: { type: string, example: "基隆市中正區OO路123號" }
+ *                   contactName: { type: string, example: "宋辰星" }
+ *                   contactPhone: { type: string, example: "0912-345-678" }
+ *                   note: { type: string, example: "麻煩幫我放門口～" }
+ *               deliveryFee:
+ *                 type: number
+ *                 example: 30
+ *                 description: 外送費（預設 0）
+ *               arriveTime:
+ *                 type: string
+ *                 format: date-time
+ *           example:
+ *             deliveryInfo:
+ *               address: "基隆市中正區OO路123號"
+ *               contactName: "宋辰星"
+ *               contactPhone: "0912-345-678"
+ *               note: "麻煩幫我放門口～"
+ *             deliveryFee: 30
+ *             arriveTime: "2024-08-01T12:30:00.000Z"
+ *     responses:
+ *       200:
+ *         description: 成功建立訂單
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 data: { $ref: '#/components/schemas/Order' }
+ *             example:
+ *               success: true
+ *               data:
+ *                 _id: "671c0c2f5c3b5a001276a7ff"
+ *                 total: 450
+ *                 deliveryFee: 30
+ *                 currency: "TWD"
+ *                 arriveTime: "2024-08-01T12:30:00.000Z"
+ *                 items:
+ *                   - name: "三杯雞"
+ *                     price: 220
+ *                     quantity: 1
+ *                     image: "https://example.com/meal.jpg"
+ *                     restaurant:
+ *                       id: "66f2426335e9054c99b316a0"
+ *                       name: "傑哥加長加長菜"
+ *                 deliveryInfo:
+ *                   address: "基隆市中正區OO路123號"
+ *                   contactName: "宋辰星"
+ *                   contactPhone: "0912-345-678"
+ *                   note: "麻煩幫我放門口～"
+ */
+
+export default defineEventHandler(async (event) => {
+    await connectDB()
+    // const payload = await verifyJwtFromEvent(event)
+    // const userId = payload.id
+    const user = await getUserFromEvent(event) // 取得目前使用者，11/15更新後會檔掉被封鎖的使用者
+    const userId = user._id
+    if (!userId) throw createError({ statusCode: 401, statusMessage: 'Invalid token payload' })
+    // 同時 populate 餐廳 phone & address，之後將這些欄位存入 order 的 snapshot
+    const cart = await Cart.findOne({ user: userId }).populate('items.restaurantId', 'name phone menu address locationGeo')
+    if (!cart || cart.items.length === 0) {
+        throw createError({ statusCode: 400, statusMessage: '購物車為空，無法建立訂單' })
+    }
+    if (cart.status !== 'open') {
+        throw createError({ statusCode: 400, statusMessage: '購物車狀態不正確，無法建立訂單' })
+    }
+
+    const restaurantGeoCache = new Map<string, { lat: number, lng: number }>()
+    const detailedItems = await Promise.all(cart.items.map(async (it: any) => {
+        const restaurant = it.restaurantId
+        const menuItem = restaurant?.menu?.find((m: any) => String(m._id) === String(it.menuItemId))
+        let restaurantLocation: { lat: number, lng: number } | null = null
+        const cacheKey = restaurant?._id?.toString() || restaurant?.address
+        if (cacheKey && restaurantGeoCache.has(cacheKey)) {
+            restaurantLocation = restaurantGeoCache.get(cacheKey) || null
+        } else {
+            if (Array.isArray(restaurant?.locationGeo?.coordinates) && restaurant.locationGeo.coordinates.length === 2) {
+                const [lon, lat] = restaurant.locationGeo.coordinates
+                restaurantLocation = { lat, lng: lon }
+            } else if (restaurant?.address) {
+                try {
+                    const coords = await geocodeAddress(restaurant.address)
+                    if (coords) {
+                        restaurantLocation = { lat: coords.lat, lng: coords.lon }
+                    }
+                } catch (err) {
+                    console.warn('Failed to geocode restaurant address', restaurant?.address, err)
+                }
+            }
+
+            if (cacheKey && restaurantLocation) {
+                restaurantGeoCache.set(cacheKey, restaurantLocation)
+            }
+        }
+
+        return {
+            menuItemId: it.menuItemId,
+            name: menuItem?.name || it.name,
+            image: menuItem?.image || null,
+            info: menuItem?.info || null,
+            price: menuItem?.price || it.price,
+            quantity: it.quantity,
+            restaurant: {
+                id: restaurant?._id,
+                name: restaurant?.name || '(未知餐廳)',
+                phone: restaurant?.phone || '',
+                address: restaurant?.address || '',
+                location: restaurantLocation || undefined,
+            },
+        }
+    }))
+
+    const body = await readBody(event)
+    const deliveryInfo = body.deliveryInfo || {}
+    const deliveryFee = typeof body.deliveryFee === 'number' && body.deliveryFee >= 0 ? body.deliveryFee : 0
+    const arriveTime = body.arriveTime || null
+    if (deliveryInfo.address) {
+        try {
+            const coords = await geocodeAddress(deliveryInfo.address)
+            if (coords) {
+                deliveryInfo.location = { lat: coords.lat, lng: coords.lon }
+            }
+        } catch (err) {
+            console.warn('Failed to geocode delivery address', deliveryInfo.address, err)
+        }
+    }
+    const newOrder = new Order({
+        user: userId,
+        items: detailedItems,
+        total: cart.total + deliveryFee,
+        deliveryFee,
+        arriveTime,
+        currency: cart.currency,
+        deliveryInfo,
+    })
+
+    await newOrder.save()
+
+    // 鎖定購物車，防止重複下單
+    cart.status = 'locked'
+    await cart.save()
+    // 清空使用者購物車
+    await clearUserCart(userId)
+
+    return { success: true, data: newOrder }
+})
