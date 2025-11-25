@@ -2,11 +2,15 @@
 
 import type { IGeoPoint } from "@server/interfaces/geoPoint.interface";
 
+import geoCache from "@server/models/geoCache.model";
+import KeelongAddressMap from "@server/models/KeelongAddressMap";
 export function normalizeAddress(addr: string): string {
     if (!addr) return addr;
     let s = addr.trim();
     // 將常見分隔符改成空白
     s = s.replace(/[，,、\/\\]+/g, " ");
+    // 去掉郵遞區號（3-5位數字開頭）
+    s = s.replace(/^\d{3,5}\s*/g, "");
     //71-7號 -> 71之7號
     s = s.replace(/(\d+)[\-\–](\d+)/g, "$1之$2");
     // 在常見地址後綴（市/區/路/街/段/巷/弄/號等）後面若接中文，通常插入空白。
@@ -50,6 +54,25 @@ export function normalizeAddress(addr: string): string {
 export async function geocodeAddress(address: string) {
     if (!address) return null;
     const q = normalizeAddress(address);
+
+    // 查 KeelongAddressMap，先去掉"基隆市"
+    // 正規化地址
+    const qWithoutKeelong = q.replace(/^基隆市\s*/, "");
+    const keelongEntry = await (KeelongAddressMap as any).findOne({ normalizedAddress: qWithoutKeelong });
+    if (keelongEntry) {
+        console.log("Geocode KeelongAddressMap hit for address:", qWithoutKeelong);
+        console.log("Found coordinates:", { lat: parseFloat(keelongEntry.lat), lon: parseFloat(keelongEntry.lon) });
+        return { lat: parseFloat(keelongEntry.lat), lon: parseFloat(keelongEntry.lon) };
+    }
+
+    // 先查 cache
+    const cached = await (geoCache as any).findOne({ address: q });
+    if (cached) {
+        console.log("Geocode cache hit for address:", q);
+        return { lat: cached.lat, lon: cached.lon };
+    }
+
+    // 查 Nominatim
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
     const res = await fetch(url, {
         headers: {
@@ -62,6 +85,13 @@ export async function geocodeAddress(address: string) {
     const data = await res.json();
     if (!Array.isArray(data) || data.length === 0) return null;
     const { lat, lon } = data[0];
+    // 存 cache
+    const geo = new (geoCache as any)({
+        address: q,
+        lat: parseFloat(lat),
+        lon: parseFloat(lon),
+    });
+    await geo.save();
     return { lat: parseFloat(lat), lon: parseFloat(lon) };
 }
 

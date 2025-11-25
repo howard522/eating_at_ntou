@@ -146,7 +146,7 @@ const links = computed<link[]>(() => {
     return [
       { title: '管理店家', to: '/admin/stores', value: 'admin-stores' },
       { title: '查看訂單', to: '/admin/orders', value: 'admin-orders' },
-      { title: '管理會員', to: '/admin/accounts', value: 'admin-accounts' },
+      { title: '管理會員', to: '/admin/users', value: 'admin-users' },
     ];
   }
   else {
@@ -163,6 +163,12 @@ watch(links, (newLinks) => {
     activeNav.value = '';
   }
 }, { immediate: true });
+
+onMounted(async () => {
+  if (role.value === 'customer') {
+    await cartStore.fetchCart();
+  }
+});
 </script>
 
 <style scoped>
