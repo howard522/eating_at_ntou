@@ -39,10 +39,7 @@ export async function getRestaurantById(id: string): Promise<IRestaurant> {
 
     // 找不到餐廳拋出 404 錯誤
     if (!restaurant) {
-        throw createError({
-            statusCode: 404,
-            statusMessage: "Restaurant not found",
-        });
+        throw createError({ statusCode: 404, message: "Restaurant not found" });
     }
 
     return restaurant;
@@ -129,10 +126,7 @@ export async function searchRestaurantsNearByAddress(
     const geocode = await getGeocodeFromAddress(address);
 
     if (!geocode) {
-        throw createError({
-            statusCode: 400,
-            statusMessage: "Failed to geocode the provided address",
-        });
+        throw createError({ statusCode: 400, message: "Failed to geocode the provided address" });
     }
 
     // 關鍵字查詢條件
@@ -186,10 +180,7 @@ export async function updateRestaurantById(id: string, data: UpdateRestaurantBod
     });
 
     if (!restaurant) {
-        throw createError({
-            statusCode: 404,
-            statusMessage: "Restaurant not found",
-        });
+        throw createError({ statusCode: 404, message: "Restaurant not found" });
     }
 
     return restaurant;
@@ -205,10 +196,7 @@ export async function updateRestaurantGeocodeById(id: string): Promise<IRestaura
     const restaurant = await getRestaurantById(id);
 
     if (!restaurant) {
-        throw createError({
-            statusCode: 404,
-            statusMessage: "Restaurant not found",
-        });
+        throw createError({ statusCode: 404, message: "Restaurant not found" });
     }
 
     // 檢查是否需要更新經緯度
@@ -240,10 +228,7 @@ export async function deleteRestaurantById(id: string): Promise<IRestaurant | nu
 
     // 找不到餐廳拋出 404 錯誤
     if (!restaurant) {
-        throw createError({
-            statusCode: 404,
-            statusMessage: "Restaurant not found",
-        });
+        throw createError({ statusCode: 404, message: "Restaurant not found" });
     }
 
     return restaurant;
@@ -281,10 +266,7 @@ export async function getMenuItemById(restaurantId: string, menuId: string): Pro
     const menuItem = restaurant.menu.id(menuId);
 
     if (!menuItem) {
-        throw createError({
-            statusCode: 404,
-            statusMessage: "Menu item not found",
-        });
+        throw createError({ statusCode: 404, message: "Menu item not found" });
     }
 
     return menuItem;
@@ -307,10 +289,7 @@ export async function updateMenuItemById(
     const menuItem = restaurant.menu.id(menuId);
 
     if (!menuItem) {
-        throw createError({
-            statusCode: 404,
-            statusMessage: "Menu item not found",
-        });
+        throw createError({ statusCode: 404, message: "Menu item not found" });
     }
 
     // 更新欄位
@@ -332,10 +311,7 @@ export async function deleteMenuItemById(restaurantId: string, menuId: string): 
     const menuItem = restaurant.menu.id(menuId);
 
     if (!menuItem) {
-        throw createError({
-            statusCode: 404,
-            statusMessage: "Menu item not found",
-        });
+        throw createError({ statusCode: 404, message: "Menu item not found" });
     }
 
     menuItem.deleteOne();

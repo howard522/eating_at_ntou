@@ -84,10 +84,7 @@ export default defineEventHandler(async (event) => {
 
     // 檢查必填欄位
     if (!data.name || !data.address || !data.phone) {
-        throw createError({
-            statusCode: 400,
-            message: "Missing required fields: name, address, phone",
-        });
+        throw createError({ statusCode: 400, message: "Missing required fields: name, address, phone" });
     }
 
     // 自動地理編碼
