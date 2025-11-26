@@ -1,10 +1,6 @@
 // server/api/restaurants/near.get.ts
 
-import {
-    getRestaurantsByQuery,
-    updateRestaurantGeocodeById,
-    searchRestaurantsNearByAddress,
-} from "@server/services/restaurants.service";
+import { searchRestaurantsNearByAddress } from "@server/services/restaurants.service";
 import { parseInteger } from "@server/utils/parseNumber";
 
 /**
@@ -82,26 +78,6 @@ export default defineEventHandler(async (event) => {
     const limit = parseInteger(query.limit, DEFAULT_LIMIT, 1, MAX_LIMIT);
     const skip = parseInteger(query.skip, 0, 0);
     const maxDistance = query.maxDistance ? Number(query.maxDistance) : undefined; // meters
-
-    // Attempt aggregation. But before that, ensure that documents missing locationGeo are attempted geocode-once.
-    // We'll find a small set of restaurants that have no locationGeo and try to geocode them (best-effort, limited to 20 per request)
-    const missing = await getRestaurantsByQuery(
-        {
-            $or: [
-                { locationGeo: { $exists: false } },
-                { "locationGeo.coordinates": { $exists: false } },
-                { "locationGeo.coordinates": null },
-            ],
-            isActive: true,
-        },
-        {
-            limit: limit,
-        }
-    );
-
-    missing.forEach(async (r) => {
-        await updateRestaurantGeocodeById(r._id.toString());
-    });
 
     const results = await searchRestaurantsNearByAddress(address, search, true, { limit, skip, maxDistance });
 

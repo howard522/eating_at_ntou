@@ -81,11 +81,19 @@ import type { UpdateRestaurantBody } from "@server/interfaces/restaurant.interfa
 export default defineEventHandler(async (event) => {
     const id = getRouterParam(event, "id") as string;
     const form = await readMultipartFormData(event);
-    const data = await parseForm<UpdateRestaurantBody>(form);
+    const data = await parseForm<UpdateRestaurantBody>(form, ["tags"]);
 
     // 自動地理編碼
     if (data.address) {
-        data.locationGeo = await getGeocodeFromAddress(data.address);
+        const geocode = await getGeocodeFromAddress(data.address);
+        if (geocode) {
+            data.locationGeo = geocode;
+        } else {
+            // 地址無法成功地理編碼
+            console.warn(`Geocoding failed for address: ${data.address}`);
+
+            throw createError({ statusCode: 400, message: "Bad Address for Geocoding" });
+        }
     }
 
     const restaurant = await updateRestaurantById(id, data);

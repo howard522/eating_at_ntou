@@ -1,6 +1,6 @@
 // server/api/restaurants/index.get.ts
 
-import { searchRestaurants, updateRestaurantGeocodeById } from "@server/services/restaurants.service";
+import { searchRestaurants } from "@server/services/restaurants.service";
 import { parseInteger } from "@server/utils/parseNumber";
 
 /**
@@ -32,13 +32,6 @@ import { parseInteger } from "@server/utils/parseNumber";
  *         description: 跳過筆數（用於分頁）
  *         schema:
  *           type: integer
- *       - name: geocode
- *         in: query
- *         description: |
- *           若為 true，將對回傳結果中沒有座標的餐廳呼叫 Nominatim 取得經緯度，並把結果寫回 DB（測試用途）。
- *           請務必提供可辨識的 User-Agent（email 或 domain），並注意速率限制（範例實作每次等待 1.1 秒）。
- *         schema:
- *           type: boolean
  *     responses:
  *       200:
  *         description: 成功回傳餐廳清單
@@ -69,17 +62,7 @@ export default defineEventHandler(async (event) => {
     const skip = parseInteger(query.skip, 0, 0);
 
     // 查詢餐廳
-    let restaurants = await searchRestaurants(search, true, { limit, skip });
-
-    // 若帶 ?geocode=true，嘗試把沒有座標的餐廳更新到 DB（測試用）
-    if (query.geocode === "true") {
-        restaurants.forEach(async (r) => {
-            await updateRestaurantGeocodeById(r._id.toString());
-        });
-
-        // 重新抓一次包含更新後的資料（只取上架餐廳）
-        restaurants = await searchRestaurants(search, true, { limit, skip });
-    }
+    const restaurants = await searchRestaurants(search, true, { limit, skip });
 
     return {
         success: true,

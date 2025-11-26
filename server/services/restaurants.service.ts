@@ -90,7 +90,12 @@ export async function searchRestaurants(
 
     // 關鍵字查詢條件
     const mongoQuery = buildRestaurantSearchQuery(search, { maxTerms, maxTermLength });
-    mongoQuery.isActive = isActive;
+
+    // 只搜尋上架的餐廳
+    if (isActive) {
+        mongoQuery.isActive = true;
+    }
+
     const restaurants = await getRestaurantsByQuery(mongoQuery, { limit, skip });
 
     return restaurants;
@@ -132,7 +137,11 @@ export async function searchRestaurantsNearByAddress(
 
     // 關鍵字查詢條件
     const mongoQuery = buildRestaurantSearchQuery(search, { maxTerms, maxTermLength });
-    mongoQuery.isActive = isActive;
+
+    // 只搜尋上架的餐廳
+    if (isActive) {
+        mongoQuery.isActive = true;
+    }
 
     // First, try to find nearby using aggregation with $geoNear
     const geoNearStage: PipelineStage = {

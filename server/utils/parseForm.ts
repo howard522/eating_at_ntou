@@ -25,10 +25,12 @@ export function parseFormField(field: string): any {
  * 支援泛型 T 以符合不同的資料結構
  *
  * @param form 表單資料
+ * @param fieldsNeedToSplit 需要以逗號分隔的欄位名稱陣列
  * @returns 解析後的資料物件
  */
 export async function parseForm<T extends Record<string, any>>(
-    form: Awaited<ReturnType<typeof readMultipartFormData>>
+    form: Awaited<ReturnType<typeof readMultipartFormData>>,
+    fieldsNeedToSplit: string[] = []
 ): Promise<T> {
     const data: Partial<T> = {};
 
@@ -49,8 +51,15 @@ export async function parseForm<T extends Record<string, any>>(
         }
 
         // 文字欄位
-        let val = field.data.toString();
-        data[field.name as keyof T] = parseFormField(val);
+        let val: string | any = field.data.toString();
+        val = parseFormField(val);
+
+        // 需要以逗號分隔的欄位
+        if (fieldsNeedToSplit.includes(field.name as string) && typeof val === "string") {
+            val = val.trim().split(",");
+        }
+
+        data[field.name as keyof T] = val;
     }
 
     return data as T;

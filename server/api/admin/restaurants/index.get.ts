@@ -1,8 +1,6 @@
 // server/api/admin/restaurants/index.get.ts
 
-import { getRestaurantsByQuery, updateRestaurantById } from "@server/services/restaurants.service";
-import { getGeocodeFromAddress, sleep, validateGeocode } from "@server/utils/nominatim";
-import { buildRestaurantSearchQuery } from "@server/utils/mongoQuery";
+import { searchRestaurants, updateRestaurantGeocodeById } from "@server/services/restaurants.service";
 
 /**
  * @openapi
@@ -33,12 +31,6 @@ import { buildRestaurantSearchQuery } from "@server/utils/mongoQuery";
  *         description: 跳過筆數（用於分頁）
  *         schema:
  *           type: integer
- *       - name: geocode
- *         in: query
- *         description: |
- *           若為 true，將對回傳結果中沒有座標的餐廳呼叫 Nominatim 取得經緯度，並把結果寫回 DB（測試用途）。
- *         schema:
- *           type: boolean
  *     responses:
  *       200:
  *         description: 成功回傳餐廳清單
@@ -57,42 +49,19 @@ import { buildRestaurantSearchQuery } from "@server/utils/mongoQuery";
  *                     $ref: '#/components/schemas/Restaurant'
  */
 export default defineEventHandler(async (event) => {
-    // 防止過長或過多關鍵字造成效能問題
-    const MAX_TERMS = 5;
-    const MAX_TERM_LEN = 50;
+    // 防止過長造成效能問題
     const DEFAULT_LIMIT = 50;
     const MAX_LIMIT = 100;
 
     const query = getQuery(event);
-    const raw_search = query.search?.toString() ?? "";
-
-    // MongoDB 查詢物件
-    const mongoQuery = buildRestaurantSearchQuery(raw_search, { maxTerms: MAX_TERMS, maxTermLength: MAX_TERM_LEN });
+    const search = (query.search as string) ?? "";
 
     // 分頁參數
-    const limit = Math.min(Number(query.limit) ?? DEFAULT_LIMIT, MAX_LIMIT);
-    const skip = Number(query.skip) ?? 0;
+    const limit = parseInteger(query.limit, DEFAULT_LIMIT, 1, MAX_LIMIT);
+    const skip = parseInteger(query.skip, 0, 0);
 
     // 此 admin endpoint 不過濾 isActive，會回傳上、下架資料
-    let restaurants = await getRestaurantsByQuery(mongoQuery, { limit, skip });
-
-    if (query.geocode === "true") {
-        for (const r of restaurants) {
-            if (r.address && !validateGeocode(r.locationGeo)) {
-                try {
-                    const geocode = await getGeocodeFromAddress(r.address);
-                    if (geocode) {
-                        await updateRestaurantById(r._id.toString(), { locationGeo: geocode });
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
-                await sleep(1100);
-            }
-        }
-
-        restaurants = await getRestaurantsByQuery(mongoQuery, { limit, skip });
-    }
+    let restaurants = await searchRestaurants(search, false, { limit, skip });
 
     return {
         success: true,

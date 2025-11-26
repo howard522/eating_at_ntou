@@ -80,7 +80,7 @@ import type { CreateRestaurantBody } from "@server/interfaces/restaurant.interfa
 
 export default defineEventHandler(async (event) => {
     const form = await readMultipartFormData(event);
-    const data = await parseForm<CreateRestaurantBody>(form);
+    const data = await parseForm<CreateRestaurantBody>(form, ["tags"]);
 
     // 檢查必填欄位
     if (!data.name || !data.address || !data.phone) {
@@ -91,7 +91,15 @@ export default defineEventHandler(async (event) => {
     }
 
     // 自動地理編碼
-    data.locationGeo = await getGeocodeFromAddress(data.address);
+    const geocode = await getGeocodeFromAddress(data.address);
+    if (geocode) {
+        data.locationGeo = geocode;
+    } else {
+        // 地址無法成功地理編碼
+        console.warn(`Geocoding failed for address: ${data.address}`);
+
+        throw createError({ statusCode: 400, message: "Bad Address for Geocoding" });
+    }
 
     const restaurant = await createRestaurant(data);
 
