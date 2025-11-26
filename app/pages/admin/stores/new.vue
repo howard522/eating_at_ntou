@@ -316,7 +316,6 @@ const getDefaultStore = (): Store => ({
 });
 
 const resetForm = () => {
-  cleanupPreviews();
   newStore.value = getDefaultStore();
   menuItems.value = [];
   imagePreviewUrl.value = undefined;
