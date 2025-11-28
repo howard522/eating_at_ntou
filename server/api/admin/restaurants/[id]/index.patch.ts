@@ -1,16 +1,18 @@
-// server/api/admin/restaurants/[id].patch.ts
-import { defineEventHandler, readMultipartFormData } from 'h3'
-import { updateRestaurantById } from '@server/utils/restaurant'
-import { geocodeAddress } from '@server/utils/nominatim'
-import type { UpdateRestaurantBody } from '@server/utils/types'
+// server/api/admin/restaurants/[id]/index.patch.ts
+
+import { updateRestaurantById } from "@server/services/restaurants.service";
+import { getGeocodeFromAddress } from "@server/utils/nominatim";
+import { parseForm } from "@server/utils/parseForm";
+import type { UpdateRestaurantBody } from "@server/interfaces/restaurant.interface";
+
 /**
  * @openapi
  * /api/admin/restaurants/{id}:
  *   patch:
  *     summary: 管理員更新指定餐廳資訊（自動地理編碼與圖片上傳）
- *     description: >
+ *     description: |
  *       僅限管理員使用，用於更新餐廳主體資料（不含菜單）。
- *       若傳入新的 `image` 圖片，系統會自動上傳至 Imgbb 並回傳圖片 URL。
+ *       若傳入新的 `image` 圖片，系統會自動上傳至 ImgBB 並回傳圖片 URL。
  *       若提供新的 `address`，系統會自動透過 Nominatim API 取得地理座標並更新 `locationGeo` 欄位。
  *     tags:
  *       - Admin
@@ -51,7 +53,7 @@ import type { UpdateRestaurantBody } from '@server/utils/types'
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: 餐廳封面圖檔（由後端自動上傳至 Imgbb）
+ *                 description: 餐廳封面圖檔（由後端自動上傳至 ImgBB）
  *     responses:
  *       200:
  *         description: 成功更新餐廳資料
@@ -76,55 +78,28 @@ import type { UpdateRestaurantBody } from '@server/utils/types'
  *       500:
  *         description: 伺服器內部錯誤
  */
-
-
 export default defineEventHandler(async (event) => {
-    const form = await readMultipartFormData(event)
-    const id = event.context.params?.id as string
-    const data: Partial<UpdateRestaurantBody> = {}
-
-    for (const field of form || []) {
-        // 餐廳封面圖
-        if (field.name === 'image' && typeof field.type === 'string' && field.type.startsWith('image/')) {
-            const blob = new Blob([new Uint8Array(field.data)], { type: field.type })
-            const formData = new FormData()
-            formData.append('image', blob, field.filename)
-
-            const res = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.IMAGEBB_API_KEY}`, {
-                method: 'POST',
-                body: formData
-            })
-            const json = await res.json()
-            if (json.success) data.image = json.data.url
-            continue
-        }
-
-        // 文字欄位
-        if (field.name) {
-            let val: any = field.data.toString()
-            if (val.trim().startsWith('{') || val.trim().startsWith('[')) {
-                try { val = JSON.parse(val) } catch { }
-            }
-            data[field.name as keyof UpdateRestaurantBody] = val
-        }
-    }
+    const id = getRouterParam(event, "id") as string;
+    const form = await readMultipartFormData(event);
+    const data = await parseForm<UpdateRestaurantBody>(form, ["tags"]);
 
     // 自動地理編碼
     if (data.address) {
-        try {
-            const coords = await geocodeAddress(data.address)
-            if (coords) {
-                data.locationGeo = {
-                    type: 'Point',
-                    coordinates: [coords.lon, coords.lat]
-                }
-            }
-        } catch (err) {
-            console.error('Geocoding failed:', err)
+        const geocode = await getGeocodeFromAddress(data.address);
+        if (geocode) {
+            data.locationGeo = geocode;
+        } else {
+            // 地址無法成功地理編碼
+            console.warn(`Geocoding failed for address: ${data.address}`);
+
+            throw createError({ statusCode: 400, message: "Bad Address for Geocoding" });
         }
     }
 
-    const updated = await updateRestaurantById(id, data)
-    if (!updated) throw new Error('Restaurant not found')
-    return { success: true, restaurant: updated }
-})
+    const restaurant = await updateRestaurantById(id, data);
+
+    return {
+        success: true,
+        restaurant,
+    };
+});
