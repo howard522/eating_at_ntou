@@ -25,14 +25,15 @@ export interface IRestaurant extends Document {
 }
 
 // 新增菜單項目資料
-export type CreateMenuItemBody = Pick<IMenuItem, "name" | "price"> & Partial<Omit<IMenuItem, "name" | "price">>;
+export type CreateMenuItemBody = Pick<IMenuItem, "name" | "price"> &
+    Partial<Omit<IMenuItem, "name" | "price">> & { imageURL?: string };
 
 // 更新菜單項目資料
-export type UpdateMenuItemBody = Partial<IMenuItem>;
+export type UpdateMenuItemBody = Partial<IMenuItem> & { imageURL?: string };
 
 // 新增餐廳資料
 export type CreateRestaurantBody = Pick<IRestaurant, "name" | "address" | "phone"> &
-    Partial<Omit<IRestaurant, "name" | "address" | "phone">>;
+    Partial<Omit<IRestaurant, "name" | "address" | "phone">> & { imageURL?: string };
 
 // 更新餐廳資料
-export type UpdateRestaurantBody = Partial<IRestaurant>;
+export type UpdateRestaurantBody = Partial<IRestaurant> & { imageURL?: string };
