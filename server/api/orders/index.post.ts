@@ -2,7 +2,7 @@ import { defineEventHandler, readBody, createError } from 'h3'
 import connectDB from '@server/utils/db'
 import Order from '@server/models/order.model'
 import Cart from '@server/models/cart.model'
-import { clearUserCart } from '@server/utils/cart'
+import { clearCartByUserId } from '@server/services/cart.service'
 import { assertNotBanned, getUserFromEvent } from '@server/utils/auth'
 import { geocodeAddress } from '@server/utils/nominatim'
 import { verifyJwtFromEvent } from '@server/utils/auth'
@@ -171,7 +171,7 @@ export default defineEventHandler(async (event) => {
     cart.status = 'locked'
     await cart.save()
     // 清空使用者購物車
-    await clearUserCart(userId)
+    await clearCartByUserId(userId)
 
     return { success: true, data: newOrder }
 })

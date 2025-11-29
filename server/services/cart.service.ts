@@ -4,7 +4,7 @@ import type { ObjectId } from "mongoose";
 import type { ICartResponse, ICartItemResponse } from "@server/interfaces/cart.interface";
 import type { IRestaurant } from "@server/interfaces/restaurant.interface";
 
-async function fineCartByUserId(userId: string | ObjectId) {
+async function findCartByUserId(userId: string | ObjectId) {
     const cart = await Cart.findOne({ user: userId });
 
     return cart;
@@ -13,11 +13,11 @@ async function fineCartByUserId(userId: string | ObjectId) {
 /**
  * 根據使用者 ID 獲取購物車
  *
- * @param userId - 使用者的 ID
+ * @param userId 使用者的 ID
  * @returns 購物車
  */
 export async function getCartByUserId(userId: string | ObjectId): Promise<ICartResponse | null> {
-    const cart = await fineCartByUserId(userId);
+    const cart = await findCartByUserId(userId);
 
     if (!cart) {
         return null;
@@ -67,17 +67,40 @@ export async function getCartByUserId(userId: string | ObjectId): Promise<ICartR
     return cartResponse;
 }
 
-// export async function createCart(userId: string, currency: string) {
-//     const cart = new Cart({
-//         user: userId,
-//         items: [],
-//         currency,
-//         total: 0,
-//         status: "open",
-//     });
+export async function updateCartByUserId(userId: string | ObjectId, items: any[]) {
+    if (!items.length) {
+        // return { success: false, message: 'items array required' }
+        // 允許清空購物車 好耶(2025/11/02)
+        await clearCartByUserId(userId);
+        return { items: [], total: 0, currency: "TWD" };
+    }
 
+    // Upsert cart for user
+    let cart = await findCartByUserId(userId);
+
+    if (!cart) {
+        // create new cart
+        cart = new Cart({ user: userId, items });
+    } else {
+        // if cart is locked, disallow modifications
+        if (cart.status === "locked") {
+            throw new Error("Cart is locked and cannot be modified");
+        }
+        // naive merge: replace items with provided
+        cart.items = items;
+    }
+    await cart.save();
+    return cart;
+}
+
+/**
+ * 根據使用者 ID 清空購物車
+ *
+ * @param userId 使用者的 ID
+ * @returns 清空後的購物車
+ */
 export async function clearCartByUserId(userId: string | ObjectId) {
-    const cart = await fineCartByUserId(userId);
+    const cart = await findCartByUserId(userId);
 
     if (!cart) {
         return null;

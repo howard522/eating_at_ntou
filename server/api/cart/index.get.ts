@@ -1,8 +1,5 @@
-import { defineEventHandler, createError } from 'h3'
-import connectDB from '@server/utils/db'
-import Cart from '@server/models/cart.model'
-import { verifyJwtFromEvent } from '@server/utils/auth'
-
+import { getCartByUserId } from "@server/services/cart.service";
+import { verifyJwtFromEvent } from "@server/utils/auth";
 
 /**
  * @openapi
@@ -111,48 +108,50 @@ import { verifyJwtFromEvent } from '@server/utils/auth'
  */
 
 export default defineEventHandler(async (event) => {
-    await connectDB()
-
     // Auth
-    const payload = await verifyJwtFromEvent(event)
-    const userId = payload.id
-    if (!userId) throw createError({ statusCode: 401, statusMessage: 'invalid token payload' })
+    const payload = await verifyJwtFromEvent(event);
+    const userId = payload.id;
+    if (!userId) throw createError({ statusCode: 401, statusMessage: "invalid token payload" });
 
-    const cart = await Cart.findOne({ user: userId }).populate('items.restaurantId', 'name menu')
+    const cart = await getCartByUserId(userId);
+
+    // const cart = await Cart.findOne({ user: userId }).populate("items.restaurantId", "name menu");
     if (!cart) {
-        return { success: true, data: { items: [], total: 0, currency: 'TWD' } }
+        return { success: true, data: { items: [], total: 0, currency: "TWD" } };
     }
-
-    const detailedItems = cart.items.map((it: any) => {
-        const restaurant = it.restaurantId
-        const menuItem = restaurant?.menu?.find(
-            (m: any) => String(m._id) === String(it.menuItemId)
-        )
-
-        return {
-            menuItemId: it.menuItemId?.toString(),
-            name: menuItem?.name || it.name,
-            price: menuItem?.price || it.price,
-            image: menuItem?.image || null,
-            info: menuItem?.info || null,
-            quantity: it.quantity,
-            restaurantId: restaurant?._id?.toString(),
-            restaurantName: restaurant?.name || '(未知餐廳)'
-        }
-    })
 
     return {
         success: true,
-        data: {
-            _id: cart._id,
-            user: cart.user,
-            currency: cart.currency,
-            total: cart.total,
-            status: cart.status,
-            createdAt: cart.createdAt,
-            updatedAt: cart.updatedAt,
-            items: detailedItems
-        }
-    }
+        data: cart,
+    };
 
-})
+    // const detailedItems = cart.items.map((it: any) => {
+    //     const restaurant = it.restaurantId;
+    //     const menuItem = restaurant?.menu?.find((m: any) => String(m._id) === String(it.menuItemId));
+
+    //     return {
+    //         menuItemId: it.menuItemId?.toString(),
+    //         name: menuItem?.name || it.name,
+    //         price: menuItem?.price || it.price,
+    //         image: menuItem?.image || null,
+    //         info: menuItem?.info || null,
+    //         quantity: it.quantity,
+    //         restaurantId: restaurant?._id?.toString(),
+    //         restaurantName: restaurant?.name || "(未知餐廳)",
+    //     };
+    // });
+
+    // return {
+    //     success: true,
+    //     data: {
+    //         _id: cart._id,
+    //         user: cart.user,
+    //         currency: cart.currency,
+    //         total: cart.total,
+    //         status: cart.status,
+    //         createdAt: cart.createdAt,
+    //         updatedAt: cart.updatedAt,
+    //         items: detailedItems,
+    //     },
+    // };
+});

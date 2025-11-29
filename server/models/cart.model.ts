@@ -11,12 +11,12 @@ const cartItemSchema = new Schema<ICartItem>({
     restaurantId: {
         type: Schema.Types.ObjectId,
         ref: "Restaurant",
-        required: false,
+        required: true,
     },
     menuItemId: {
         type: Schema.Types.ObjectId,
         ref: "MenuItem",
-        required: false,
+        required: true,
     },
     name: { type: String, required: true },
     price: { type: Number, required: true }, // price snapshot in cents
