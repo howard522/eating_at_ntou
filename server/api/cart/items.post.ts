@@ -1,5 +1,6 @@
 import { verifyJwtFromEvent } from "@server/utils/auth";
 import { updateCartByUserId } from "@server/services/cart.service";
+import type { CartPostBody } from "@server/interfaces/cart.interface";
 
 /**
  * @openapi
@@ -74,7 +75,7 @@ import { updateCartByUserId } from "@server/services/cart.service";
  *                 total: 420
  */
 export default defineEventHandler(async (event) => {
-    const body = await readBody(event);
+    const body = await readBody<CartPostBody>(event);
 
     // Auth
     const payload = await verifyJwtFromEvent(event);

@@ -47,3 +47,8 @@ export interface ICartResponse {
     createdAt: Date;
     updatedAt: Date;
 }
+
+
+export interface CartPostBody {
+    items: Partial<ICartItem>[];
+}

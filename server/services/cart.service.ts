@@ -1,7 +1,7 @@
 import Cart from "@server/models/cart.model";
 import { getMenuItemById } from "./restaurants.service";
 import type { ObjectId } from "mongoose";
-import type { ICartResponse, ICartItemResponse } from "@server/interfaces/cart.interface";
+import type { ICartResponse, ICartItem, ICartItemResponse } from "@server/interfaces/cart.interface";
 import type { IRestaurant } from "@server/interfaces/restaurant.interface";
 
 async function findCartByUserId(userId: string | ObjectId) {
@@ -102,7 +102,7 @@ export async function getCartByUserId(userId: string | ObjectId): Promise<ICartR
  * @param items 購物車項目陣列
  * @returns 更新後的購物車
  */
-export async function updateCartByUserId(userId: string | ObjectId, items: any[]) {
+export async function updateCartByUserId(userId: string | ObjectId, items: Partial<ICartItem>[]) {
     if (!items.length) {
         // return { success: false, message: 'items array required' }
         // 允許清空購物車 好耶 (2025/11/02)
@@ -117,7 +117,8 @@ export async function updateCartByUserId(userId: string | ObjectId, items: any[]
         throw new Error("Cart is locked and cannot be modified");
     }
     // naive merge: replace items with provided
-    cart.items = items;
+    cart.items.splice(0, cart.items.length); // 清空陣列
+    cart.items.push(...items); // 新增新項目
 
     await cart.save();
 
