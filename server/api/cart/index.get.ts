@@ -106,7 +106,6 @@ import { verifyJwtFromEvent } from "@server/utils/auth";
  *                     restaurantId: "68f2426335e9054c99b316a0"
  *                     restaurantName: "傑哥加長加長菜"
  */
-
 export default defineEventHandler(async (event) => {
     // Auth
     const payload = await verifyJwtFromEvent(event);
@@ -116,42 +115,9 @@ export default defineEventHandler(async (event) => {
     const cart = await getCartByUserId(userId);
 
     // const cart = await Cart.findOne({ user: userId }).populate("items.restaurantId", "name menu");
-    if (!cart) {
-        return { success: true, data: { items: [], total: 0, currency: "TWD" } };
-    }
 
     return {
         success: true,
         data: cart,
     };
-
-    // const detailedItems = cart.items.map((it: any) => {
-    //     const restaurant = it.restaurantId;
-    //     const menuItem = restaurant?.menu?.find((m: any) => String(m._id) === String(it.menuItemId));
-
-    //     return {
-    //         menuItemId: it.menuItemId?.toString(),
-    //         name: menuItem?.name || it.name,
-    //         price: menuItem?.price || it.price,
-    //         image: menuItem?.image || null,
-    //         info: menuItem?.info || null,
-    //         quantity: it.quantity,
-    //         restaurantId: restaurant?._id?.toString(),
-    //         restaurantName: restaurant?.name || "(未知餐廳)",
-    //     };
-    // });
-
-    // return {
-    //     success: true,
-    //     data: {
-    //         _id: cart._id,
-    //         user: cart.user,
-    //         currency: cart.currency,
-    //         total: cart.total,
-    //         status: cart.status,
-    //         createdAt: cart.createdAt,
-    //         updatedAt: cart.updatedAt,
-    //         items: detailedItems,
-    //     },
-    // };
 });

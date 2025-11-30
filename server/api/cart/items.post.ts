@@ -73,7 +73,6 @@ import { updateCartByUserId } from "@server/services/cart.service";
  *                 currency: "TWD"
  *                 total: 420
  */
-
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
 
