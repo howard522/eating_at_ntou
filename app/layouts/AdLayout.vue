@@ -40,8 +40,11 @@ const fetchRandomAd = async () => {
     }
 }
 
-onMounted(() => {
-    fetchRandomAd();
+// 更新廣告內容
+watch(showAd, (newVal) => {
+    if (newVal) {
+        fetchRandomAd();
+    }
 });
 
 </script>
