@@ -48,7 +48,6 @@ export interface ICartResponse {
     updatedAt: Date;
 }
 
-
 export interface CartPostBody {
     items: Partial<ICartItem>[];
 }
