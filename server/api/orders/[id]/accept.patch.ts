@@ -1,7 +1,7 @@
-import { defineEventHandler, createError } from 'h3'
-import connectDB from '@server/utils/db'
-import Order from '@server/models/order.model'
-import { getUserFromEvent } from '@server/utils/auth'
+// server/api/orders/[id]/accept.patch.ts
+
+import { updateOrderDeliveryPerson } from "@server/services/order.service";
+import { getUserFromEvent } from "@server/utils/auth";
 
 /**
  * 前端請注意：
@@ -44,35 +44,21 @@ import { getUserFromEvent } from '@server/utils/auth'
  *                 deliveryPerson: "670a15fa5c3b5a001279cc33"
  *                 deliveryStatus: "on_the_way"
  */
-
 export default defineEventHandler(async (event) => {
-    await connectDB()
-
     // const payload = await verifyJwtFromEvent(event)
     // assertNotBanned(payload) // 確保使用者未被封鎖
     // const userId = payload.id
-    const user = await getUserFromEvent(event) // 取得目前使用者，11/15更新後會檔掉被封鎖的使用者
-    const userId = user._id
 
-    if (!userId) throw createError({ statusCode: 401, statusMessage: 'Invalid token payload' })
-    const orderId = event.context.params?.id
-    if (!orderId) throw createError({ statusCode: 400, statusMessage: 'Missing order id' })
+    const user = await getUserFromEvent(event); // 取得目前使用者，11/15更新後會檔掉被封鎖的使用者
+    const userId = user._id;
 
-    const order = await Order.findById(orderId)
-    if (!order) throw createError({ statusCode: 404, statusMessage: 'Order not found' })
-    if (order.deliveryPerson)
-        throw createError({ statusCode: 409, statusMessage: 'Order already accepted' })
+    if (!userId) throw createError({ statusCode: 401, statusMessage: "Invalid token payload" });
 
-    order.deliveryPerson = userId
-    order.deliveryStatus = 'on_the_way'
-    await order.save()
+    const orderId = getRouterParam(event, "id") as string;
 
-    // populate deliveryPerson so API 回傳格式與其他 endpoint 一致（含 name/img/phone）
-    try {
-        await order.populate('deliveryPerson', 'name img phone')
-    } catch (e) {
-        // ignore populate errors
-    }
+    if (!orderId) throw createError({ statusCode: 400, statusMessage: "Missing order id" });
 
-    return { success: true, data: order }
-})
+    const order = await updateOrderDeliveryPerson(orderId, userId);
+
+    return { success: true, data: order };
+});

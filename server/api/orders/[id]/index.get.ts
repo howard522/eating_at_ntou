@@ -1,7 +1,7 @@
-import { defineEventHandler, createError } from 'h3'
-import connectDB from '@server/utils/db'
-import Order from '@server/models/order.model'
-import { verifyJwtFromEvent } from '@server/utils/auth'
+// server/api/orders/[id]/index.get.ts
+
+import { getOrderById, getOrderOwnership } from "@server/services/order.service";
+import { verifyJwtFromEvent } from "@server/utils/auth";
 
 /**
  * @openapi
@@ -63,55 +63,24 @@ import { verifyJwtFromEvent } from '@server/utils/auth'
  *                   contactPhone: "0912-345-678"
  *                   note: "請放門口"
  */
-
 export default defineEventHandler(async (event) => {
-    await connectDB()
+    const payload = await verifyJwtFromEvent(event);
+    const userId = payload.id;
 
-    const payload = await verifyJwtFromEvent(event)
-    const userId = payload.id
-    if (!event.context.params?.id)
-        throw createError({ statusCode: 400, statusMessage: 'Missing order id' })
+    const orderId = getRouterParam(event, "id");
 
-    const orderId = event.context.params.id
-    const order: any = await Order.findById(orderId)
-        .populate('user', 'name email')
-        // 將外送員回傳必要欄位：name, img, phone
-        .populate('deliveryPerson', 'name img phone')
-        // items.restaurant.phone 已存為 snapshot，無需額外 populate
-        .lean()
-
-    if (!order) throw createError({ statusCode: 404, statusMessage: 'Order not found' })
+    if (!orderId) throw createError({ statusCode: 400, message: "Missing order id" });
 
     // 權限檢查：顧客、外送員（只能查自己的訂單）
-    // 或 Admin 都可查
-    const isOwner = String(order.user?._id || order.user) === userId
-    const isDelivery = String(order.deliveryPerson?._id || order.deliveryPerson) === userId
-    const isAdmin = payload.role === 'admin' || payload.role === 'multi'
+    // 或 Admin 都可查詢
+    const ownership = await getOrderOwnership(orderId, userId);
+    const isAdmin = payload.role === "admin" || payload.role === "multi"; // QUESTION: multi 角色是否有此權限？
 
-    if (!isOwner && !isDelivery && !isAdmin) {
-        throw createError({ statusCode: 403, statusMessage: 'Not allowed to view this order' })
+    if (!ownership.isOwner && !ownership.isDeliveryPerson && !isAdmin) {
+        throw createError({ statusCode: 403, message: "Not allowed to view this order" });
     }
 
-    // 正規化 deliveryPerson：考慮可能為 null（尚未被外送員接單）或未被 populate
-    try {
-        if (order.deliveryPerson) {
-            // 若為 populated object，取必要欄位；若僅為 id（未 populate），只回傳 id
-            const dp: any = order.deliveryPerson
-            order.deliveryPerson = {
-                _id: dp._id || dp,
-                name: dp.name || null,
-                img: dp.img || '',
-                phone: dp.phone || '',
-            }
-        } else {
-            order.deliveryPerson = null
-        }
-    } catch (e) {
-        // 若任何情況發生錯誤，保險起見設為 null
-        order.deliveryPerson = null
-    }
+    const order = await getOrderById(orderId);
 
-    // restaurant phone 已在 order.snapshot (items[].restaurant.phone)，不需額外處理
-
-    return { success: true, data: order }
-})
+    return { success: true, data: order };
+});
