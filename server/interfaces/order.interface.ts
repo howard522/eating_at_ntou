@@ -64,3 +64,18 @@ export interface OrderStatusUpdate {
     customerStatus?: CustomerStatus;
     deliveryStatus?: DeliveryStatus;
 }
+
+export interface OrderInfo {
+    deliveryInfo: {
+        address: string;
+        contactName: string;
+        contactPhone: string;
+        note?: string;
+        location?: {
+            lat: number;
+            lng: number;
+        };
+    };
+    deliveryFee: number;
+    arriveTime?: Date;
+}

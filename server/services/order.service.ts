@@ -1,10 +1,11 @@
 // server/services/order.service.ts
 
-import type { IOrder, OrderStatusUpdate } from "@server/interfaces/order.interface";
+import type { IOrder, OrderInfo, OrderStatusUpdate } from "@server/interfaces/order.interface";
+import Cart from "@server/models/cart.model";
 import Order from "@server/models/order.model";
 import { haversineDistance } from "@server/utils/distance";
 import type { FilterQuery, Types } from "mongoose";
-import { getCartByUserId } from "./cart.service";
+import { clearCartByUserId } from "./cart.service";
 import { getRestaurantsByQuery } from "./restaurants.service";
 
 /**
@@ -30,9 +31,27 @@ export async function getOrderOwnership(orderId: string, userId: string) {
  *
  * @param userId 使用者 ID
  */
-export async function createOrder(userId: string) {
-    const cart = await getCartByUserId(userId);
+export async function createOrder(userId: string | Types.ObjectId, OrderInfo: OrderInfo) {
+    const { deliveryInfo, arriveTime } = OrderInfo;
 
+    const deliveryFee =
+        typeof OrderInfo.deliveryFee === "number" && OrderInfo.deliveryFee >= 0 ? OrderInfo.deliveryFee : 0;
+
+    if (deliveryInfo.address) {
+        try {
+            const coords = await geocodeAddress(deliveryInfo.address);
+            if (coords) {
+                deliveryInfo.location = { lat: coords.lat, lng: coords.lon };
+            }
+        } catch (err) {
+            console.warn("Failed to geocode delivery address", deliveryInfo.address, err);
+        }
+    }
+
+    const cart = await Cart.findOne({ user: userId }).populate(
+        "items.restaurantId",
+        "name phone menu address locationGeo"
+    );
     if (!cart || cart.items.length === 0) {
         throw createError({ statusCode: 400, message: "購物車為空，無法建立訂單" });
     }
@@ -40,6 +59,76 @@ export async function createOrder(userId: string) {
     if (cart.status !== "open") {
         throw createError({ statusCode: 400, message: "購物車狀態不正確，無法建立訂單" });
     }
+
+    const restaurantGeoCache = new Map<string, { lat: number; lng: number }>();
+    const detailedItems = await Promise.all(
+        cart.items.map(async (it: any) => {
+            const restaurant = it.restaurantId;
+            const menuItem = restaurant?.menu?.find((m: any) => String(m._id) === String(it.menuItemId));
+            let restaurantLocation: { lat: number; lng: number } | null = null;
+            const cacheKey = restaurant?._id?.toString() || restaurant?.address;
+            if (cacheKey && restaurantGeoCache.has(cacheKey)) {
+                restaurantLocation = restaurantGeoCache.get(cacheKey) || null;
+            } else {
+                if (
+                    Array.isArray(restaurant?.locationGeo?.coordinates) &&
+                    restaurant.locationGeo.coordinates.length === 2
+                ) {
+                    const [lon, lat] = restaurant.locationGeo.coordinates;
+                    restaurantLocation = { lat, lng: lon };
+                } else if (restaurant?.address) {
+                    try {
+                        const coords = await geocodeAddress(restaurant.address);
+                        if (coords) {
+                            restaurantLocation = { lat: coords.lat, lng: coords.lon };
+                        }
+                    } catch (err) {
+                        console.warn("Failed to geocode restaurant address", restaurant?.address, err);
+                    }
+                }
+
+                if (cacheKey && restaurantLocation) {
+                    restaurantGeoCache.set(cacheKey, restaurantLocation);
+                }
+            }
+
+            return {
+                menuItemId: it.menuItemId,
+                name: menuItem?.name || it.name,
+                image: menuItem?.image || null,
+                info: menuItem?.info || null,
+                price: menuItem?.price || it.price,
+                quantity: it.quantity,
+                restaurant: {
+                    id: restaurant?._id,
+                    name: restaurant?.name || "(未知餐廳)",
+                    phone: restaurant?.phone || "",
+                    address: restaurant?.address || "",
+                    location: restaurantLocation || undefined,
+                },
+            };
+        })
+    );
+
+    const newOrder = new Order({
+        user: userId,
+        items: detailedItems,
+        total: cart.total + deliveryFee,
+        deliveryFee,
+        arriveTime,
+        currency: cart.currency,
+        deliveryInfo,
+    });
+
+    await newOrder.save();
+
+    // 鎖定購物車，防止重複下單
+    cart.status = "locked";
+    await cart.save();
+    // 清空使用者購物車
+    await clearCartByUserId(userId);
+
+    return newOrder;
 }
 
 export async function getOrderById(orderId: string) {
@@ -223,6 +312,102 @@ export async function getAvailableOrdersForDeliveryPerson(
     // 不過有分頁應該還好，一頁就最多 100 筆訂單。
 }
 
+/**
+ * 取得管理員用的訂單列表
+ *
+ * @param orderId 根據訂單 ID 查詢
+ * @param options.completed 訂單是否完成
+ * @param options.from 起始日期
+ * @param options.to 結束日期
+ * @param options.limit 最大回傳筆數（預設 50）
+ * @param options.skip 跳過筆數（預設 0）
+ * @param options.sortBy 排序欄位（預設 createdAt）
+ * @param options.order 排序方式（asc 或 desc，預設 desc）
+ * @returns 符合條件的訂單列表
+ */
+export async function getOrdersForAdmin(
+    orderId?: string,
+    options?: {
+        completed?: boolean;
+        from?: Date;
+        to?: Date;
+        limit?: number;
+        skip?: number;
+        sortBy?: "createdAt" | "total" | "deliveryFee";
+        order?: "asc" | "desc";
+    }
+) {
+    const limit = options?.limit ?? 50;
+    const skip = options?.skip ?? 0;
+    const sortBy = options?.sortBy ?? "createdAt";
+    const order = (options?.order ?? "desc") === "asc" ? 1 : -1;
+
+    const filter: FilterQuery<IOrder> = {};
+
+    if (orderId) {
+        filter._id = orderId;
+    }
+
+    if (options?.completed !== undefined) {
+        const completed = !!options.completed; // 強制轉布林值
+
+        if (completed) {
+            filter.$and = [{ customerStatus: "completed" }, { deliveryStatus: "completed" }];
+        } else {
+            filter.$or = [{ customerStatus: { $ne: "completed" } }, { deliveryStatus: { $ne: "completed" } }];
+        }
+    }
+
+    // 日期區間查詢
+    if (options?.from || options?.to) {
+        filter.createdAt = {};
+        if (options?.from) {
+            filter.createdAt.$gte = options.from;
+        }
+        if (options?.to) {
+            filter.createdAt.$lte = options.to;
+        }
+    }
+
+    let orders = await Order.find(filter)
+        .sort({ [sortBy]: order })
+        .skip(skip)
+        .limit(limit)
+        .populate("user", "name img email")
+        .populate("deliveryPerson", "name img phone")
+        .lean();
+
+    // 整理 deliveryPerson 格式
+    orders = orders.map((order) => {
+        const o = order;
+        try {
+            if (o.deliveryPerson) {
+                const dp: any = o.deliveryPerson;
+                o.deliveryPerson = {
+                    _id: dp._id || dp,
+                    name: dp.name || null,
+                    img: dp.img || "",
+                    phone: dp.phone || "",
+                };
+            } else {
+                o.deliveryPerson = null;
+            }
+        } catch (e) {
+            o.deliveryPerson = null;
+        }
+        return o;
+    });
+
+    return orders;
+}
+
+/**
+ * 更新訂單的外送員
+ *
+ * @param orderId 訂單 ID
+ * @param deliveryPersonId 外送員 ID
+ * @returns 更新後的訂單
+ */
 export async function updateOrderDeliveryPerson(orderId: string, deliveryPersonId: string | Types.ObjectId) {
     const order = await Order.findById(orderId);
 
@@ -247,6 +432,13 @@ export async function updateOrderDeliveryPerson(orderId: string, deliveryPersonI
     return order;
 }
 
+/**
+ * 更新訂單狀態
+ *
+ * @param orderId 訂單 ID
+ * @param status 訂單狀態更新物件
+ * @returns 更新後的訂單
+ */
 export async function updateOrderStatusById(orderId: string, status: OrderStatusUpdate) {
     const order = await Order.findById(orderId);
 
