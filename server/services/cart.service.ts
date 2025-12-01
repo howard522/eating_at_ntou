@@ -1,8 +1,11 @@
-import Cart from "@server/models/cart.model";
-import { getMenuItemById } from "./restaurants.service";
-import type { ObjectId } from "mongoose";
-import type { ICartResponse, ICartItem, ICartItemResponse } from "@server/interfaces/cart.interface";
+import type { ICartItem, ICartItemResponse, ICartResponse } from "@server/interfaces/cart.interface";
 import type { IRestaurant } from "@server/interfaces/restaurant.interface";
+import Cart from "@server/models/cart.model";
+import { calculateDeliveryFeeByDistance } from "@server/utils/calcPrice";
+import { haversineDistance } from "@server/utils/distance";
+import { getGeocodeFromAddress } from "@server/utils/nominatim";
+import type { ObjectId } from "mongoose";
+import { getMenuItemById, getRestaurantById } from "./restaurants.service";
 
 async function findCartByUserId(userId: string | ObjectId) {
     const cart = await Cart.findOne({ user: userId });
@@ -141,4 +144,47 @@ export async function clearCartByUserId(userId: string | ObjectId) {
     await cart.save();
 
     return cart;
+}
+
+/**
+ * 根據使用者 ID 計算外送費用
+ *
+ * @param userId 使用者的 ID
+ * @param address 使用者的外送地址
+ * @returns 外送費用
+ */
+export async function calculateDeliveryFee(userId: string | ObjectId, address: string) {
+    const cart = await findCartByUserId(userId);
+
+    if (!cart.items.length) {
+        return 0; // 沒有項目，暫時回傳 0
+        // throw new Error("Cart is empty, cannot calculate delivery fee");
+    }
+
+    const location = await getGeocodeFromAddress(address);
+    if (!location) {
+        throw new Error("Failed to get geocode from address");
+    }
+
+    let totalDistance = 0;
+    for (const item of cart.items) {
+        const restaurant = await getRestaurantById(item.restaurantId);
+        if (!restaurant) {
+            throw new Error(`Restaurant with ID ${item.restaurantId} not found`);
+        }
+
+        let dis = haversineDistance(restaurant.locationGeo!.coordinates, location.coordinates);
+
+        totalDistance += dis;
+    }
+
+    // 使用平均距離來計算外送費用
+    const avgDistance = totalDistance / cart.items.length / 1000; // 轉換為公里
+
+    console.log(`Calculated average delivery distance: ${avgDistance.toFixed(2)} km`);
+
+    return {
+        distance: avgDistance,
+        fee: calculateDeliveryFeeByDistance(avgDistance),
+    };
 }
