@@ -57,6 +57,9 @@ import { verifyJwtFromEvent } from '@server/utils/auth'
  *                     restaurant:
  *                       name: "傑哥加長加長菜"
  *                       phone: "02-1234-5678"
+ *                       location:
+ *                         lat: 25.1508
+ *                         lng: 121.7730
  *                 deliveryInfo:
  *                   address: "基隆市中正區OO路123號"
  *                   contactName: "宋辰星"
