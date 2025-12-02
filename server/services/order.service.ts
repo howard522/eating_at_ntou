@@ -21,8 +21,25 @@ export async function getOrderOwnership(orderId: string, userId: string) {
     if (!order) throw createError({ statusCode: 404, message: "Order not found" });
 
     return {
-        isOwner: String(order.user) === userId,
-        isDeliveryPerson: order.deliveryPerson && String(order.deliveryPerson) === userId,
+        isOwner: String(order.user) === String(userId),
+        isDeliveryPerson: order.deliveryPerson && String(order.deliveryPerson) === String(userId),
+    };
+}
+
+/**
+ * 取得訂單狀態
+ *
+ * @param orderId 訂單 ID
+ * @returns 訂單的顧客狀態和外送員狀態
+ */
+export async function getOrderStatus(orderId: string) {
+    const order = await Order.findById(orderId).select("customerStatus deliveryStatus");
+
+    if (!order) throw createError({ statusCode: 404, message: "Order not found" });
+
+    return {
+        customerStatus: order.customerStatus,
+        deliveryStatus: order.deliveryStatus,
     };
 }
 
