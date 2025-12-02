@@ -120,7 +120,14 @@ export const components = {
                             name: { type: 'string' }
                             ,
                             phone: { type: 'string' },
-                            address: { type: 'string' }
+                            address: { type: 'string' },
+                            location: {
+                                type: 'object',
+                                properties: {
+                                    lat: { type: 'number' },
+                                    lng: { type: 'number' }
+                                }
+                            }
                         }
                     }
                 }

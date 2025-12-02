@@ -57,6 +57,9 @@ import { verifyJwtFromEvent } from '@server/utils/auth'
  *                     restaurant:
  *                       name: "傑哥加長加長菜"
  *                       phone: "02-1234-5678"
+ *                       location:
+ *                         lat: 25.1508
+ *                         lng: 121.7730
  *                 deliveryInfo:
  *                   address: "基隆市中正區OO路123號"
  *                   contactName: "宋辰星"
@@ -78,6 +81,7 @@ export default defineEventHandler(async (event) => {
         // 將外送員回傳必要欄位：name, img, phone
         .populate('deliveryPerson', 'name img phone')
         // items.restaurant.phone 已存為 snapshot，無需額外 populate
+        .populate('items.restaurant.id', 'locationGeo')
         .lean()
 
     if (!order) throw createError({ statusCode: 404, statusMessage: 'Order not found' })
@@ -90,6 +94,17 @@ export default defineEventHandler(async (event) => {
 
     if (!isOwner && !isDelivery && !isAdmin) {
         throw createError({ statusCode: 403, statusMessage: 'Not allowed to view this order' })
+    }
+
+    // 補上餐廳經緯度
+    if (order.items) {
+        order.items.forEach((item: any) => {
+            if (item.restaurant && item.restaurant.id && item.restaurant.id.locationGeo && item.restaurant.id.locationGeo.coordinates) {
+                const [lng, lat] = item.restaurant.id.locationGeo.coordinates;
+                item.restaurant.location = { lat, lng };
+                item.restaurant.id = item.restaurant.id._id;
+            }
+        });
     }
 
     // 正規化 deliveryPerson：考慮可能為 null（尚未被外送員接單）或未被 populate
