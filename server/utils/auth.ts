@@ -4,11 +4,10 @@ import jwt from "jsonwebtoken";
 import User from "@server/models/user.model";
 import connectDB from "./db";
 import type { H3Event } from "h3";
+import type { JwtPayload } from "@server/interfaces/jwt.interface";
 import type { IUser, UserResponse } from "@server/interfaces/user.interface";
 
 export const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
-
-export type JwtPayload = { id: string; role?: string; iat?: number; exp?: number };
 
 /**
  * 使用指定的 payload 產生 JWT 字串。

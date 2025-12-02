@@ -1,7 +1,8 @@
 // FILE: server/api/auth/me.get.ts
 // ============================================================================
 
-import { getUserFromEvent, toPublicUser } from "@server/utils/auth";
+import { toPublicUser } from "@server/utils/auth";
+import { getUser } from "@server/utils/getUser";
 
 /**
  * @openapi
@@ -26,6 +27,6 @@ import { getUserFromEvent, toPublicUser } from "@server/utils/auth";
  *         description: 未授權
  */
 export default defineEventHandler(async (event) => {
-    const user = await getUserFromEvent(event);
+    const user = getUser(event);
     return { success: true, user: toPublicUser(user) };
 });
