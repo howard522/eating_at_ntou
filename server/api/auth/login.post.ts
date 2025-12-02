@@ -1,4 +1,8 @@
 // FILE: server/api/auth/login.post.ts
+
+import type { LoginBody } from "@server/interfaces/user.interface";
+import { loginUser } from "@server/services/auth.service";
+
 /**
  * @openapi
  * /api/auth/login:
@@ -49,35 +53,10 @@
  *                 statusCode: { type: integer, example: 401 }
  *                 statusMessage: { type: string, example: 帳號不存在或密碼錯誤 }
  */
-
-
-import { defineEventHandler, readBody, createError } from 'h3'
-import jwt from 'jsonwebtoken'
-import bcrypt from 'bcryptjs'
-import User from '@server/models/user.model'
-import connectDB from '@server/utils/db'
-import { JWT_SECRET } from '@server/utils/auth'
-
 export default defineEventHandler(async (event) => {
-  await connectDB()
-  const { email, password } = await readBody(event)
-  const user = await User.findOne({ email })
-  if (!user) throw createError({ statusCode: 401, statusMessage: '帳號不存在' })
-  const isMatch = await bcrypt.compare(password, user.password)
-  if (!isMatch) throw createError({ statusCode: 401, statusMessage: '密碼錯誤' })
-  if (user.role === 'banned') throw createError({ statusCode: 403, statusMessage: '帳號已被封鎖' })
-  const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' })
-  return {
-    success: true,
-    token,
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      img: user.img || '',
-      address: user.address || '',
-      phone: user.phone || '',
-    }
-  }
-})
+    const { email, password } = await readBody<LoginBody>(event);
+
+    const { user, token } = await loginUser(email, password);
+
+    return { success: true, token, user };
+});
