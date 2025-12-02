@@ -1,16 +1,15 @@
-import { defineEventHandler, createError, getQuery } from 'h3'
-import connectDB from '@server/utils/db'
-import Order from '@server/models/order.model'
-import Restaurant from '@server/models/restaurant.model'
-import { verifyJwtFromEvent } from '@server/utils/auth'
+// server/api/orders/available.get.ts
+
+import { getAvailableOrdersForDeliveryPerson } from "@server/services/order.service";
+import { verifyJwtFromEvent } from "@server/utils/auth";
 
 /**
  * @openapi
  * /api/orders/available:
  *   get:
  *     summary: 查詢可接單列表
- *     description: >
- *       取得所有尚未被外送員接單、狀態為「準備中」的訂單清單。  
+ *     description: |
+ *       取得所有尚未被外送員接單、狀態為「準備中」的訂單清單。
  *       支援依餐廳名稱搜尋、排序（建立時間、外送費、預估送達時間、距離）與地理距離篩選。
  *     tags:
  *       - Order
@@ -168,114 +167,35 @@ import { verifyJwtFromEvent } from '@server/utils/auth'
  *                   type: string
  *                   example: "未登入或 Token 錯誤"
  */
-
-
 export default defineEventHandler(async (event) => {
-    await connectDB()
-
     // Auth
-    const payload = await verifyJwtFromEvent(event)
+    const payload = await verifyJwtFromEvent(event);
 
-    const query = getQuery(event)
-    const { keyword = '', sortBy = 'createdAt', order = 'desc', lat, lon } = query
+    const query = getQuery(event);
+    const { keyword = "", sortBy = "createdAt", order = "desc", lat, lon } = query;
     // 分頁參數
-    const DEFAULT_LIMIT = 50
-    const MAX_LIMIT = 100
-    let limit = Number(query.limit) || DEFAULT_LIMIT
-    limit = Math.min(limit, MAX_LIMIT)
-    const skip = Number(query.skip) || 0
-
-    // // 查詢尚未接單的訂單（支援 skip / limit）
-    // const orders = await Order.find({
-    //     deliveryPerson: null,
-    //     deliveryStatus: 'preparing'
-    // })
-    //     .sort({ createdAt: -1 })
-    //     .skip(skip)
-    //     .limit(limit)
-    //     .lean()
-
-    // 可接的訂單：
-    const baseFilter: any = {
-        deliveryPerson: null,
-        deliveryStatus: 'preparing'
-    }
-
-    // 若有關鍵字，先找出符合餐廳，再用餐廳 ID 過濾訂單
-    let restaurantIds: string[] = []
-    if (keyword) {
-        const matched = await Restaurant.find({
-            name: { $regex: keyword, $options: 'i' }
-        }).select('_id')
-
-        restaurantIds = matched.map(r => r._id)
-        if (restaurantIds.length === 0) {
-            return { success: true, count: 0, data: [] }
-        }
-        baseFilter['items.restaurant.id'] = { $in: restaurantIds }
-    }
+    const DEFAULT_LIMIT = 50;
+    const MAX_LIMIT = 100;
+    let limit = Number(query.limit) || DEFAULT_LIMIT;
+    limit = Math.min(limit, MAX_LIMIT);
+    const skip = Number(query.skip) || 0;
 
     // 查詢訂單
-    let orders = await Order.find(baseFilter)
-        .populate('items.restaurant.id', 'name locationGeo phone address')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean()
-
-    // 若有經緯度，計算距離並排序
-    if (lat && lon) {
-        const userPos = [Number(lon), Number(lat)]
-        orders = orders.map((o) => {
-            const rest = o.items?.[0]?.restaurant?.id
-            const coord = rest?.locationGeo?.coordinates
-            const dist = coord
-                ? haversineDistance(userPos, coord)
-                : Number.POSITIVE_INFINITY
-            return { ...o, _distance: dist }
-        })
-    }
-
-    // 排序
-    const dir = order === 'asc' ? 1 : -1
-    orders.sort((a, b) => {
-        switch (sortBy) {
-            case 'deliveryFee':
-                return dir * ((a.deliveryFee || 0) - (b.deliveryFee || 0))
-            case 'arriveTime':
-                return dir * (new Date(a.arriveTime).getTime() - new Date(b.arriveTime).getTime())
-            case 'distance':
-                return dir * (((a._distance ?? Infinity) - (b._distance ?? Infinity)) || 0)
-            case 'createdAt':
-            default:
-                return dir * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    let orders = await getAvailableOrdersForDeliveryPerson(
+        lat ? Number(lat) : undefined,
+        lon ? Number(lon) : undefined,
+        keyword ? String(keyword) : undefined,
+        {
+            limit,
+            skip,
+            sortBy: sortBy as "createdAt" | "deliveryFee" | "arriveTime" | "distance",
+            order: order === "asc" ? "asc" : "desc",
         }
-    })
+    );
+
     return {
         success: true,
         count: orders.length,
-        data: orders
-    }
-})
-
-// Haversine formula 計算兩點距離（公尺)，因為mongodb的geoNear在這種間接查詢無法使用
-// 所以我問chat，然後抄下來的
-function haversineDistance(coord1: number[], coord2: number[]) {
-    const [lon1, lat1] = coord1
-    const [lon2, lat2] = coord2
-    const R = 6371e3 // 地球半徑 (m)
-    const φ1 = (lat1 * Math.PI) / 180
-    const φ2 = (lat2 * Math.PI) / 180
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180
-    const a =
-        Math.sin(Δφ / 2) ** 2 +
-        Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-    return R * c
-}
-
-
-// 現在功能是完整的了，但我覺得現在的距離處理有效能疑慮，
-// 因為是先抓訂單再算距離，若訂單量大時會很慢，
-// 不過有分頁應該還好，一頁就最多 100 筆訂單。
+        data: orders,
+    };
+});

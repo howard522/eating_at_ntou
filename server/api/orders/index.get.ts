@@ -1,17 +1,17 @@
-import { defineEventHandler, getQuery, createError } from 'h3'
-import connectDB from '@server/utils/db'
-import Order from '@server/models/order.model'
-import { verifyJwtFromEvent } from '@server/utils/auth'
+// server/api/orders/index.get.ts
+
+import { getOrdersByUserRole } from "@server/services/order.service";
+import { verifyJwtFromEvent } from "@server/utils/auth";
 
 /**
  * @openapi
  * /api/orders:
  *   get:
  *     summary: 查詢使用者或外送員的訂單
- *     description: 
- *       根據使用者角色查詢訂單：  
- *       - 若角色為顧客，回傳該使用者下的訂單。  
- *       - 若角色為外送員，回傳該使用者接的訂單。  
+ *     description:
+ *       根據使用者角色查詢訂單：
+ *       - 若角色為顧客，回傳該使用者下的訂單。
+ *       - 若角色為外送員，回傳該使用者接的訂單。
  *       可使用 `?role=customer` 或 `?role=delivery` 明確指定。
  *     tags:
  *       - Order
@@ -77,37 +77,29 @@ import { verifyJwtFromEvent } from '@server/utils/auth'
  */
 
 export default defineEventHandler(async (event) => {
-    await connectDB()
-
     // Auth
-    const payload = await verifyJwtFromEvent(event)
-    const userId = payload.id
-    if (!userId) throw createError({ statusCode: 401, statusMessage: 'invalid token payload' })
+    const payload = await verifyJwtFromEvent(event);
+    const userId = payload.id;
+    if (!userId) throw createError({ statusCode: 401, statusMessage: "invalid token payload" });
 
     // 取得角色參數（預設為 customer）
-    const query = getQuery(event)
-    const role = query.role === 'delivery' ? 'delivery' : 'customer'
-
-    // 查詢條件
-    const condition =
-        role === 'delivery'
-            ? { deliveryPerson: userId }
-            : { user: userId }
+    const query = getQuery(event);
+    const role = query.role === "delivery" ? "delivery" : "customer";
 
     // 分頁參數
-    const DEFAULT_LIMIT = 50
-    const MAX_LIMIT = 100
-    let limit = Number(query.limit) || DEFAULT_LIMIT
-    limit = Math.min(limit, MAX_LIMIT)
-    const skip = Number(query.skip) || 0
+    const DEFAULT_LIMIT = 50;
+    const MAX_LIMIT = 100;
+    let limit = Number(query.limit) || DEFAULT_LIMIT;
+    limit = Math.min(limit, MAX_LIMIT);
+    const skip = Number(query.skip) || 0;
 
     // 查詢訂單（新到舊），支援 skip / limit
-    const orders = await Order.find(condition).sort({ createdAt: -1 }).skip(skip).limit(limit).lean()
+    const orders = await getOrdersByUserRole(userId, role, { limit, skip });
 
     return {
         success: true,
+        role,
         count: orders.length,
         data: orders,
-        role
-    }
-})
+    };
+});

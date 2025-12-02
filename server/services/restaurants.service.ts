@@ -2,7 +2,7 @@
 
 import Restaurant from "@server/models/restaurant.model";
 import { cleanObject } from "@server/utils/cleanObject";
-import type { FilterQuery, PipelineStage, Types } from "mongoose";
+import type { FilterQuery, ObjectId, PipelineStage, Types } from "mongoose";
 import type {
     CreateMenuItemBody,
     CreateRestaurantBody,
@@ -14,7 +14,7 @@ import type {
 import { buildRestaurantSearchQuery } from "@server/utils/mongoQuery";
 import { getGeocodeFromAddress, sleep, validateGeocode } from "@server/utils/nominatim";
 
-type MenuItemSubdocument = Types.Subdocument<Types.ObjectId, IRestaurant, IMenuItem>;
+type MenuItemSubdocument = Types.Subdocument<Types.ObjectId, IRestaurant, IMenuItem> & IMenuItem;
 
 /**
  * 新增餐廳
@@ -34,7 +34,11 @@ export async function createRestaurant(data: CreateRestaurantBody): Promise<IRes
  * @param id 餐廳的 MongoDB ObjectId
  * @returns 餐廳
  */
-export async function getRestaurantById(id: string): Promise<IRestaurant> {
+export async function getRestaurantById(id: string | ObjectId): Promise<IRestaurant> {
+    if (!id) {
+        throw createError({ statusCode: 400, message: "Restaurant ID is required" });
+    }
+
     const restaurant = await Restaurant.findById(id);
 
     // 找不到餐廳拋出 404 錯誤
@@ -169,12 +173,13 @@ export async function searchRestaurantsNearByAddress(
  * @param data 要更新的餐廳資料
  * @returns 更新後的餐廳
  */
-export async function updateRestaurantById(id: string, data: UpdateRestaurantBody): Promise<IRestaurant> {
-    // 過濾掉空欄位
-    const cleaned = cleanObject(data);
+export async function updateRestaurantById(id: string | ObjectId, data: UpdateRestaurantBody): Promise<IRestaurant> {
+    if (!id) {
+        throw createError({ statusCode: 400, message: "Restaurant ID is required" });
+    }
 
     // 更新資料庫
-    const restaurant = await Restaurant.findByIdAndUpdate(id, cleaned, {
+    const restaurant = await Restaurant.findByIdAndUpdate(id, cleanObject(data), {
         new: true,
         runValidators: true,
     });
@@ -192,7 +197,11 @@ export async function updateRestaurantById(id: string, data: UpdateRestaurantBod
  * @param id 餐廳的 MongoDB ObjectId
  * @returns 更新後的餐廳
  */
-export async function updateRestaurantGeocodeById(id: string): Promise<IRestaurant> {
+export async function updateRestaurantGeocodeById(id: string | ObjectId): Promise<IRestaurant> {
+    if (!id) {
+        throw createError({ statusCode: 400, message: "Restaurant ID is required" });
+    }
+
     const restaurant = await getRestaurantById(id);
 
     if (!restaurant) {
@@ -223,7 +232,11 @@ export async function updateRestaurantGeocodeById(id: string): Promise<IRestaura
  * @param id 餐廳的 MongoDB ObjectId
  * @returns 被刪除的餐廳
  */
-export async function deleteRestaurantById(id: string): Promise<IRestaurant | null> {
+export async function deleteRestaurantById(id: string | ObjectId): Promise<IRestaurant | null> {
+    if (!id) {
+        throw createError({ statusCode: 400, message: "Restaurant ID is required" });
+    }
+
     const restaurant = await Restaurant.findByIdAndDelete(id);
 
     // 找不到餐廳拋出 404 錯誤
@@ -242,9 +255,13 @@ export async function deleteRestaurantById(id: string): Promise<IRestaurant | nu
  * @returns 新增的菜單項目
  */
 export async function createMenuItem(
-    restaurantId: string,
+    restaurantId: string | ObjectId,
     data: CreateMenuItemBody
-): Promise<MenuItemSubdocument & IMenuItem> {
+): Promise<MenuItemSubdocument> {
+    if (!restaurantId) {
+        throw createError({ statusCode: 400, message: "Restaurant ID is required" });
+    }
+
     const restaurant = await getRestaurantById(restaurantId);
     const menuItem = restaurant.menu.create(data);
 
@@ -261,9 +278,12 @@ export async function createMenuItem(
  * @param menuId 菜單項目的 MongoDB ObjectId
  * @returns 指定的菜單項目
  */
-export async function getMenuItemById(restaurantId: string, menuId: string): Promise<MenuItemSubdocument & IMenuItem> {
+export async function getMenuItemById(
+    restaurantId: string | ObjectId,
+    menuId: string | ObjectId
+): Promise<MenuItemSubdocument> {
     const restaurant = await getRestaurantById(restaurantId);
-    const menuItem = restaurant.menu.id(menuId);
+    const menuItem = restaurant.menu.id(menuId.toString());
 
     if (!menuItem) {
         throw createError({ statusCode: 404, message: "Menu item not found" });
@@ -281,21 +301,15 @@ export async function getMenuItemById(restaurantId: string, menuId: string): Pro
  * @returns 更新後的菜單項目
  */
 export async function updateMenuItemById(
-    restaurantId: string,
-    menuId: string,
+    restaurantId: string | ObjectId,
+    menuId: string | ObjectId,
     data: UpdateMenuItemBody
-): Promise<MenuItemSubdocument & IMenuItem> {
-    const restaurant = await getRestaurantById(restaurantId);
-    const menuItem = restaurant.menu.id(menuId);
-
-    if (!menuItem) {
-        throw createError({ statusCode: 404, message: "Menu item not found" });
-    }
+): Promise<MenuItemSubdocument> {
+    const menuItem = await getMenuItemById(restaurantId, menuId);
 
     // 更新欄位
     Object.assign(menuItem, cleanObject(data));
-
-    await restaurant.save();
+    await menuItem.parent().save();
 
     return menuItem;
 }
@@ -306,14 +320,9 @@ export async function updateMenuItemById(
  * @param restaurantId 餐廳的 MongoDB ObjectId
  * @param menuId 菜單項目的 MongoDB ObjectId
  */
-export async function deleteMenuItemById(restaurantId: string, menuId: string): Promise<void> {
-    const restaurant = await getRestaurantById(restaurantId);
-    const menuItem = restaurant.menu.id(menuId);
-
-    if (!menuItem) {
-        throw createError({ statusCode: 404, message: "Menu item not found" });
-    }
+export async function deleteMenuItemById(restaurantId: string | ObjectId, menuId: string | ObjectId): Promise<void> {
+    const menuItem = await getMenuItemById(restaurantId, menuId);
 
     menuItem.deleteOne();
-    await restaurant.save();
+    await menuItem.parent().save();
 }

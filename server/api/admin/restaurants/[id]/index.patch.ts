@@ -50,6 +50,10 @@ import type { UpdateRestaurantBody } from "@server/interfaces/restaurant.interfa
  *                 items:
  *                   type: string
  *                 example: ["中式", "學生餐", "平價"]
+ *               imageURL:
+ *                 type: string
+ *                 format: uri
+ *                 description: 圖片的 URL
  *               image:
  *                 type: string
  *                 format: binary
@@ -94,6 +98,11 @@ export default defineEventHandler(async (event) => {
 
             throw createError({ statusCode: 400, message: "Bad Address for Geocoding" });
         }
+    }
+
+    if (data.imageURL) {
+        data.image = data.imageURL;
+        delete data.imageURL;
     }
 
     const restaurant = await updateRestaurantById(id, data);

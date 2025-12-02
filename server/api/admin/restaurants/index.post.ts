@@ -46,6 +46,10 @@ import type { CreateRestaurantBody } from "@server/interfaces/restaurant.interfa
  *                 items:
  *                   type: string
  *                 example: ["炸物", "夜宵", "學生最愛"]
+ *               imageURL:
+ *                 type: string
+ *                 format: uri
+ *                 description: 圖片的 URL
  *               image:
  *                 type: string
  *                 format: binary
@@ -96,6 +100,11 @@ export default defineEventHandler(async (event) => {
         console.warn(`Geocoding failed for address: ${data.address}`);
 
         throw createError({ statusCode: 400, message: "Bad Address for Geocoding" });
+    }
+
+    if (data.imageURL) {
+        data.image = data.imageURL;
+        delete data.imageURL;
     }
 
     const restaurant = await createRestaurant(data);

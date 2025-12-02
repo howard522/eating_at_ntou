@@ -1,4 +1,8 @@
 // FILE: server/api/auth/register.post.ts
+
+import type { RegisterBody } from "@server/interfaces/user.interface";
+import { registerUser } from "@server/services/auth.service";
+
 /**
  * @openapi
  * /api/auth/register:
@@ -50,58 +54,18 @@
  *                 statusCode: { type: integer, example: 400 }
  *                 statusMessage: { type: string, example: email already in use }
  */
-import { defineEventHandler, readBody, createError } from "h3";
-import connectDB from "@server/utils/db";
-import User from "@server/models/user.model";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "@server/utils/auth";
-
 export default defineEventHandler(async (event) => {
-  await connectDB();
-  const body = await readBody(event);
-  const name = (body.name || "這個人很懶，不想取暱稱") as string;
-  const email = (body.email || "") as string;
-  const password = (body.password || "") as string;
-  const role = (body.role || "multi") as string;
+    const body = await readBody<RegisterBody>(event);
+    const name = body.name || "這個人很懶，不想取暱稱";
+    const email = body.email;
+    const password = body.password;
+    const role = body.role || "multi";
 
-  if (!email || !password) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "缺少電子信箱或密碼",
-    });
-  }
-  const existing = await User.findOne({ email });
-  if (existing) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "電子信箱已經註冊",
-    });
-  }
+    if (!email || !password) {
+        throw createError({ statusCode: 400, statusMessage: "缺少電子信箱或密碼" });
+    }
 
-  const u = new User({
-    name,
-    email,
-    password,
-    role,
-    // 預設不指定 img/address/phone
-  });
-  await u.save();
+    const { user, token } = await registerUser(name, email, password, role);
 
-  const token = jwt.sign({ id: u._id, role: u.role }, JWT_SECRET, {
-    expiresIn: "7d",
-  });
-
-  return {
-    success: true,
-    token,
-    user: {
-      id: u._id,
-      name: u.name,
-      email: u.email,
-      role: u.role,
-      img: u.img || "",
-      address: u.address || "",
-      phone: u.phone || "",
-    },
-  };
+    return { success: true, token, user };
 });

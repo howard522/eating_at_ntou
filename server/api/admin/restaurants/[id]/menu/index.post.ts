@@ -43,6 +43,10 @@ import type { CreateMenuItemBody } from "@server/interfaces/restaurant.interface
  *               info:
  *                 type: string
  *                 example: "附湯與小菜，限午餐供應"
+ *               imageURL:
+ *                 type: string
+ *                 format: uri
+ *                 description: 圖片的 URL
  *               image:
  *                 type: string
  *                 format: binary
@@ -79,6 +83,11 @@ export default defineEventHandler(async (event) => {
     // 檢查必填欄位
     if (!data.name || !data.price) {
         throw createError({ statusCode: 400, message: "Missing required fields: name, price" });
+    }
+
+    if (data.imageURL) {
+        data.image = data.imageURL;
+        delete data.imageURL;
     }
 
     const menuItem = await createMenuItem(restaurantId, data);

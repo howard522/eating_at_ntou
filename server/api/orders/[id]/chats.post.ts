@@ -1,3 +1,9 @@
+// server/api/orders/[id]/chats.post.ts
+
+import { createChatMessage } from "@server/services/chat.service";
+import { getOrderOwnership, getOrderStatus } from "@server/services/order.service";
+import { getUser } from "@server/utils/getUser";
+
 /**
  * @openapi
  * /api/orders/{id}/chats:
@@ -49,47 +55,30 @@
  *       404:
  *         description: 訂單不存在
  */
-
-import { createError, defineEventHandler, getQuery, readBody } from "h3";
-import ChatMessage from "@server/models/chatMessage.model";
-import Order from "@server/models/order.model";
-import connectDB from "@server/utils/db";
-import { verifyJwtFromEvent } from "@server/utils/auth";
-
 export default defineEventHandler(async (event) => {
-    await connectDB();
+    const userId = getUser(event)._id as string;
+    const orderId = getRouterParam(event, "id") as string;
 
-    const payload = await verifyJwtFromEvent(event);
-    const userId = payload.id;
-    if (!event.context.params?.id) throw createError({ statusCode: 400, statusMessage: "Missing order id" });
+    if (!orderId) {
+        throw createError({ statusCode: 400, statusMessage: "Missing order id" });
+    }
 
-    const orderId = event.context.params.id;
-    console.log("orderId:", orderId);
-    const order: any = await Order.findById(orderId)
-        .populate("user", "name email")
-        // 將外送員回傳必要欄位：name, img, phone
-        .populate("deliveryPerson", "name img phone")
-        // items.restaurant.phone 已存為 snapshot，無需額外 populate
-        .lean();
-
-    if (!order) throw createError({ statusCode: 404, statusMessage: "Order not found" });
+    const ownership = await getOrderOwnership(orderId, userId);
+    const status = await getOrderStatus(orderId);
 
     // 權限檢查：顧客、外送員（只能查自己的訂單）
-    // 或 Admin 都可查
-    const isOwner = String(order.user?._id || order.user) === userId;
-    const isDelivery = String(order.deliveryPerson?._id || order.deliveryPerson) === userId;
-    const isAdmin = payload.role === "admin" || payload.role === "multi";
-
-    if (!isOwner && !isDelivery && !isAdmin) {
+    if (!ownership.isOwner && !ownership.isDeliveryPerson) {
         throw createError({ statusCode: 403, statusMessage: "Not allowed to view this order" });
     }
 
     // 已完成訂單禁止發送訊息
-    if (order.customerStatus === "completed" && order.deliveryStatus === "completed") {
+    if (status.customerStatus === "completed" && status.deliveryStatus === "completed") {
         throw createError({ statusCode: 403, statusMessage: "Cannot send messages to completed orders" });
     }
 
-    const { content, role } = await readBody(event);
+    const body = await readBody(event);
+    const content = body.content as string;
+    const role = body.role as "customer" | "delivery" | undefined;
 
     // 不能傳送空訊息
     if (!content || typeof content !== "string" || content.trim() === "") {
@@ -101,14 +90,12 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 400, statusMessage: "Invalid role value" });
     }
 
-    const chatMessage = new ChatMessage({
-        order: orderId,
-        sender: userId,
-        senderRole: role || "customer",
-        content: content.trim(),
-    });
-
-    await chatMessage.save();
+    const chatMessage = await createChatMessage(
+        orderId,
+        userId,
+        role || (ownership.isOwner ? "customer" : "delivery"),
+        content.trim()
+    );
 
     return { success: true, data: chatMessage };
 });

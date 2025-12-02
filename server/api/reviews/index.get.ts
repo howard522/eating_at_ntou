@@ -1,7 +1,6 @@
-import { defineEventHandler, getQuery, createError, type H3Event } from 'h3'
-import connectDB from '@server/utils/db'
-import Review from '@server/models/review.model'
-import { count } from 'console'
+// server/api/reviews/index.get.ts
+
+import { getReviewsByRestaurantId } from "@server/services/reviews.service";
 
 /**
  * @openapi
@@ -66,52 +65,25 @@ import { count } from 'console'
  *       400:
  *         description: 缺少餐廳 ID
  */
-export default defineEventHandler(async (event: H3Event) => {
-    await connectDB()
-    const query = getQuery(event)
-    const restaurantId = query.restaurantId
-    const skip = parseInt(query.skip as string) || 0
-    const limit = parseInt(query.limit as string) || 10
-    const sort = query.sort as string || 'newest'
+export default defineEventHandler(async (event) => {
+    const query = getQuery(event);
+    const restaurantId = query.restaurantId as string;
+    const skip = parseInt(query.skip as string) || 0;
+    const limit = parseInt(query.limit as string) || 10;
+    const sort = (query.sort as "newest" | "highest" | "lowest" | undefined) || "newest";
 
     if (!restaurantId) {
         throw createError({
             statusCode: 400,
-            statusMessage: 'Missing required parameter: restaurantId'
-        })
+            statusMessage: "Missing required parameter: restaurantId",
+        });
     }
 
-    let sortOptions: any = { createdAt: -1 }
-    if (sort === 'highest') {
-        sortOptions = { rating: -1, createdAt: -1 }
-    } else if (sort === 'lowest') {
-        sortOptions = { rating: 1, createdAt: -1 }
-    }
-
-    const total = await (Review as any).countDocuments({ restaurant: restaurantId })
-    const reviews = await (Review as any).find({ restaurant: restaurantId })
-        .populate('user', 'name img')
-        .sort(sortOptions)
-        .skip(skip)
-        .limit(limit)
-
-    const data = reviews.map((review: any) => ({
-        _id: review._id,
-        restaurantId: review.restaurant,
-        user: {
-            _id: review.user?._id,
-            name: review.user?.name,
-            img: review.user?.img
-        },
-        rating: review.rating,
-        content: review.content,
-        createdAt: review.createdAt,
-        updatedAt: review.updatedAt
-    }))
+    const { total, reviews } = await getReviewsByRestaurantId(restaurantId, sort, skip, limit);
 
     return {
         success: true,
         count: reviews.length,
-        data
-    }
-})
+        reviews,
+    };
+});

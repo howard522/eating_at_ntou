@@ -1,11 +1,11 @@
 // server/interfaces/order.interface.ts
 
-import type { ObjectId } from "mongoose";
+import type { Document, Types } from "mongoose";
 
 // 單一商品快照介面
-export interface IOrderItem {
+export interface IOrderItem extends Document {
     // 商品快照
-    menuItemId?: ObjectId; // 可選，因為商品可能已被刪除
+    menuItemId?: Types.ObjectId; // 可選，因為商品可能已被刪除
     name: string;
     image?: string;
     info?: string;
@@ -16,23 +16,26 @@ export interface IOrderItem {
 
     // 餐廳快照
     restaurant: {
-        id?: ObjectId; // 可選，因為餐廳可能已被刪除
+        id?: Types.ObjectId; // 可選，因為餐廳可能已被刪除
         name?: string;
         phone?: string;
         address?: string;
     };
 }
 
+export type CustomerStatus = "preparing" | "on_the_way" | "received" | "completed";
+export type DeliveryStatus = "preparing" | "on_the_way" | "delivered" | "completed";
+
 // 訂單主體介面
-export interface IOrder {
+export interface IOrder extends Document {
     // 下單者
-    user: ObjectId;
+    user: Types.ObjectId;
 
     // 外送員（可為空，表示尚未接單）
-    deliveryPerson?: ObjectId | null;
+    deliveryPerson?: Types.ObjectId | null;
 
     // 商品快照陣列
-    items: IOrderItem[];
+    items: Types.DocumentArray<IOrderItem>;
 
     // 結帳資訊
     total: number; // 總金額
@@ -49,10 +52,30 @@ export interface IOrder {
     };
 
     // 訂單雙角色狀態
-    customerStatus: "preparing" | "on_the_way" | "received" | "completed";
-    deliveryStatus: "preparing" | "on_the_way" | "delivered" | "completed";
+    customerStatus: CustomerStatus;
+    deliveryStatus: DeliveryStatus;
 
     // 系統紀錄
     createdAt: Date;
     updatedAt: Date;
+}
+
+export interface OrderStatusUpdate {
+    customerStatus?: CustomerStatus;
+    deliveryStatus?: DeliveryStatus;
+}
+
+export interface OrderInfo {
+    deliveryInfo: {
+        address: string;
+        contactName: string;
+        contactPhone: string;
+        note?: string;
+        location?: {
+            lat: number;
+            lng: number;
+        };
+    };
+    deliveryFee: number;
+    arriveTime?: Date;
 }

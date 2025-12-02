@@ -48,6 +48,10 @@ import type { UpdateMenuItemBody } from "@server/interfaces/restaurant.interface
  *               info:
  *                 type: string
  *                 example: "附湯與小菜，限午餐供應"
+ *               imageURL:
+ *                 type: string
+ *                 format: uri
+ *                 description: 圖片的 URL
  *               image:
  *                 type: string
  *                 format: binary
@@ -81,6 +85,11 @@ export default defineEventHandler(async (event) => {
     const menuId = getRouterParam(event, "menuId") as string;
     const form = await readMultipartFormData(event);
     const data = await parseForm<UpdateMenuItemBody>(form);
+
+    if (data.imageURL) {
+        data.image = data.imageURL;
+        delete data.imageURL;
+    }
 
     const menu = await updateMenuItemById(restaurantId, menuId, data);
 

@@ -1,3 +1,9 @@
+// server/api/orders/[id]/chats.get.ts
+
+import { getChatMessages } from "@server/services/chat.service";
+import { getOrderOwnership } from "@server/services/order.service";
+import { getUser } from "@server/utils/getUser";
+
 /**
  * @openapi
  * /api/orders/{id}/chats:
@@ -59,36 +65,18 @@
  *       404:
  *         description: 訂單不存在
  */
-
-import { createError, defineEventHandler, getQuery, getRouterParam } from "h3";
-import ChatMessage from "@server/models/chatMessage.model";
-import Order from "@server/models/order.model";
-import connectDB from "@server/utils/db";
-import { verifyJwtFromEvent, assertNotBanned } from "@server/utils/auth";
-
 export default defineEventHandler(async (event) => {
-    await connectDB();
+    const userId = getUser(event)._id as string;
+    const orderId = getRouterParam(event, "id") as string;
 
-    const payload = await verifyJwtFromEvent(event);
-    assertNotBanned(payload); // 確保使用者未被封鎖
-    const userId = payload.id;
-    if (!event.context.params?.id) throw createError({ statusCode: 400, statusMessage: "Missing order id" });
+    if (!orderId) {
+        throw createError({ statusCode: 400, statusMessage: "Missing order id" });
+    }
 
-    const orderId = getRouterParam(event, "id");
-    const order: any = await Order.findById(orderId)
-        .populate("user", "name img")
-        .populate("deliveryPerson", "name img")
-        .lean();
-
-    if (!order) throw createError({ statusCode: 404, statusMessage: "Order not found" });
+    const ownership = await getOrderOwnership(orderId, userId);
 
     // 權限檢查：顧客、外送員（只能查自己的訂單）
-    // 或 Admin 都可查
-    const isOwner = String(order.user?._id || order.user) === userId;
-    const isDelivery = String(order.deliveryPerson?._id || order.deliveryPerson) === userId;
-    const isAdmin = payload.role === "admin" || payload.role === "multi";
-
-    if (!isOwner && !isDelivery && !isAdmin) {
+    if (!ownership.isOwner && !ownership.isDeliveryPerson) {
         throw createError({ statusCode: 403, statusMessage: "Not allowed to view this order" });
     }
 
@@ -104,30 +92,12 @@ export default defineEventHandler(async (event) => {
     let after = query.after ? new Date(query.after as string) : null;
     let before = query.before ? new Date(query.before as string) : null;
 
-    const timestampFilter: Record<string, any> = {};
-
-    if (after) {
-        timestampFilter.$gte = after;
-    }
-
-    if (before) {
-        timestampFilter.$lte = before;
-    }
-
-    const filter: Record<string, any> = { order: orderId };
-
-    if (after || before) {
-        filter.timestamp = timestampFilter;
-    }
-
-    limit = Math.min(Math.max(limit, MIN_LIMIT), MAX_LIMIT);
-    skip = Math.max(skip, MIN_SKIP);
-
-    const chatMessages = await ChatMessage.find(filter)
-        .sort({ timestamp: -1 }) // 排序：新到舊
-        .limit(limit)
-        .skip(skip)
-        .populate("sender", "name img");
+    const chatMessages = await getChatMessages(orderId, {
+        limit: Math.min(Math.max(limit, MIN_LIMIT), MAX_LIMIT),
+        skip: Math.max(skip, MIN_SKIP),
+        after: after || undefined,
+        before: before || undefined,
+    });
 
     return {
         success: true,

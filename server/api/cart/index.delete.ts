@@ -1,9 +1,5 @@
-import { defineEventHandler, createError } from 'h3'
-import connectDB from '@server/utils/db'
-import Cart from '@server/models/cart.model'
-import { verifyJwtFromEvent } from '@server/utils/auth'
-import { clearUserCart } from '@server/utils/cart'
-
+import { verifyJwtFromEvent } from "@server/utils/auth";
+import { clearCartByUserId } from "@server/services/cart.service";
 
 /**
  * @openapi
@@ -46,18 +42,15 @@ import { clearUserCart } from '@server/utils/cart'
  *         description: 找不到使用者的購物車。
  */
 export default defineEventHandler(async (event) => {
-    await connectDB()
-    const payload = await verifyJwtFromEvent(event)
-    const userId = payload.id
+    const payload = await verifyJwtFromEvent(event);
+    const userId = payload.id;
     if (!userId) {
-        throw createError({ statusCode: 401, statusMessage: 'Invalid token payload' })
+        throw createError({ statusCode: 401, statusMessage: "Invalid token payload" });
     }
-    const cart = await clearUserCart(userId)
+    const cart = await clearCartByUserId(userId);
     if (!cart) {
-        throw createError({ statusCode: 404, statusMessage: 'Cart not found' })
+        throw createError({ statusCode: 404, statusMessage: "Cart not found" });
     }
 
-    return { success: true, data: cart }
-
-})
-
+    return { success: true, data: cart };
+});
