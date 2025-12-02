@@ -1,14 +1,11 @@
-import { defineEventHandler, createError } from 'h3'
-import connectDB from '@server/utils/db'
-import User from '@server/models/user.model'
-import { getUserFromEvent } from '@server/utils/auth'
+import { banUser } from "@server/services/auth.service";
 
 /**
  * @openapi
  * /api/admin/users/{id}/ban:
  *   patch:
  *     summary: 管理員停用會員帳號
- *     description: >
+ *     description: |
  *       將指定會員帳號標記為停用狀態（role = "banned"）。
  *       停用後，該會員無法登入、下單或接單。
  *     tags:
@@ -47,39 +44,19 @@ import { getUserFromEvent } from '@server/utils/auth'
  *         description: 找不到目標使用者
  */
 export default defineEventHandler(async (event) => {
-    await connectDB()
-
     // 取得呼叫者（必須是 admin）
-    const me = await getUserFromEvent(event)
-    if (me.role !== 'admin') {
-        throw createError({ statusCode: 403, statusMessage: '無權限' })
+    // NOTE: 已在 middleware 驗證過呼叫者權限
+
+    const userId = getRouterParam(event, "id");
+    if (!userId) {
+        throw createError({ statusCode: 400, statusMessage: "Bad Request", message: "缺少使用者 ID" });
     }
 
-    const id = event.context.params?.id
-    if (!id) {
-        throw createError({ statusCode: 400, statusMessage: '缺少使用者 ID' })
-    }
-
-    // 不能 ban 自己，也不能 ban 其他 admin，防止admin耍白痴
-    if (String(me._id) === String(id)) {
-        throw createError({ statusCode: 400, statusMessage: '不可停用自己的帳號' })
-    }
-
-    const user = await User.findById(id)
-    if (!user) {
-        throw createError({ statusCode: 404, statusMessage: '找不到使用者' })
-    }
-
-    if (user.role === 'admin') {
-        throw createError({ statusCode: 400, statusMessage: '不可停用管理員帳號' })
-    }
-
-    user.role = 'banned'
-    await user.save()
+    const { userId: bannedUserId, role } = await banUser(userId);
 
     return {
         success: true,
-        userId: String(user._id),
-        role: user.role,
-    }
-})
+        userId: bannedUserId,
+        role: role,
+    };
+});

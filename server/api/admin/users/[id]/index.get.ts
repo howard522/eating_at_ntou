@@ -1,7 +1,5 @@
-import { defineEventHandler, createError } from 'h3'
-import connectDB from '@server/utils/db'
-import User from '@server/models/user.model'
-import { getUserFromEvent, toPublicUser } from '@server/utils/auth'
+import { getUserById } from "@server/services/user.service";
+import { toPublicUser } from "@server/utils/auth";
 
 /**
  * @openapi
@@ -31,23 +29,17 @@ import { getUserFromEvent, toPublicUser } from '@server/utils/auth'
  *         description: 找不到使用者
  */
 export default defineEventHandler(async (event: any) => {
-    await connectDB()
-
-    // 取得呼叫者並驗證為 admin
-    const me = await getUserFromEvent(event)
-    if (me.role !== 'admin') {
-        throw createError({ statusCode: 403, statusMessage: '無權限' })
-    }
-
-    const id = event.context.params?.id
+    const id = getRouterParam(event, "id");
     if (!id) {
-        throw createError({ statusCode: 400, statusMessage: '缺少使用者 ID' })
+        throw createError({ statusCode: 400, statusMessage: "缺少使用者 ID" });
     }
 
-    const user = await (User.findById as any)(id).lean()
+    const user = await getUserById(id);
+
+    // TODO: 應該在 service 處理比較好
     if (!user) {
-        throw createError({ statusCode: 404, statusMessage: '找不到使用者' })
+        throw createError({ statusCode: 404, statusMessage: "找不到使用者" });
     }
 
-    return { success: true, data: toPublicUser(user) }
-})
+    return { success: true, data: toPublicUser(user) };
+});

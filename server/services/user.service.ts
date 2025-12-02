@@ -1,7 +1,6 @@
-import type { IUser } from "@server/interfaces/user.interface";
+import type { IUser, UserRole } from "@server/interfaces/user.interface";
 import User from "@server/models/user.model";
-import type { Types } from "mongoose";
-import type { UserRole } from "@server/interfaces/user.interface";
+import type { FilterQuery, Types } from "mongoose";
 
 /**
  * 建立新使用者帳號
@@ -58,6 +57,41 @@ export async function getUserByEmail(email: string) {
     }
 
     return user;
+}
+
+export async function searchUsers(options: {
+    role?: UserRole;
+    query?: string;
+    limit?: number;
+    skip?: number;
+    sortBy?: string;
+    order?: "asc" | "desc";
+}) {
+    const filter: FilterQuery<IUser> = {};
+    const limit = options.limit ?? 50;
+    const skip = options.skip ?? 0;
+    const sortBy = options.sortBy ?? "createdAt";
+    const order = options.order === "asc" ? 1 : -1;
+
+    // 角色篩選
+    if (options.role) {
+        filter.role = options.role;
+    }
+
+    // 關鍵字查詢
+    if (options.query) {
+        const re = new RegExp(options.query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+        filter.$or = [{ name: { $regex: re } }, { email: { $regex: re } }];
+    }
+
+    const users = await User.find(filter)
+        .limit(limit)
+        .skip(skip)
+        .sort({ [sortBy]: order });
+
+    const data = users.map((user) => toPublicUser(user));
+
+    return data;
 }
 
 export async function updateUser(userId: string | Types.ObjectId, updateData: Partial<IUser>) {
