@@ -1,4 +1,4 @@
-// FILE: server/api/auth/login.post.ts
+// server/api/auth/login.post.ts
 
 import type { LoginBody } from "@server/interfaces/user.interface";
 import { loginUser } from "@server/services/auth.service";
@@ -8,8 +8,10 @@ import { loginUser } from "@server/services/auth.service";
  * /api/auth/login:
  *   post:
  *     summary: 使用者登入
- *     description: 驗證 email 與密碼，成功回傳 JWT 與使用者資料。
- *     tags: [Auth]
+ *     description: |
+ *       驗證 email 與密碼，成功回傳 JWT 與使用者資料。
+ *     tags:
+ *       - Auth
  *     requestBody:
  *       required: true
  *       content:
@@ -44,14 +46,11 @@ import { loginUser } from "@server/services/auth.service";
  *                     address: 海洋大學資工系館
  *                     phone: "0912345678"
  *       401:
- *         description: 帳號不存在或密碼錯誤
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 statusCode: { type: integer, example: 401 }
- *                 statusMessage: { type: string, example: 帳號不存在或密碼錯誤 }
+ *         $ref: '#/components/responses/LoginFailed'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     const { email, password } = await readBody<LoginBody>(event);

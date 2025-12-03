@@ -1,7 +1,5 @@
-// FILE: server/api/auth/me.get.ts
-// ============================================================================
+// server/api/auth/me.get.ts
 
-import { toPublicUser } from "@server/utils/auth";
 import { getUser } from "@server/utils/getUser";
 
 /**
@@ -9,7 +7,8 @@ import { getUser } from "@server/utils/getUser";
  * /api/auth/me:
  *   get:
  *     summary: 取得已登入使用者資料
- *     tags: [Auth]
+ *     tags:
+ *       - Users
  *     security:
  *       - BearerAuth: []
  *     responses:
@@ -24,7 +23,11 @@ import { getUser } from "@server/utils/getUser";
  *                 user:
  *                   $ref: '#/components/schemas/UserPublic'
  *       401:
- *         description: 未授權
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     const user = getUser(event);

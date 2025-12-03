@@ -1,5 +1,4 @@
-// FILE: server/api/auth/me/password.patch.ts  (新增/更新)
-// ============================================================================
+// server/api/auth/me/password.patch.ts
 
 import type { UpdatePasswordBody } from "@server/interfaces/user.interface";
 import { changeUserPassword } from "@server/services/auth.service";
@@ -9,8 +8,9 @@ import { getUser } from "@server/utils/getUser";
  * @openapi
  * /api/auth/me/password:
  *   patch:
- *     summary: 變更我的密碼
- *     tags: [Users]
+ *     summary: 變更密碼
+ *     tags:
+ *       - Users
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -19,14 +19,26 @@ import { getUser } from "@server/utils/getUser";
  *         application/json:
  *           schema:
  *             type: object
- *             required: [currentPassword, newPassword]
+ *             required:
+ *               - currentPassword
+ *               - newPassword
  *             properties:
- *               currentPassword: { type: string }
- *               newPassword: { type: string, minLength: 6 }
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 6
  *     responses:
- *       200: { description: 已更新 }
- *       400: { description: 參數錯誤 }
- *       401: { description: 密碼不正確 / 未授權 }
+ *       200:
+ *         description: 已更新
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     const userId = getUser(event).id;

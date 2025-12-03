@@ -245,6 +245,9 @@ export const components = {
                 //     },
                 // },
             },
+            LoginFailed: {
+                description: "登入失敗，帳號不存在或密碼錯誤",
+            },
 
             // 403
             Forbidden: {

@@ -1,4 +1,4 @@
-// FILE: server/api/auth/register.post.ts
+// server/api/auth/register.post.ts
 
 import type { RegisterBody } from "@server/interfaces/user.interface";
 import { registerUser } from "@server/services/auth.service";
@@ -8,8 +8,10 @@ import { registerUser } from "@server/services/auth.service";
  * /api/auth/register:
  *   post:
  *     summary: 使用者註冊
- *     description: 建立新帳號（email 唯一），成功回傳 JWT 與使用者資料（不回傳密碼）。
- *     tags: [Auth]
+ *     description: |
+ *       建立新帳號（email 唯一），成功回傳 JWT 與使用者資料（不回傳密碼）。
+ *     tags:
+ *       - Auth
  *     requestBody:
  *       required: true
  *       content:
@@ -45,14 +47,13 @@ import { registerUser } from "@server/services/auth.service";
  *                     address: ""
  *                     phone: ""
  *       400:
- *         description: 請求不正確或 email 已存在
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 statusCode: { type: integer, example: 400 }
- *                 statusMessage: { type: string, example: email already in use }
+ *         $ref: '#/components/responses/BadRequest'
+ *       409:
+ *         $ref: '#/components/responses/Conflict'
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     const body = await readBody<RegisterBody>(event);

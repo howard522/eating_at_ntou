@@ -1,5 +1,4 @@
-// FILE: server/api/auth/me.patch.ts  (新增/更新)
-// ============================================================================
+// server/api/auth/me.patch.ts
 
 import type { UpdateUserBody } from "@server/interfaces/user.interface";
 import { updateUser } from "@server/services/user.service";
@@ -11,7 +10,8 @@ import { parseForm } from "@server/utils/parseForm";
  * /api/auth/me:
  *   patch:
  *     summary: 更新我的個人資料
- *     tags: [Users]
+ *     tags:
+ *       - Users
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -21,14 +21,24 @@ import { parseForm } from "@server/utils/parseForm";
  *           schema:
  *             type: object
  *             properties:
- *               name: { type: string }
- *               address: { type: string }
- *               phone: { type: string }
+ *               name:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               phone:
+ *                 type: string
  *               img:
  *                 type: string
  *                 format: binary
  *     responses:
- *       200: { description: 已更新 }
+ *       200:
+ *         description: 已更新
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     const userId = getUser(event).id;

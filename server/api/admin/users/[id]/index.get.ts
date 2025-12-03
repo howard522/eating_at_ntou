@@ -1,3 +1,5 @@
+// server/api/admin/users/[id]/index.get.ts
+
 import { getUserById } from "@server/services/user.service";
 import { toPublicUser } from "@server/utils/auth";
 
@@ -5,10 +7,11 @@ import { toPublicUser } from "@server/utils/auth";
  * @openapi
  * /api/admin/users/{id}:
  *   get:
- *     summary: 由管理員取得單一使用者資料
- *     description: 管理員專用：依使用者 ID 取得 user 的公開欄位（不包含密碼）。
+ *     summary: 管理員 - 取得單一使用者資料
+ *     description: |
+ *       管理員專用：依使用者 ID 取得 user 的公開欄位（不包含密碼）。
  *     tags:
- *       - Admin
+ *       - Admin - Users
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -27,6 +30,8 @@ import { toPublicUser } from "@server/utils/auth";
  *         description: 非管理員無權限
  *       404:
  *         description: 找不到使用者
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event: any) => {
     const id = getRouterParam(event, "id");
