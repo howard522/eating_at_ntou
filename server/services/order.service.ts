@@ -155,10 +155,27 @@ export async function getOrderById(orderId: string) {
     const order = await Order.findById(orderId)
         .populate("user", "name img email")
         .populate("deliveryPerson", "name img phone")
+        .populate("items.restaurant.id", "locationGeo")
         .lean();
     // items.restaurant.phone 已存為 snapshot，無需額外 populate
 
     if (!order) throw createError({ statusCode: 404, statusMessage: "Order not found" });
+
+    // 補上餐廳經緯度
+    if (order.items) {
+        order.items.forEach((item) => {
+            if (
+                item.restaurant &&
+                item.restaurant.id &&
+                item.restaurant.id.locationGeo &&
+                item.restaurant.id.locationGeo.coordinates
+            ) {
+                const [lng, lat] = item.restaurant.id.locationGeo.coordinates;
+                item.restaurant.location = { lat, lng };
+                item.restaurant.id = item.restaurant.id._id;
+            }
+        });
+    }
 
     // 正規化 deliveryPerson：考慮可能為 null（尚未被外送員接單）或未被 populate
     try {
