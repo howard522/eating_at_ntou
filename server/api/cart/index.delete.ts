@@ -1,4 +1,5 @@
-import { verifyJwtFromEvent } from "@server/utils/auth";
+// server/api/cart/index.delete.ts
+
 import { clearCartByUserId } from "@server/services/cart.service";
 import { getUser } from "@server/utils/getUser";
 
@@ -38,9 +39,9 @@ import { getUser } from "@server/utils/getUser";
  *                     createdAt: "2025-10-23T20:57:53.449Z"
  *                     updatedAt: "2025-11-02T10:00:00.000Z"
  *       401:
- *         description: 未提供或無效的 JWT。
- *       404:
- *         description: 找不到使用者的購物車。
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 export default defineEventHandler(async (event) => {
     const userId = getUser(event)._id as string;

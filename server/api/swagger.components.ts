@@ -337,6 +337,11 @@ export const components = {
                 // },
             },
 
+            // 423
+            Locked: {
+                description: "資源被鎖定無法修改",
+            },
+
             // 429
             TooManyRequests: {
                 description: "請求過於頻繁",

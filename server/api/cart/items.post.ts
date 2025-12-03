@@ -1,3 +1,5 @@
+// server/api/cart/items.post.ts
+
 import type { CartItemUpdateBody } from "@server/interfaces/cart.interface";
 import { updateCartByUserId } from "@server/services/cart.service";
 import { getUser } from "@server/utils/getUser";
@@ -73,6 +75,14 @@ import { getUser } from "@server/utils/getUser";
  *                       辣度: "小辣"
  *                 currency: "TWD"
  *                 total: 420
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       423:
+ *         $ref: '#/components/responses/Locked'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     const userId = getUser(event)._id as string;

@@ -7,8 +7,9 @@ import { getUser } from "@server/utils/getUser";
  * @openapi
  * /api/cart/delivery-fee:
  *   get:
- *     summary: 取得目前使用者的外送費用
- *     description: 驗證 JWT 後，根據使用者的購物車內容與外送地址，計算並回傳外送費用。
+ *     summary: 計算外送費用
+ *     description: |
+ *       根據使用者的購物車內容與外送地址，計算並回傳外送費用。
  *     tags:
  *       - Cart
  *     security:
@@ -40,6 +41,14 @@ import { getUser } from "@server/utils/getUser";
  *                     deliveryFee:
  *                       type: number
  *                       example: 30
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     const userId = getUser(event)._id as string;
