@@ -48,6 +48,15 @@ import { deleteRestaurantById } from "@server/services/restaurants.service";
  */
 export default defineEventHandler(async (event) => {
     const id = getRouterParam(event, "id") as string;
+
+    if (!id) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Restaurant id is required",
+        });
+    }
+
     await deleteRestaurantById(id);
 
     return {

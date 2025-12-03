@@ -1,6 +1,6 @@
 // server/api/admin/restaurants/index.get.ts
 
-import { searchRestaurants, updateRestaurantGeocodeById } from "@server/services/restaurants.service";
+import { searchRestaurants } from "@server/services/restaurants.service";
 
 /**
  * @openapi
@@ -60,8 +60,8 @@ export default defineEventHandler(async (event) => {
     const limit = parseInteger(query.limit, DEFAULT_LIMIT, 1, MAX_LIMIT);
     const skip = parseInteger(query.skip, 0, 0);
 
-    // 此 admin endpoint 不過濾 isActive，會回傳上、下架資料
-    let restaurants = await searchRestaurants(search, false, { limit, skip });
+    // Admin endpoint 回傳所有餐廳（包含下架）
+    let restaurants = await searchRestaurants(search, { limit, skip, activeOnly: false });
 
     return {
         success: true,

@@ -1,9 +1,8 @@
 // server/api/admin/restaurants/[id]/index.patch.ts
 
-import { updateRestaurantById } from "@server/services/restaurants.service";
-import { getGeocodeFromAddress } from "@server/utils/nominatim";
-import { parseForm } from "@server/utils/parseForm";
 import type { UpdateRestaurantBody } from "@server/interfaces/restaurant.interface";
+import { updateRestaurantById } from "@server/services/restaurants.service";
+import { parseForm } from "@server/utils/parseForm";
 
 /**
  * @openapi
@@ -87,17 +86,12 @@ export default defineEventHandler(async (event) => {
     const form = await readMultipartFormData(event);
     const data = await parseForm<UpdateRestaurantBody>(form, ["tags"]);
 
-    // 自動地理編碼
-    if (data.address) {
-        const geocode = await getGeocodeFromAddress(data.address);
-        if (geocode) {
-            data.locationGeo = geocode;
-        } else {
-            // 地址無法成功地理編碼
-            console.warn(`Geocoding failed for address: ${data.address}`);
-
-            throw createError({ statusCode: 400, message: "Bad Address for Geocoding" });
-        }
+    if (!id) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Restaurant id is required",
+        });
     }
 
     if (data.imageURL) {

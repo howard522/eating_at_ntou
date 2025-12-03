@@ -1,9 +1,8 @@
 // server/api/admin/restaurants/index.post.ts
 
-import { createRestaurant } from "@server/services/restaurants.service";
-import { getGeocodeFromAddress } from "@server/utils/nominatim";
-import { parseForm } from "@server/utils/parseForm";
 import type { CreateRestaurantBody } from "@server/interfaces/restaurant.interface";
+import { createRestaurant } from "@server/services/restaurants.service";
+import { parseForm } from "@server/utils/parseForm";
 
 /**
  * @openapi
@@ -88,18 +87,11 @@ export default defineEventHandler(async (event) => {
 
     // 檢查必填欄位
     if (!data.name || !data.address || !data.phone) {
-        throw createError({ statusCode: 400, message: "Missing required fields: name, address, phone" });
-    }
-
-    // 自動地理編碼
-    const geocode = await getGeocodeFromAddress(data.address);
-    if (geocode) {
-        data.locationGeo = geocode;
-    } else {
-        // 地址無法成功地理編碼
-        console.warn(`Geocoding failed for address: ${data.address}`);
-
-        throw createError({ statusCode: 400, message: "Bad Address for Geocoding" });
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required fields: name, address, phone",
+        });
     }
 
     if (data.imageURL) {
@@ -110,6 +102,7 @@ export default defineEventHandler(async (event) => {
     const restaurant = await createRestaurant(data);
 
     setResponseStatus(event, 201); // 201 Created
+
     return {
         success: true,
         restaurant,

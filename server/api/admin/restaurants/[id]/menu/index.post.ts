@@ -80,9 +80,17 @@ export default defineEventHandler(async (event) => {
     const form = await readMultipartFormData(event);
     const data = await parseForm<CreateMenuItemBody>(form);
 
+    if (!restaurantId) {
+        throw createError({ statusCode: 400, statusMessage: "Bad Request", message: "Missing required parameter: id" });
+    }
+
     // 檢查必填欄位
     if (!data.name || !data.price) {
-        throw createError({ statusCode: 400, message: "Missing required fields: name, price" });
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required fields: name, price",
+        });
     }
 
     if (data.imageURL) {
@@ -93,6 +101,7 @@ export default defineEventHandler(async (event) => {
     const menuItem = await createMenuItem(restaurantId, data);
 
     setResponseStatus(event, 201); // 201 Created
+
     return {
         success: true,
         menuItem,

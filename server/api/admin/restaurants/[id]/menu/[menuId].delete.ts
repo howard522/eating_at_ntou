@@ -57,6 +57,14 @@ export default defineEventHandler(async (event) => {
     const restaurantId = getRouterParam(event, "id") as string;
     const menuId = getRouterParam(event, "menuId") as string;
 
+    if (!restaurantId || !menuId) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameters: id, menuId",
+        });
+    }
+
     await deleteMenuItemById(restaurantId, menuId);
 
     return {

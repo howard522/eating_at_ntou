@@ -62,7 +62,7 @@ export default defineEventHandler(async (event) => {
     const skip = parseInteger(query.skip, 0, 0);
 
     // 查詢餐廳
-    const restaurants = await searchRestaurants(search, true, { limit, skip });
+    const restaurants = await searchRestaurants(search, { limit, skip, activeOnly: true });
 
     return {
         success: true,

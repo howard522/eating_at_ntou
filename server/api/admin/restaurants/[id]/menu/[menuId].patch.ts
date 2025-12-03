@@ -86,6 +86,14 @@ export default defineEventHandler(async (event) => {
     const form = await readMultipartFormData(event);
     const data = await parseForm<UpdateMenuItemBody>(form);
 
+    if (!restaurantId || !menuId) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameters: id, menuId",
+        });
+    }
+
     if (data.imageURL) {
         data.image = data.imageURL;
         delete data.imageURL;
