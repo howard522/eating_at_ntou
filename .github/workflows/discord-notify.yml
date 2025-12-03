@@ -11,9 +11,9 @@ on:
         types: [submitted]
 
     issues:
-        types: [opened, closed]
+        types: [opened, closed, reopened]
 
-    issue_comment:
+    issue_comment: # 包含 PR comments
         types: [created]
 
     watch:
@@ -23,7 +23,7 @@ on:
 
 jobs:
     notify:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-slim
 
         steps:
             - name: Send embed to Discord
@@ -41,6 +41,7 @@ jobs:
                       TITLE="🚀 Push to ${GITHUB_REF##*/}"
                       DESC="${{ github.event.head_commit.message }}"
                       URL="${{ github.event.head_commit.url }}"
+                      FOOT="commit ${{ github.event.head_commit.id }}"
                       ;;
 
                     pull_request)
@@ -49,39 +50,44 @@ jobs:
                         TITLE="🟣 Pull Request Merged"
                       else
                         case "${{ github.event.action }}" in
-                          opened)     COLOR=3066993;  TITLE="🟢 Pull Request Opened" ;;
-                          closed)     COLOR=15158332; TITLE="🔴 Pull Request Closed" ;;
-                          reopened)   COLOR=15844367; TITLE="🟡 Pull Request Reopened" ;;
-                          synchronize) COLOR=3447003; TITLE="🔄 Pull Request Updated" ;;
+                          opened)     COLOR=3066993;  TITLE="🟢 PR Opened" ;;
+                          closed)     COLOR=15158332; TITLE="🔴 PR Closed" ;;
+                          reopened)   COLOR=15844367; TITLE="🟡 PR Reopened" ;;
+                          synchronize) COLOR=3447003; TITLE="🔄 PR Updated" ;;
                         esac
                       fi
                       TITLE="$TITLE: ${{ github.event.pull_request.title }}"
                       DESC="${{ github.event.pull_request.body }}"
                       URL="${{ github.event.pull_request.html_url }}"
+                      FOOT="Pull Request #${{ github.event.pull_request.number }}"
                       ;;
 
                     pull_request_review)
                       COLOR=3447003  # blue
-                      TITLE="📝 Pull Request Review: ${{ github.event.pull_request.title }}"
+                      TITLE="📝 PR Review: ${{ github.event.pull_request.title }}"
                       DESC="${{ github.event.review.body }}"
                       URL="${{ github.event.review.html_url }}"
+                      FOOT="Pull Request #${{ github.event.pull_request.number }}"
                       ;;
 
                     issues)
                       case "${{ github.event.action }}" in
                         opened) COLOR=3066993; TITLE="🟢 Issue Opened" ;;
                         closed) COLOR=15158332; TITLE="🔴 Issue Closed" ;;
+                        reopened) COLOR=15844367; TITLE="🟡 Issue Reopened" ;;
                       esac
                       TITLE="$TITLE: ${{ github.event.issue.title }}"
                       DESC=" ${{ github.event.issue.body }}"
                       URL="${{ github.event.issue.html_url }}"
+                      FOOT="Issue #${{ github.event.issue.number }}"
                       ;;
 
                     issue_comment)
                       COLOR=3447003
-                      TITLE="💬 New Comment"
+                      TITLE="💬 New Comment on Issue#${{ github.event.issue.number }}"
                       DESC="${{ github.event.comment.body }}"
                       URL="${{ github.event.comment.html_url }}"
+                      FOOT="Issue #${{ github.event.issue.number }}"
                       ;;
 
                     watch)
@@ -89,6 +95,7 @@ jobs:
                       TITLE="⭐ Repo Starred"
                       DESC="**User:** ${{ github.actor }}"
                       URL=""
+                      FOOT="${GITHUB_REPOSITORY}"
                       ;;
 
                     fork)
@@ -96,6 +103,7 @@ jobs:
                       TITLE="🍴 Repo Forked"
                       DESC="**User:** ${{ github.actor }}"
                       URL=""
+                      FOOT="${GITHUB_REPOSITORY}"
                       ;;
 
                     *)
@@ -103,6 +111,7 @@ jobs:
                       TITLE="📣 Event Triggered"
                       DESC="$EVENT event triggered."
                       URL=""
+                      FOOT="${GITHUB_REPOSITORY}"
                       ;;
                   esac
 
@@ -110,6 +119,7 @@ jobs:
                   SAFE_TITLE=$(printf '%s' "$TITLE" | jq -Rs .)
                   SAFE_DESC=$(printf '%s' "$DESC" | jq -Rs .)
                   SAFE_URL=$(printf '%s' "$URL" | jq -Rs .)
+                  SAFE_FOOT=$(printf '%s' "$FOOT" | jq -Rs .)
                   SAFE_ACTOR=$(printf '%s' "$ACTOR" | jq -Rs .)
                   SAFE_AVATAR=$(printf '%s' "$AVATAR_URL" | jq -Rs .)
 
@@ -127,7 +137,7 @@ jobs:
                         "url": $SAFE_URL,
                         "color": $COLOR,
                         "footer": {
-                          "text": "${GITHUB_REPOSITORY}"
+                          "text": $SAFE_FOOT
                         },
                         "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
                       }
