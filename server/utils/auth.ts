@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import User from "@server/models/user.model";
 import connectDB from "./db";
 import type { H3Event } from "h3";
-import type { JwtPayload } from "@server/interfaces/jwt.interface";
+import type { JwtPayload } from "@server/interfaces/user.interface";
 import type { IUser, UserResponse } from "@server/interfaces/user.interface";
 
 export const JWT_SECRET = process.env.JWT_SECRET || "supersecret";

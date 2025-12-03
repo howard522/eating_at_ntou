@@ -1,9 +1,15 @@
 // server/interfaces/user.interface.ts
 
+import type { CreateBody, ObjectIdLike, UpdateBody } from "./common.interface";
+
 export type UserRole = "admin" | "multi" | "banned";
 
+// --------------------
 // 使用者介面
-export interface IUser extends Document {
+// --------------------
+
+export interface IUser {
+    id: ObjectIdLike; // QUESTION: 會必須存在嗎？
     name: string;
     email: string;
     password: string;
@@ -16,40 +22,34 @@ export interface IUser extends Document {
     updatedAt?: Date;
 }
 
-export interface LoginBody {
-    email: string;
-    password: string;
+export interface IUserMethods {
+    comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-export interface RegisterBody {
-    name?: string;
-    email: string;
-    password: string;
-    role?: UserRole;
-}
+// --------------------
+// 使用者相關 DTO
+// --------------------
+
+export type LoginBody = Pick<IUser, "email" | "password">;
+
+export type RegisterBody = CreateBody<IUser, "email" | "password">;
 
 export interface UpdatePasswordBody {
     currentPassword: string;
     newPassword: string;
 }
 
-export interface UpdateUserBody {
-    name?: string;
-    address?: string;
-    phone?: string;
-    img?: string;
-    // activeRole?: "customer" | "delivery" | null;
-}
+export type UpdateUserBody = UpdateBody<IUser>;
 
-export interface UserResponse {
+export type UserResponse = Required<IUser>;
+
+// --------------------
+// JWT 負載介面
+// --------------------
+
+export interface JwtPayload {
     id: string;
-    name: string;
-    email: string;
-    role: UserRole;
-    img: string;
-    address: string;
-    phone: string;
-    // activeRole?: "customer" | "delivery" | null;
-    createdAt?: Date;
-    updatedAt?: Date;
+    role?: UserRole;
+    iat?: number;
+    exp?: number;
 }

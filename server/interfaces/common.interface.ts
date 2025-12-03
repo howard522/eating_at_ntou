@@ -37,3 +37,13 @@ export interface QueryPaginationOptions {
     limit?: number;
     skip?: number;
 }
+
+// --------------------
+// 其他
+// --------------------
+
+export interface ImageFile {
+    data: Uint8Array;
+    type?: string;
+    filename?: string;
+}

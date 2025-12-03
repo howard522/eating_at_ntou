@@ -1,13 +1,20 @@
 // server/models/user.model.ts
 
+import type { IUser, IUserMethods } from "@server/interfaces/user.interface";
+import { genSalt, hash, compare } from "bcryptjs";
+import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
-import { genSalt, hash } from "bcryptjs";
-import type { Model } from "mongoose";
-import type { IUser } from "@server/interfaces/user.interface";
 
 const { Schema, model } = mongoose;
 
-const userSchema = new Schema<IUser>(
+// 文件類型定義
+type UserDocument = HydratedDocument<IUser, IUserMethods>;
+
+// --------------------
+// 使用者
+// --------------------
+
+const userSchema = new Schema<UserDocument>(
     {
         name: String,
         email: {
@@ -31,6 +38,10 @@ const userSchema = new Schema<IUser>(
     { timestamps: true }
 );
 
+// --------------------
+// 密碼雜湊
+// --------------------
+
 // Hash password before save if modified
 userSchema.pre("save", async function (next) {
     try {
@@ -43,4 +54,16 @@ userSchema.pre("save", async function (next) {
     }
 });
 
-export default (mongoose.models.User as Model<IUser>) || model<IUser>("User", userSchema);
+// 驗證密碼
+userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+    const isMatch = await compare(candidatePassword, this.password);
+    return isMatch;
+};
+
+// --------------------
+// Model export
+// --------------------
+
+export const User = (mongoose.models.User as Model<UserDocument>) || model<UserDocument>("User", userSchema);
+
+export default User;
