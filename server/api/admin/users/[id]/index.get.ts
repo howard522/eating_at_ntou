@@ -1,7 +1,6 @@
 // server/api/admin/users/[id]/index.get.ts
 
 import { getUserById } from "@server/services/user.service";
-import { toPublicUser } from "@server/utils/auth";
 
 /**
  * @openapi
@@ -46,5 +45,5 @@ export default defineEventHandler(async (event: any) => {
         throw createError({ statusCode: 404, statusMessage: "找不到使用者" });
     }
 
-    return { success: true, data: toPublicUser(user) };
+    return { success: true, data: user };
 });

@@ -1,7 +1,7 @@
 // server/api/orders/[id]/accept.patch.ts
 
 import { updateOrderDeliveryPerson } from "@server/services/order.service";
-import { getUserFromEvent } from "@server/utils/auth";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 
 /**
  * 前端請注意：
@@ -45,12 +45,7 @@ import { getUserFromEvent } from "@server/utils/auth";
  *                 deliveryStatus: "on_the_way"
  */
 export default defineEventHandler(async (event) => {
-    // const payload = await verifyJwtFromEvent(event)
-    // assertNotBanned(payload) // 確保使用者未被封鎖
-    // const userId = payload.id
-
-    const user = await getUserFromEvent(event); // 取得目前使用者，11/15更新後會檔掉被封鎖的使用者
-    const userId = user._id;
+    const userId = getCurrentUser(event).id;
 
     if (!userId) throw createError({ statusCode: 401, statusMessage: "Invalid token payload" });
 

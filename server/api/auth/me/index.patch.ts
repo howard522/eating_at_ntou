@@ -2,7 +2,7 @@
 
 import type { UpdateUserBody } from "@server/interfaces/user.interface";
 import { updateUser } from "@server/services/user.service";
-import { getUser } from "@server/utils/getUser";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 import { parseForm } from "@server/utils/parseForm";
 
 /**
@@ -41,7 +41,7 @@ import { parseForm } from "@server/utils/parseForm";
  *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-    const userId = getUser(event).id;
+    const userId = getCurrentUser(event).id;
 
     const form = await readMultipartFormData(event);
     const data = await parseForm<UpdateUserBody>(form);

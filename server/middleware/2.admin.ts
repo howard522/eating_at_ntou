@@ -1,6 +1,6 @@
 // server/middleware/1.auth.ts
 
-import { getUser } from "@server/utils/getUser";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 
 export default defineEventHandler(async (event) => {
     const path = getRequestURL(event).pathname;
@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
         return;
     }
 
-    const user = getUser(event);
+    const user = getCurrentUser(event);
 
     if (user.role !== "admin") {
         throw createError({ statusCode: 403, statusMessage: "Forbidden", message: "Permission denied" });

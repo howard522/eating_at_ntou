@@ -1,7 +1,7 @@
 // server/api/orders/[id]/index.get.ts
 
 import { getOrderById, getOrderOwnership } from "@server/services/order.service";
-import { verifyJwtFromEvent } from "@server/utils/auth";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 
 /**
  * @openapi
@@ -67,8 +67,8 @@ import { verifyJwtFromEvent } from "@server/utils/auth";
  *                   note: "請放門口"
  */
 export default defineEventHandler(async (event) => {
-    const payload = await verifyJwtFromEvent(event);
-    const userId = payload.id;
+    const user = getCurrentUser(event);
+    const userId = user.id;
 
     const orderId = getRouterParam(event, "id");
 
@@ -76,8 +76,8 @@ export default defineEventHandler(async (event) => {
 
     // 權限檢查：顧客、外送員（只能查自己的訂單）
     // 或 Admin 都可查詢
-    const ownership = await getOrderOwnership(orderId, userId);
-    const isAdmin = payload.role === "admin" || payload.role === "multi"; // QUESTION: multi 角色是否有此權限？
+    const ownership = await getOrderOwnership(orderId, user.id);
+    const isAdmin = user.role === "admin" || user.role === "multi"; // QUESTION: multi 角色是否有此權限？
 
     if (!ownership.isOwner && !ownership.isDeliveryPerson && !isAdmin) {
         throw createError({ statusCode: 403, message: "Not allowed to view this order" });

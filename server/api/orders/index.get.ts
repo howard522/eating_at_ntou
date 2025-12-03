@@ -1,7 +1,7 @@
 // server/api/orders/index.get.ts
 
 import { getOrdersByUserRole } from "@server/services/order.service";
-import { verifyJwtFromEvent } from "@server/utils/auth";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 
 /**
  * @openapi
@@ -77,9 +77,8 @@ import { verifyJwtFromEvent } from "@server/utils/auth";
  */
 
 export default defineEventHandler(async (event) => {
-    // Auth
-    const payload = await verifyJwtFromEvent(event);
-    const userId = payload.id;
+    const userId = getCurrentUser(event).id;
+
     if (!userId) throw createError({ statusCode: 401, statusMessage: "invalid token payload" });
 
     // 取得角色參數（預設為 customer）

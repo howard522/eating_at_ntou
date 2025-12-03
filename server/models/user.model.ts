@@ -1,14 +1,14 @@
 // server/models/user.model.ts
 
-import type { IUser, IUserMethods } from "@server/interfaces/user.interface";
-import { genSalt, hash, compare } from "bcryptjs";
+import type { IUserMethods, IUserWithPassword } from "@server/interfaces/user.interface";
+import { comparePassword, generatePasswordHash } from "@server/utils/auth";
 import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
 
 const { Schema, model } = mongoose;
 
 // 文件類型定義
-type UserDocument = HydratedDocument<IUser, IUserMethods>;
+type UserDocument = HydratedDocument<IUserWithPassword, IUserMethods>;
 
 // --------------------
 // 使用者
@@ -46,8 +46,7 @@ const userSchema = new Schema<UserDocument>(
 userSchema.pre("save", async function (next) {
     try {
         if (!this.isModified("password")) return next();
-        const salt = await genSalt(10);
-        this.password = await hash(this.password, salt);
+        this.password = await generatePasswordHash(this.password);
         next();
     } catch (e) {
         next(e as any);
@@ -56,7 +55,7 @@ userSchema.pre("save", async function (next) {
 
 // 驗證密碼
 userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
-    const isMatch = await compare(candidatePassword, this.password);
+    const isMatch = await comparePassword(candidatePassword, this.password);
     return isMatch;
 };
 

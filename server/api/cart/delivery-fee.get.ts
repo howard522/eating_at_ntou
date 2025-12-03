@@ -1,7 +1,7 @@
 // server/api/cart/delivery-fee.get.ts
 
 import { calculateDeliveryFee } from "@server/services/cart.service";
-import { getUser } from "@server/utils/getUser";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 
 /**
  * @openapi
@@ -51,7 +51,7 @@ import { getUser } from "@server/utils/getUser";
  *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-    const userId = getUser(event).id;
+    const userId = getCurrentUser(event).id;
 
     const address = getQuery(event).address as string;
 

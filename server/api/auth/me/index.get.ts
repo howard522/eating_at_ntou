@@ -1,6 +1,6 @@
 // server/api/auth/me.get.ts
 
-import { getUser } from "@server/utils/getUser";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 
 /**
  * @openapi
@@ -30,7 +30,7 @@ import { getUser } from "@server/utils/getUser";
  *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-    const user = getUser(event);
+    const user = getCurrentUser(event);
 
     return { success: true, user };
 });

@@ -2,7 +2,7 @@
 
 import { createChatMessage } from "@server/services/chat.service";
 import { getOrderOwnership, getOrderStatus } from "@server/services/order.service";
-import { getUser } from "@server/utils/getUser";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 
 /**
  * @openapi
@@ -56,7 +56,7 @@ import { getUser } from "@server/utils/getUser";
  *         description: 訂單不存在
  */
 export default defineEventHandler(async (event) => {
-    const userId = getUser(event).id;
+    const userId = getCurrentUser(event).id;
     const orderId = getRouterParam(event, "id") as string;
 
     if (!orderId) {

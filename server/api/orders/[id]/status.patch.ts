@@ -2,7 +2,7 @@
 
 import type { OrderStatusUpdate } from "@server/interfaces/order.interface";
 import { getOrderOwnership, updateOrderStatusById } from "@server/services/order.service";
-import { verifyJwtFromEvent } from "@server/utils/auth";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 
 /**
  * @openapi
@@ -51,8 +51,7 @@ import { verifyJwtFromEvent } from "@server/utils/auth";
  *                   $ref: '#/components/schemas/Order'
  */
 export default defineEventHandler(async (event) => {
-    const payload = await verifyJwtFromEvent(event);
-    const userId = payload.id;
+    const userId = getCurrentUser(event).id;
 
     const orderId = getRouterParam(event, "id") as string;
 

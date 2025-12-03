@@ -1,7 +1,6 @@
 // server/api/orders/available.get.ts
 
 import { getAvailableOrdersForDeliveryPerson } from "@server/services/order.service";
-import { verifyJwtFromEvent } from "@server/utils/auth";
 
 /**
  * @openapi
@@ -168,9 +167,6 @@ import { verifyJwtFromEvent } from "@server/utils/auth";
  *                   example: "未登入或 Token 錯誤"
  */
 export default defineEventHandler(async (event) => {
-    // Auth
-    const payload = await verifyJwtFromEvent(event);
-
     const query = getQuery(event);
     const { keyword = "", sortBy = "createdAt", order = "desc", lat, lon } = query;
     // 分頁參數

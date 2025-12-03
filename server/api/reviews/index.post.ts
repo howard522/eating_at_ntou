@@ -2,7 +2,7 @@
 
 import { getRestaurantById } from "@server/services/restaurants.service";
 import { createReview } from "@server/services/reviews.service";
-import { verifyJwtFromEvent } from "@server/utils/auth";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 
 /**
  * @openapi
@@ -56,9 +56,9 @@ import { verifyJwtFromEvent } from "@server/utils/auth";
  *         description: 找不到餐廳
  */
 export default defineEventHandler(async (event) => {
+    const userId = getCurrentUser(event).id;
+
     const body = await readBody(event);
-    const payload = await verifyJwtFromEvent(event);
-    const userId = payload.id;
 
     const { restaurantId, rating, content } = body;
 

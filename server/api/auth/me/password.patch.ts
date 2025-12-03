@@ -2,7 +2,7 @@
 
 import type { UpdatePasswordBody } from "@server/interfaces/user.interface";
 import { changeUserPassword } from "@server/services/auth.service";
-import { getUser } from "@server/utils/getUser";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 
 /**
  * @openapi
@@ -41,7 +41,7 @@ import { getUser } from "@server/utils/getUser";
  *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-    const userId = getUser(event).id;
+    const userId = getCurrentUser(event).id;
 
     const { currentPassword, newPassword } = await readBody<UpdatePasswordBody>(event);
 
