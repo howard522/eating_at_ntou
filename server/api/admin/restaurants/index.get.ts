@@ -8,11 +8,12 @@ import { searchRestaurants } from "@server/services/restaurants.service";
  *   get:
  *     summary: 管理員 - 搜尋餐廳（包含上架與下架）
  *     description: |
- *       管理員用的餐廳搜尋，可搜尋 name / info / address / menu.name。與公開 API 類似，但會回傳包含已下架的餐廳。
+ *       僅限管理員使用。
  *
- *       若查詢參數帶上 `geocode=true`，伺服器會嘗試呼叫 Nominatim 將缺少經緯度的餐廳地址轉換為座標，並把座標寫回資料庫（此為有副作用的測試功能）。
+ *       可搜尋 name / info / address / menu.name。
+ *       與公開 API 類似，但會回傳包含已下架的餐廳。
  *     tags:
- *       - Admin
+ *       - Admin - Restaurants
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -26,11 +27,16 @@ import { searchRestaurants } from "@server/services/restaurants.service";
  *         description: 最大回傳筆數（預設 50，限制為 100）
  *         schema:
  *           type: integer
+ *           default: 50
+ *           minimum: 1
+ *           maximum: 100
  *       - name: skip
  *         in: query
  *         description: 跳過筆數（用於分頁）
  *         schema:
  *           type: integer
+ *           default: 0
+ *           minimum: 0
  *     responses:
  *       200:
  *         description: 成功回傳餐廳清單
@@ -47,6 +53,16 @@ import { searchRestaurants } from "@server/services/restaurants.service";
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Restaurant'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     // 防止過長造成效能問題

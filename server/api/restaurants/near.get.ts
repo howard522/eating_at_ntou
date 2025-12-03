@@ -64,6 +64,12 @@ import { parseInteger } from "@server/utils/parseNumber";
  *                           distance:
  *                             type: number
  *                             description: 距離（公尺）
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     // 防止過長造成效能問題

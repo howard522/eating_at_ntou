@@ -8,22 +8,23 @@ import type { CreateMenuItemBody } from "@server/interfaces/restaurant.interface
  * @openapi
  * /api/admin/restaurants/{id}/menu:
  *   post:
- *     summary: 為指定餐廳新增菜單項目（支援圖片上傳）
+ *     summary: 管理員 - 新增菜單項目（支援圖片上傳）
  *     description: |
  *       僅限管理員使用。
- *       可新增一個菜單項目，若上傳圖片，系統會自動上傳至 ImgBB 並儲存其 URL。
+ *
+ *       可新增一個菜單項目。
+ *       若傳入圖片，系統會自動上傳至 ImgBB 並回傳圖片 URL。
  *     tags:
- *       - Admin
+ *       - Admin - Restaurants
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: 餐廳的唯一 MongoDB ObjectId
+ *         description: 餐廳 ID
  *         schema:
  *           type: string
- *           example: "6731e8adfb75b5f214ecb321"
  *     requestBody:
  *       required: true
  *       content:
@@ -46,11 +47,11 @@ import type { CreateMenuItemBody } from "@server/interfaces/restaurant.interface
  *               imageURL:
  *                 type: string
  *                 format: uri
- *                 description: 圖片的 URL
+ *                 description: 直接使用圖片的 URL
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: 上傳圖片檔案，會自動上傳至 ImgBB 並回傳 URL
+ *                 description: 菜單項目圖片（由後端自動上傳至 ImgBB）
  *     responses:
  *       201:
  *         description: 成功建立新菜單項目
@@ -65,15 +66,17 @@ import type { CreateMenuItemBody } from "@server/interfaces/restaurant.interface
  *                 menuItem:
  *                   $ref: '#/components/schemas/MenuItem'
  *       400:
- *         description: 無效的請求資料或圖片上傳失敗
+ *         $ref: '#/components/responses/BadRequest'
  *       401:
- *         description: 未登入或 Token 無效
+ *         $ref: '#/components/responses/Unauthorized'
  *       403:
- *         description: 權限不足（非管理員）
+ *         $ref: '#/components/responses/Forbidden'
  *       404:
- *         description: 找不到指定餐廳
+ *         $ref: '#/components/responses/NotFound'
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
  *       500:
- *         description: 伺服器內部錯誤
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     const restaurantId = getRouterParam(event, "id") as string;
