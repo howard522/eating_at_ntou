@@ -79,7 +79,12 @@ export default defineEventHandler(async (event) => {
     const skip = parseInteger(query.skip, 0, 0);
     const maxDistance = query.maxDistance ? Number(query.maxDistance) : undefined; // meters
 
-    const results = await searchRestaurantsNearByAddress(address, search, true, { limit, skip, maxDistance });
+    const results = await searchRestaurantsNearByAddress(address, search, {
+        limit,
+        skip,
+        maxDistance,
+        activeOnly: true,
+    });
 
     return {
         success: true,

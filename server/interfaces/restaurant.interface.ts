@@ -1,39 +1,52 @@
 // server/interfaces/restaurant.interface.ts
 
-import type { Document, Types } from "mongoose";
-import type { IGeoPoint } from "@server/interfaces/geoPoint.interface";
+import type { CreateBody, ImageURL, UpdateBody } from "@server/interfaces/common.interface";
+import type { IGeoPoint } from "@server/interfaces/geo.interface";
+import type { Types } from "mongoose";
 
-// 菜單項目介面
-export interface IMenuItem extends Document {
+/**
+ * 菜單項目介面
+ */
+export interface IMenuItem {
+    _id?: Types.ObjectId;
     name: string;
     price: number;
     image: string;
     info: string;
 }
 
-// 餐廳介面
-export interface IRestaurant extends Document {
+/**
+ * 餐廳介面
+ */
+export interface IRestaurant {
+    _id?: Types.ObjectId;
     name: string;
     address: string;
     phone: string;
     image: string;
     info: string;
     tags: string[];
-    menu: Types.DocumentArray<IMenuItem>;
+    menu: IMenuItem[];
     isActive: boolean;
     locationGeo?: IGeoPoint;
 }
 
-// 新增菜單項目資料
-export type CreateMenuItemBody = Pick<IMenuItem, "name" | "price"> &
-    Partial<Omit<IMenuItem, "name" | "price">> & { imageURL?: string };
+/**
+ * 新增菜單項目 DTO
+ */
+export type CreateMenuItemBody = CreateBody<IMenuItem, "name" | "price"> & ImageURL;
 
-// 更新菜單項目資料
-export type UpdateMenuItemBody = Partial<IMenuItem> & { imageURL?: string };
+/**
+ * 更新菜單項目 DTO
+ */
+export type UpdateMenuItemBody = UpdateBody<IMenuItem> & ImageURL;
 
-// 新增餐廳資料
-export type CreateRestaurantBody = Pick<IRestaurant, "name" | "address" | "phone"> &
-    Partial<Omit<IRestaurant, "name" | "address" | "phone">> & { imageURL?: string };
+/**
+ * 新增餐廳 DTO
+ */
+export type CreateRestaurantBody = CreateBody<IRestaurant, "name" | "address" | "phone"> & ImageURL;
 
-// 更新餐廳資料
-export type UpdateRestaurantBody = Partial<IRestaurant> & { imageURL?: string };
+/**
+ * 更新餐廳 DTO
+ */
+export type UpdateRestaurantBody = UpdateBody<IRestaurant> & ImageURL;

@@ -1,6 +1,6 @@
 // server/utils/nominatim.ts
 
-import type { IGeoPoint } from "@server/interfaces/geoPoint.interface";
+import type { IGeoPoint } from "@server/interfaces/geo.interface";
 
 import geoCache from "@server/models/geoCache.model";
 import KeelongAddressMap from "@server/models/KeelongAddressMap";
@@ -74,6 +74,9 @@ export async function geocodeAddress(address: string) {
     }
 
     // 查 Nominatim
+    // TODO: 節流機制應該要在這裡處理才對（尚未實作）
+    // INFO: 節流：Nominatim 建議每秒不要超過 1 次，這裡設 1.1 秒
+
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
     const res = await fetch(url, {
         headers: {
