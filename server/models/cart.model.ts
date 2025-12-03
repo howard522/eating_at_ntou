@@ -1,13 +1,23 @@
 // server/models/cart.model.ts
 
-import mongoose from "mongoose";
-import { calculateTotalPrice } from "@server/utils/calcPrice";
-import type { Model } from "mongoose";
 import type { ICart, ICartItem } from "@server/interfaces/cart.interface";
+import { calculateTotalPrice } from "@server/utils/calcPrice";
+import type { HydratedDocument, Model } from "mongoose";
+import mongoose from "mongoose";
 
 const { Schema, model } = mongoose;
 
-const cartItemSchema = new Schema<ICartItem>({
+// 文件類型定義
+type CartItemSubdocument = HydratedDocument<ICartItem>;
+type CartDocument = HydratedDocument<ICart> & {
+    items: mongoose.Types.DocumentArray<CartItemSubdocument>;
+};
+
+// --------------------
+// 購物車商品
+// --------------------
+
+const cartItemSchema = new Schema<CartItemSubdocument>({
     restaurantId: {
         type: Schema.Types.ObjectId,
         ref: "Restaurant",
@@ -20,11 +30,15 @@ const cartItemSchema = new Schema<ICartItem>({
     },
     name: { type: String, required: true },
     price: { type: Number, required: true }, // price snapshot in cents
-    quantity: { type: Number, default: 1 },
+    quantity: { type: Number, default: 1, min: 1 },
     options: { type: Schema.Types.Mixed }, // arbitrary options / modifiers
 });
 
-const cartSchema = new Schema<ICart>(
+// --------------------
+// 購物車
+// --------------------
+
+const cartSchema = new Schema<CartDocument>(
     {
         user: {
             type: Schema.Types.ObjectId,
@@ -47,10 +61,20 @@ const cartSchema = new Schema<ICart>(
     { timestamps: true }
 );
 
-// calculate total before save if items changed
+// --------------------
+// 自動計算總價
+// --------------------
+
+/**
+ * INFO: ChatGPT 說
+ * Pre-validate 比 pre-save 更安全：
+ * - save() 會跑 validate + save
+ * - create() 只跑 validate 不跑 save
+ * - update 不會跑這段（你應該使用 findOneAndUpdate hooks）
+ */
 cartSchema.pre("save", function (next) {
     try {
-        if (this.items && Array.isArray(this.items)) {
+        if (this.items) {
             this.total = calculateTotalPrice(this.items);
         }
         next();
@@ -59,4 +83,10 @@ cartSchema.pre("save", function (next) {
     }
 });
 
-export default (mongoose.models.Cart as Model<ICart>) || model<ICart>("Cart", cartSchema);
+// --------------------
+// Model export
+// --------------------
+
+export const Cart = (mongoose.models.Cart as Model<CartDocument>) || model<CartDocument>("Cart", cartSchema);
+
+export default Cart;
