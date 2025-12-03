@@ -3,7 +3,7 @@
 
 import type { UpdateUserBody } from "@server/interfaces/user.interface";
 import { updateUser } from "@server/services/user.service";
-import { getUserFromEvent, toPublicUser } from "@server/utils/auth";
+import { getUser } from "@server/utils/getUser";
 import { parseForm } from "@server/utils/parseForm";
 
 /**
@@ -31,11 +31,12 @@ import { parseForm } from "@server/utils/parseForm";
  *       200: { description: 已更新 }
  */
 export default defineEventHandler(async (event) => {
-    const me = await getUserFromEvent(event); // 取得目前使用者，11/15更新後會檔掉被封鎖的使用者
+    const userId = getUser(event).id;
+
     const form = await readMultipartFormData(event);
     const data = await parseForm<UpdateUserBody>(form);
 
-    const updated = await updateUser(me._id, data);
+    const updated = await updateUser(userId, data);
 
-    return { success: true, user: toPublicUser(updated) };
+    return { success: true, user: updated };
 });

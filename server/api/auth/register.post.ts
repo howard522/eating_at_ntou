@@ -56,16 +56,16 @@ import { registerUser } from "@server/services/auth.service";
  */
 export default defineEventHandler(async (event) => {
     const body = await readBody<RegisterBody>(event);
-    const name = body.name || "這個人很懶，不想取暱稱";
-    const email = body.email;
-    const password = body.password;
-    const role = body.role || "multi";
+    body.name ??= "這個人很懶，不想取暱稱";
+    body.role ??= "multi";
 
-    if (!email || !password) {
+    if (!body.email || !body.password) {
         throw createError({ statusCode: 400, statusMessage: "缺少電子信箱或密碼" });
     }
 
-    const { user, token } = await registerUser(name, email, password, role);
+    const { user, token } = await registerUser(body);
+
+    setResponseStatus(event, 201);
 
     return { success: true, token, user };
 });

@@ -3,7 +3,7 @@
 
 import type { UpdatePasswordBody } from "@server/interfaces/user.interface";
 import { changeUserPassword } from "@server/services/auth.service";
-import { getUserFromEvent } from "@server/utils/auth";
+import { getUser } from "@server/utils/getUser";
 
 /**
  * @openapi
@@ -29,14 +29,15 @@ import { getUserFromEvent } from "@server/utils/auth";
  *       401: { description: 密碼不正確 / 未授權 }
  */
 export default defineEventHandler(async (event) => {
-    const me = await getUserFromEvent(event);
+    const userId = getUser(event).id;
+
     const { currentPassword, newPassword } = await readBody<UpdatePasswordBody>(event);
 
     if (!currentPassword || !newPassword) {
         throw createError({ statusCode: 400, message: "currentPassword and newPassword are required" });
     }
 
-    await changeUserPassword(me._id, currentPassword, newPassword);
+    await changeUserPassword(userId, currentPassword, newPassword);
 
     return { success: true };
 });

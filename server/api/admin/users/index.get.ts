@@ -69,8 +69,7 @@ export default defineEventHandler(async (event) => {
         query: query.q as string | undefined,
         limit,
         skip,
-        sortBy,
-        order,
+        sortBy: { [sortBy]: order === "asc" ? 1 : -1 },
     });
 
     return { success: true, count: users.length, data: users };

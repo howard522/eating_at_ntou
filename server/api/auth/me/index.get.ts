@@ -28,5 +28,6 @@ import { getUser } from "@server/utils/getUser";
  */
 export default defineEventHandler(async (event) => {
     const user = getUser(event);
-    return { success: true, user: toPublicUser(user) };
+
+    return { success: true, user };
 });
