@@ -116,7 +116,7 @@ import { getUser } from "@server/utils/getUser";
  *         $ref: '#/components/responses/Forbidden'
  */
 export default defineEventHandler(async (event) => {
-    const userId = getUser(event)._id as string;
+    const userId = getUser(event).id;
 
     const cart = await getCartByUserId(userId);
 

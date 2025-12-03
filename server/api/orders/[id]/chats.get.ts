@@ -66,7 +66,7 @@ import { getUser } from "@server/utils/getUser";
  *         description: 訂單不存在
  */
 export default defineEventHandler(async (event) => {
-    const userId = getUser(event)._id as string;
+    const userId = getUser(event).id;
     const orderId = getRouterParam(event, "id") as string;
 
     if (!orderId) {

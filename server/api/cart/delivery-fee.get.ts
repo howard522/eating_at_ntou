@@ -51,7 +51,7 @@ import { getUser } from "@server/utils/getUser";
  *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-    const userId = getUser(event)._id as string;
+    const userId = getUser(event).id;
 
     const address = getQuery(event).address as string;
 
