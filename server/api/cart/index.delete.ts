@@ -1,5 +1,6 @@
 import { verifyJwtFromEvent } from "@server/utils/auth";
 import { clearCartByUserId } from "@server/services/cart.service";
+import { getUser } from "@server/utils/getUser";
 
 /**
  * @openapi
@@ -42,15 +43,9 @@ import { clearCartByUserId } from "@server/services/cart.service";
  *         description: 找不到使用者的購物車。
  */
 export default defineEventHandler(async (event) => {
-    const payload = await verifyJwtFromEvent(event);
-    const userId = payload.id;
-    if (!userId) {
-        throw createError({ statusCode: 401, statusMessage: "Invalid token payload" });
-    }
+    const userId = getUser(event)._id as string;
+
     const cart = await clearCartByUserId(userId);
-    if (!cart) {
-        throw createError({ statusCode: 404, statusMessage: "Cart not found" });
-    }
 
     return { success: true, data: cart };
 });

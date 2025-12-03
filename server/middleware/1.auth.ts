@@ -4,7 +4,7 @@ import { getUserById } from "@server/services/user.service";
 import { verifyJwt } from "@server/utils/auth";
 
 function isNeedAuth(path: string) {
-    const needAuthPaths = ["/api/admin/", "/api/auth/me", "/api/cart/", "/api/orders/"];
+    const needAuthPaths = ["/api/admin", "/api/auth/me", "/api/cart", "/api/orders"];
     for (const p of needAuthPaths) {
         if (path.startsWith(p)) {
             return true;
@@ -24,7 +24,11 @@ export default defineEventHandler(async (event) => {
     const authHeader = getHeader(event, "Authorization") ?? getHeader(event, "authorization") ?? "";
 
     if (!authHeader) {
-        throw createError({ statusCode: 401, statusMessage: "Unauthorized", message: "Authentication required. Please log in." });
+        throw createError({
+            statusCode: 401,
+            statusMessage: "Unauthorized",
+            message: "Authentication required. Please log in.",
+        });
     }
 
     // 解析 Bearer 格式

@@ -1,6 +1,6 @@
-import { verifyJwtFromEvent } from "@server/utils/auth";
+import type { CartItemUpdateBody } from "@server/interfaces/cart.interface";
 import { updateCartByUserId } from "@server/services/cart.service";
-import type { CartPostBody } from "@server/interfaces/cart.interface";
+import { getUser } from "@server/utils/getUser";
 
 /**
  * @openapi
@@ -75,11 +75,9 @@ import type { CartPostBody } from "@server/interfaces/cart.interface";
  *                 total: 420
  */
 export default defineEventHandler(async (event) => {
-    const body = await readBody<CartPostBody>(event);
+    const userId = getUser(event)._id as string;
 
-    // Auth
-    const payload = await verifyJwtFromEvent(event);
-    const userId = payload.id;
+    const body = await readBody<CartItemUpdateBody>(event);
 
     // Expect body.items: array of { name, price, quantity, restaurantId?, menuItemId?, options? }
     const items = Array.isArray(body.items) ? body.items : [];

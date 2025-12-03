@@ -1,5 +1,5 @@
 import { getCartByUserId } from "@server/services/cart.service";
-import { verifyJwtFromEvent } from "@server/utils/auth";
+import { getUser } from "@server/utils/getUser";
 
 /**
  * @openapi
@@ -107,14 +107,9 @@ import { verifyJwtFromEvent } from "@server/utils/auth";
  *                     restaurantName: "傑哥加長加長菜"
  */
 export default defineEventHandler(async (event) => {
-    // Auth
-    const payload = await verifyJwtFromEvent(event);
-    const userId = payload.id;
-    if (!userId) throw createError({ statusCode: 401, statusMessage: "invalid token payload" });
+    const userId = getUser(event)._id as string;
 
     const cart = await getCartByUserId(userId);
-
-    // const cart = await Cart.findOne({ user: userId }).populate("items.restaurantId", "name menu");
 
     return {
         success: true,

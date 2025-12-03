@@ -1,7 +1,7 @@
 // server/api/cart/delivery-fee.get.ts
 
-import { verifyJwtFromEvent } from "@server/utils/auth";
 import { calculateDeliveryFee } from "@server/services/cart.service";
+import { getUser } from "@server/utils/getUser";
 
 /**
  * @openapi
@@ -42,9 +42,7 @@ import { calculateDeliveryFee } from "@server/services/cart.service";
  *                       example: 30
  */
 export default defineEventHandler(async (event) => {
-    // Auth
-    const payload = await verifyJwtFromEvent(event);
-    const userId = payload.id;
+    const userId = getUser(event)._id as string;
 
     const address = getQuery(event).address as string;
 
