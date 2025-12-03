@@ -24,6 +24,14 @@ export type CreateBody<T, K extends keyof T> = Pick<T, K> & Partial<Omit<T, K>>;
  */
 export type UpdateBody<T> = Partial<T>;
 
+/**
+ * 包含時間戳記的介面
+ */
+export interface WithTimestamps {
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
 export type ImageURL = { imageURL?: string };
 
 // --------------------
@@ -36,6 +44,7 @@ export type ImageURL = { imageURL?: string };
 export interface QueryPaginationOptions {
     limit?: number;
     skip?: number;
+    sortBy?: Record<string, 1 | -1>; // 例如 { createdAt: -1 }
 }
 
 // --------------------

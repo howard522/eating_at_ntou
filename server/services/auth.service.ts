@@ -1,10 +1,16 @@
 // server/services/auth.service.ts
 
-import type { UserRole } from "@server/interfaces/user.interface";
-import { createUser, getUserByEmail, getUserById, updateUser } from "@server/services/user.service";
-import { signJwt, toPublicUser } from "@server/utils/auth";
-import bcrypt from "bcryptjs";
-import type { Types } from "mongoose";
+import type { ObjectIdLike } from "@server/interfaces/common.interface";
+import type { RegisterBody } from "@server/interfaces/user.interface";
+import {
+    createUser,
+    getUserByEmail,
+    getUserById,
+    updateUser,
+    updateUserPasswordById,
+    verifyUserPasswordById,
+} from "@server/services/user.service";
+import { signJwt } from "@server/utils/auth";
 
 /**
  * 註冊新使用者
@@ -15,21 +21,21 @@ import type { Types } from "mongoose";
  * @param role 使用者角色，預設為 "multi"
  * @returns 新註冊的使用者資料及 JWT token
  */
-export async function registerUser(name: string, email: string, password: string, role: UserRole = "multi") {
-    const existingUser = await getUserByEmail(email);
+export async function registerUser(data: RegisterBody) {
+    const existingUser = await getUserByEmail(data.email);
     if (existingUser) {
-        throw createError({ statusCode: 400, statusMessage: "Bad Request", message: "電子信箱已經註冊" });
+        throw createError({ statusCode: 409, statusMessage: "Conflict", message: "電子信箱已經註冊" });
     }
 
-    if (password.length < 6) {
-        throw createError({ statusCode: 400, statusMessage: "Bad Request", message: "密碼長度至少 6 個字元" });
+    if (data.password.length < 6) {
+        throw createError({ statusCode: 422, statusMessage: "Unprocessable Entity", message: "密碼長度至少 6 個字元" });
     }
 
-    const user = await createUser(name, email, password, role);
+    const user = await createUser(data);
 
-    const token = signJwt(String(user._id), role);
+    const token = signJwt(String(user.id), data.role);
 
-    return { user: toPublicUser(user), token };
+    return { user, token };
 }
 
 /**
@@ -45,7 +51,7 @@ export async function loginUser(email: string, password: string) {
         throw createError({ statusCode: 401, statusMessage: "Unauthorized", message: "帳號不存在" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await verifyUserPasswordById(user.id, password);
     if (!isMatch) {
         throw createError({ statusCode: 401, statusMessage: "Unauthorized", message: "密碼錯誤" });
     }
@@ -54,9 +60,9 @@ export async function loginUser(email: string, password: string) {
         throw createError({ statusCode: 403, statusMessage: "Forbidden", message: "帳號已被封鎖" });
     }
 
-    const token = signJwt(String(user._id), user.role);
+    const token = signJwt(String(user.id), user.role);
 
-    return { user: toPublicUser(user), token };
+    return { user, token };
 }
 
 /**
@@ -66,18 +72,14 @@ export async function loginUser(email: string, password: string) {
  * @param currentPassword 目前密碼
  * @param newPassword 新密碼
  */
-export async function changeUserPassword(
-    userId: string | Types.ObjectId,
-    currentPassword: string,
-    newPassword: string
-) {
+export async function changeUserPassword(userId: ObjectIdLike, currentPassword: string, newPassword: string) {
     const user = await getUserById(userId);
 
     if (!user) {
         throw createError({ statusCode: 401, statusMessage: "Unauthorized", message: "使用者不存在" });
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    const isMatch = await verifyUserPasswordById(user.id, currentPassword);
     if (!isMatch) {
         throw createError({ statusCode: 401, statusMessage: "Unauthorized", message: "目前密碼錯誤" });
     }
@@ -86,7 +88,7 @@ export async function changeUserPassword(
         throw createError({ statusCode: 400, statusMessage: "Bad Request", message: "新密碼長度至少 6 個字元" });
     }
 
-    await updateUser(user._id, { password: newPassword });
+    await updateUserPasswordById(user.id, newPassword);
 }
 
 /**
@@ -95,7 +97,7 @@ export async function changeUserPassword(
  * @param userId 使用者 ID
  * @returns 封鎖後的使用者 ID 及角色
  */
-export async function banUser(userId: string | Types.ObjectId) {
+export async function banUser(userId: ObjectIdLike) {
     const user = await getUserById(userId);
 
     if (!user) {
@@ -115,10 +117,10 @@ export async function banUser(userId: string | Types.ObjectId) {
     //     throw createError({ statusCode: 400, statusMessage: "Bad Request", message: "使用者已經被封鎖了，他覺得很心累" });
     // }
 
-    await updateUser(user._id, { role: "banned" });
+    await updateUser(user.id, { role: "banned" });
 
     // QUESTION: 都已經封鎖了，為什麼還要回傳 user.role？
-    return { userId: String(user._id), role: "banned" };
+    return { userId: String(user.id), role: "banned" };
 }
 
 /**
@@ -127,7 +129,7 @@ export async function banUser(userId: string | Types.ObjectId) {
  * @param userId 使用者 ID
  * @returns 解除封鎖後的使用者 ID 及角色
  */
-export async function unbanUser(userId: string | Types.ObjectId) {
+export async function unbanUser(userId: ObjectIdLike) {
     const user = await getUserById(userId);
 
     if (!user) {
@@ -138,7 +140,7 @@ export async function unbanUser(userId: string | Types.ObjectId) {
         throw createError({ statusCode: 400, statusMessage: "Bad Request", message: "使用者並非封鎖狀態" });
     }
 
-    await updateUser(user._id, { role: "multi" });
+    await updateUser(user.id, { role: "multi" });
 
-    return { userId: String(user._id), role: "multi" };
+    return { userId: String(user.id), role: "multi" };
 }
