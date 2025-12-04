@@ -1,11 +1,18 @@
 // server/interfaces/order.interface.ts
 
-import type { Document, Types } from "mongoose";
+import type { ObjectIdLike, WithTimestamps } from "./common.interface";
+
+export type CustomerStatus = "preparing" | "on_the_way" | "received" | "completed";
+export type DeliveryStatus = "preparing" | "on_the_way" | "delivered" | "completed";
+
+// --------------------
+// 單一商品項目
+// --------------------
 
 // 單一商品快照介面
-export interface IOrderItem extends Document {
+export interface IOrderItem {
     // 商品快照
-    menuItemId?: Types.ObjectId; // 可選，因為商品可能已被刪除
+    menuItemId?: ObjectIdLike; // 可選，因為商品可能已被刪除
     name: string;
     image?: string;
     info?: string;
@@ -16,26 +23,27 @@ export interface IOrderItem extends Document {
 
     // 餐廳快照
     restaurant: {
-        id?: Types.ObjectId; // 可選，因為餐廳可能已被刪除
+        id?: ObjectIdLike; // 可選，因為餐廳可能已被刪除
         name?: string;
         phone?: string;
         address?: string;
     };
 }
 
-export type CustomerStatus = "preparing" | "on_the_way" | "received" | "completed";
-export type DeliveryStatus = "preparing" | "on_the_way" | "delivered" | "completed";
+// --------------------
+// 訂單介面
+// --------------------
 
 // 訂單主體介面
-export interface IOrder extends Document {
+export interface IOrder extends WithTimestamps {
     // 下單者
-    user: Types.ObjectId;
+    user: ObjectIdLike;
 
     // 外送員（可為空，表示尚未接單）
-    deliveryPerson?: Types.ObjectId | null;
+    deliveryPerson?: ObjectIdLike | null;
 
     // 商品快照陣列
-    items: Types.DocumentArray<IOrderItem>;
+    items: IOrderItem[];
 
     // 結帳資訊
     total: number; // 總金額
@@ -54,16 +62,13 @@ export interface IOrder extends Document {
     // 訂單雙角色狀態
     customerStatus: CustomerStatus;
     deliveryStatus: DeliveryStatus;
-
-    // 系統紀錄
-    createdAt: Date;
-    updatedAt: Date;
 }
 
-export interface OrderStatusUpdate {
-    customerStatus?: CustomerStatus;
-    deliveryStatus?: DeliveryStatus;
-}
+// --------------------
+// 訂單相關 DTO
+// --------------------
+
+export type UpdateOrderStatusBody = Partial<Pick<IOrder, "customerStatus" | "deliveryStatus">>;
 
 export interface OrderInfo {
     deliveryInfo: {

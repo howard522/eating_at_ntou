@@ -176,6 +176,10 @@ export default defineEventHandler(async (event) => {
     limit = Math.min(limit, MAX_LIMIT);
     const skip = Number(query.skip) || 0;
 
+    if (!["createdAt", "deliveryFee", "arriveTime", "distance"].includes(sortBy as string)) {
+        throw createError({ statusCode: 422, statusMessage: "Unprocessable Entity", message: "Invalid sortBy value" });
+    }
+
     // 查詢訂單
     let orders = await getAvailableOrdersForDeliveryPerson(
         lat ? Number(lat) : undefined,

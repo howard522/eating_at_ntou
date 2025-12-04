@@ -1,17 +1,27 @@
 // server/models/order.model.ts
 
-import mongoose from "mongoose";
-import { calculateTotalPrice } from "@server/utils/calcPrice";
-import type { Model } from "mongoose";
 import type { IOrder, IOrderItem } from "@server/interfaces/order.interface";
+import { calculateTotalPrice } from "@server/utils/calcPrice";
+import type { HydratedDocument, Model } from "mongoose";
+import mongoose from "mongoose";
 
 const { Schema, model } = mongoose;
+
+// 文件類型定義
+type OrderItemSubdocument = HydratedDocument<IOrderItem>;
+type OrderDocument = HydratedDocument<IOrder> & {
+    items: mongoose.Types.DocumentArray<OrderItemSubdocument>;
+};
+
+// --------------------
+// 訂單商品
+// --------------------
 
 /**
  * 單一商品快照 (orderItemSchema)
  * 完全保留下單時的狀態，避免日後商品或餐廳資料變更影響舊訂單。
  */
-const orderItemSchema = new Schema<IOrderItem>({
+const orderItemSchema = new Schema<OrderItemSubdocument>({
     // 商品快照
     menuItemId: {
         type: Schema.Types.ObjectId,
@@ -28,18 +38,27 @@ const orderItemSchema = new Schema<IOrderItem>({
 
     // 餐廳快照
     restaurant: {
-        id: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant", required: false, index: true }, //index方便查詢某餐廳的訂單
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Restaurant",
+            required: false,
+            index: true, // index方便查詢某餐廳的訂單
+        },
         name: { type: String },
         phone: { type: String },
         address: { type: String }, // 新增 address 欄位
     },
 });
 
+// --------------------
+// 訂單
+// --------------------
+
 /**
  * 訂單主體 (orderSchema)
  * 以購物車內容為基礎生成。
  */
-const orderSchema = new Schema<IOrder>(
+const orderSchema = new Schema<OrderDocument>(
     {
         // 下單者
         user: {
@@ -93,10 +112,10 @@ const orderSchema = new Schema<IOrder>(
     { timestamps: true }
 );
 
-/**
- * pre-save hook：可根據 items 自動計算 total
- * （保險起見，即使前端算好，後端仍重新驗算一次）
- */
+// --------------------
+// 自動計算總價
+// --------------------
+
 orderSchema.pre("save", function (next) {
     try {
         if (Array.isArray(this.items)) {
@@ -109,4 +128,10 @@ orderSchema.pre("save", function (next) {
     }
 });
 
-export default (mongoose.models.Order as Model<IOrder>) || model<IOrder>("Order", orderSchema);
+// --------------------
+// Model export
+// --------------------
+
+export const Order = (mongoose.models.Order as Model<OrderDocument>) || model<OrderDocument>("Order", orderSchema);
+
+export default Order;
