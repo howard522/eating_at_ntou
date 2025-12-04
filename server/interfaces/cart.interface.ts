@@ -1,7 +1,7 @@
 // server/interfaces/order.interface.ts
 
 import type { Mixed } from "mongoose";
-import type { ObjectIdLike, UpdateBody } from "./common.interface";
+import type { ObjectIdLike, UpdateBody, WithTimestamps } from "./common.interface";
 
 export type CartStatus = "open" | "locked";
 
@@ -38,15 +38,13 @@ export interface ICartItemResponse extends ICartItem {
 /**
  * 購物車介面
  */
-export interface ICart {
+export interface ICart extends WithTimestamps {
     _id?: ObjectIdLike;
     user: ObjectIdLike;
     items: ICartItem[];
     currency: string;
     total: number;
     status: CartStatus;
-    createdAt: Date;
-    updatedAt: Date;
 }
 
 /**

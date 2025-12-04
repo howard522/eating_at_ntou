@@ -1,25 +1,29 @@
 // server/interfaces/restaurant.interface.ts
 
-import type { CreateBody, ImageURL, UpdateBody } from "@server/interfaces/common.interface";
-import type { IGeoPoint } from "@server/interfaces/geo.interface";
-import type { Types } from "mongoose";
+import type { CreateBody, ImageURL, ObjectIdLike, UpdateBody } from "./common.interface";
+import type { IGeoPoint } from "./geo.interface";
 
-/**
- * 菜單項目介面
- */
+// --------------------
+// 菜單項目介面
+// --------------------
+
 export interface IMenuItem {
-    _id?: Types.ObjectId;
+    _id?: ObjectIdLike;
     name: string;
     price: number;
     image: string;
     info: string;
 }
 
+// --------------------
+// 餐廳介面
+// --------------------
+
 /**
  * 餐廳介面
  */
 export interface IRestaurant {
-    _id?: Types.ObjectId;
+    _id?: ObjectIdLike;
     name: string;
     address: string;
     phone: string;
@@ -31,22 +35,26 @@ export interface IRestaurant {
     locationGeo?: IGeoPoint;
 }
 
+// --------------------
+// 餐廳相關 DTO
+// --------------------
+
 /**
- * 新增菜單項目 DTO
+ * 新增菜單項目
  */
 export type CreateMenuItemBody = CreateBody<IMenuItem, "name" | "price"> & ImageURL;
 
 /**
- * 更新菜單項目 DTO
+ * 更新菜單項目
  */
 export type UpdateMenuItemBody = UpdateBody<IMenuItem> & ImageURL;
 
 /**
- * 新增餐廳 DTO
+ * 新增餐廳
  */
 export type CreateRestaurantBody = CreateBody<IRestaurant, "name" | "address" | "phone"> & ImageURL;
 
 /**
- * 更新餐廳 DTO
+ * 更新餐廳
  */
 export type UpdateRestaurantBody = UpdateBody<IRestaurant> & ImageURL;

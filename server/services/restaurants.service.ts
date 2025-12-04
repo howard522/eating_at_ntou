@@ -1,6 +1,6 @@
 // server/services/restaurants.service.ts
 
-import type { QueryPaginationOptions } from "@server/interfaces/common.interface";
+import type { ObjectIdLike, QueryPaginationOptions } from "@server/interfaces/common.interface";
 import type {
     CreateMenuItemBody,
     CreateRestaurantBody,
@@ -13,9 +13,9 @@ import Restaurant from "@server/models/restaurant.model";
 import { buildRestaurantSearchQuery } from "@server/utils/mongoQuery";
 import { getGeocodeFromAddress } from "@server/utils/nominatim";
 import { cleanObject } from "@server/utils/object";
-import type { FilterQuery, ObjectId, PipelineStage, Types } from "mongoose";
+import type { FilterQuery, ObjectId, PipelineStage } from "mongoose";
 
-async function findRestaurantDocumentById(restaurantId: string | Types.ObjectId) {
+async function findRestaurantDocumentById(restaurantId: ObjectIdLike) {
     const restaurant = await Restaurant.findById(restaurantId);
 
     // 找不到餐廳拋出 404 錯誤
@@ -29,6 +29,10 @@ async function findRestaurantDocumentById(restaurantId: string | Types.ObjectId)
 
     return restaurant;
 }
+
+// --------------------
+// 餐廳相關服務
+// --------------------
 
 /**
  * 新增餐廳
@@ -59,10 +63,10 @@ export async function createRestaurant(data: CreateRestaurantBody): Promise<IRes
 /**
  * 獲取指定的餐廳
  *
- * @param id 餐廳的 id
+ * @param id 餐廳 ID
  * @returns 餐廳
  */
-export async function getRestaurantById(id: string | Types.ObjectId): Promise<IRestaurant> {
+export async function getRestaurantById(id: ObjectIdLike): Promise<IRestaurant> {
     const restaurant = await findRestaurantDocumentById(id);
 
     return restaurant.toObject<IRestaurant>();
@@ -71,14 +75,11 @@ export async function getRestaurantById(id: string | Types.ObjectId): Promise<IR
 /**
  * 更新指定的餐廳，會自動忽略 `null`、`undefined`、空字串、空陣列
  *
- * @param id 餐廳的 id
+ * @param id 餐廳 ID
  * @param data 要更新的餐廳資料
  * @returns 更新後的餐廳
  */
-export async function updateRestaurantById(
-    id: string | Types.ObjectId,
-    data: UpdateRestaurantBody
-): Promise<IRestaurant> {
+export async function updateRestaurantById(id: ObjectIdLike, data: UpdateRestaurantBody): Promise<IRestaurant> {
     data = cleanObject(data); // 清理空白欄位
 
     // 自動地理編碼
@@ -114,7 +115,7 @@ export async function updateRestaurantById(
 /**
  * 刪除指定的餐廳
  *
- * @param id 餐廳的 id
+ * @param id 餐廳 ID
  * @returns 被刪除的餐廳
  */
 export async function deleteRestaurantById(id: string | ObjectId): Promise<void> {
@@ -247,17 +248,18 @@ export async function searchRestaurantsNearByAddress(
     return results;
 }
 
+// --------------------
+// 菜單項目相關服務
+// --------------------
+
 /**
  * 新增菜單項目到指定餐廳
  *
- * @param restaurantId 餐廳的 id
+ * @param restaurantId 餐廳 ID
  * @param data 菜單項目資料
  * @returns 新增的菜單項目
  */
-export async function createMenuItem(
-    restaurantId: string | Types.ObjectId,
-    data: CreateMenuItemBody
-): Promise<IMenuItem> {
+export async function createMenuItem(restaurantId: ObjectIdLike, data: CreateMenuItemBody): Promise<IMenuItem> {
     // 使用 imageURL 更新圖片欄位
     if (data.imageURL) {
         data.image = data.imageURL;
@@ -276,14 +278,11 @@ export async function createMenuItem(
 /**
  * 獲取指定的菜單項目
  *
- * @param restaurantId 餐廳的 id
- * @param menuId 菜單項目的 id
+ * @param restaurantId 餐廳 ID
+ * @param menuId 菜單項目 ID
  * @returns 指定的菜單項目
  */
-export async function getMenuItemById(
-    restaurantId: string | Types.ObjectId,
-    menuId: string | Types.ObjectId
-): Promise<IMenuItem> {
+export async function getMenuItemById(restaurantId: ObjectIdLike, menuId: ObjectIdLike): Promise<IMenuItem> {
     const restaurant = await findRestaurantDocumentById(restaurantId);
     const menuItem = restaurant.menu.id(menuId);
 
@@ -305,14 +304,14 @@ export async function getMenuItemById(
 /**
  * 更新指定的菜單項目
  *
- * @param restaurantId 餐廳的 id
- * @param menuId 菜單的 id
- * @param data 要更新的菜單資料
- * @returns 更新後的菜單
+ * @param restaurantId 餐廳 ID
+ * @param menuId 菜單項目 ID
+ * @param data 要更新的菜單項目資料
+ * @returns 更新後的菜單項目
  */
 export async function updateMenuItemById(
-    restaurantId: string | Types.ObjectId,
-    menuId: string | Types.ObjectId,
+    restaurantId: ObjectIdLike,
+    menuId: ObjectIdLike,
     data: UpdateMenuItemBody
 ): Promise<IMenuItem> {
     // 使用 imageURL 更新圖片欄位
@@ -344,13 +343,10 @@ export async function updateMenuItemById(
 /**
  * 刪除指定的菜單項目
  *
- * @param restaurantId 餐廳的 id
- * @param menuId 菜單的 id
+ * @param restaurantId 餐廳 ID
+ * @param menuId 菜單項目 ID
  */
-export async function deleteMenuItemById(
-    restaurantId: string | Types.ObjectId,
-    menuId: string | Types.ObjectId
-): Promise<void> {
+export async function deleteMenuItemById(restaurantId: ObjectIdLike, menuId: ObjectIdLike): Promise<void> {
     const restaurant = await findRestaurantDocumentById(restaurantId);
     const menuItem = restaurant.menu.id(menuId);
 

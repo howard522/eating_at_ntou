@@ -32,8 +32,6 @@ export interface WithTimestamps {
     updatedAt?: Date;
 }
 
-export type ImageURL = { imageURL?: string };
-
 // --------------------
 // 查詢、分頁相關
 // --------------------
@@ -51,6 +49,11 @@ export interface QueryPaginationOptions {
 // 其他
 // --------------------
 
+export type ImageURL = { imageURL?: string };
+
+/**
+ * 圖片檔案介面
+ */
 export interface ImageFile {
     data: Uint8Array;
     type?: string;
