@@ -3,21 +3,28 @@
 import { getUserById } from "@server/services/user.service";
 import { verifyJwt } from "@server/utils/auth";
 
-function isNeedAuth(path: string) {
+function isNeedAuth(path: string, method: string): boolean {
+    // 評論建立需要驗證
+    if (path.startsWith("/api/reviews") && method === "POST") {
+        return true;
+    }
+
     const needAuthPaths = ["/api/admin", "/api/auth/me", "/api/cart", "/api/orders"];
     for (const p of needAuthPaths) {
         if (path.startsWith(p)) {
             return true;
         }
     }
+
     return false;
 }
 
 export default defineEventHandler(async (event) => {
+    const mothed = event.node.req.method?.toUpperCase() || "";
     const url = getRequestURL(event).pathname;
 
     // 只處理需要驗證的路徑
-    if (!isNeedAuth(url)) {
+    if (!isNeedAuth(url, mothed)) {
         return;
     }
 
