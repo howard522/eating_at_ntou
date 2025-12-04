@@ -1,8 +1,8 @@
-//目的：從 Authorization Bearer token 解析使用者並回傳，供受保護路由使用
-// ============================================================================
+// server/utils/auth.ts
+
 import type { JwtPayload } from "@server/interfaces/user.interface";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 export const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 

@@ -32,7 +32,7 @@ import { getUserById } from "@server/services/user.service";
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-export default defineEventHandler(async (event: any) => {
+export default defineEventHandler(async (event) => {
     const id = getRouterParam(event, "id");
     if (!id) {
         throw createError({ statusCode: 400, statusMessage: "缺少使用者 ID" });

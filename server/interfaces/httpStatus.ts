@@ -1,3 +1,5 @@
+// server/interfaces/httpStatus.ts
+
 export enum HttpStatus {
     Continue = 100,
     SwitchingProtocols = 101,

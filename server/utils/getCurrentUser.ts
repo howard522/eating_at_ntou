@@ -1,3 +1,5 @@
+// server/utils/getCurrentUser.ts
+
 import type { IUser } from "@server/interfaces/user.interface";
 import type { H3Event } from "h3";
 
