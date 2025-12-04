@@ -2,7 +2,8 @@
 
 import type { CreateBody, ObjectIdLike, UpdateBody, WithTimestamps } from "./common.interface";
 
-export type UserRole = "admin" | "multi" | "banned";
+export type UserRole = "admin" | "multi" | "banned"; // 權限身份組
+export type ActiveUserRole = "customer" | "delivery"; // 使用者目前的活躍角色
 
 // --------------------
 // 使用者介面

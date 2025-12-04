@@ -1,12 +1,13 @@
 // server/services/chat.service.ts
 
 import type { IChatMessage } from "@server/interfaces/chatMessage.interface";
+import type { ObjectIdLike } from "@server/interfaces/common.interface";
 import ChatMessage from "@server/models/chatMessage.model";
 import type { FilterQuery } from "mongoose";
 
 export async function createChatMessage(
-    orderId: string,
-    userId: string,
+    orderId: ObjectIdLike,
+    userId: ObjectIdLike,
     role: "customer" | "delivery",
     content: string
 ) {
@@ -23,7 +24,7 @@ export async function createChatMessage(
 }
 
 export async function getChatMessages(
-    orderId: string,
+    orderId: ObjectIdLike,
     options: {
         limit: number;
         skip: number;

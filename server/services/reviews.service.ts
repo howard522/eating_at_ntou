@@ -1,3 +1,4 @@
+import type { ObjectIdLike } from "@server/interfaces/common.interface";
 import Review from "@server/models/review.model";
 
 /**
@@ -10,13 +11,13 @@ import Review from "@server/models/review.model";
  * @returns 評論列表及分頁資訊
  */
 export async function getReviewsByRestaurantId(
-    restaurantId: string,
+    restaurantId: ObjectIdLike,
     sort: "newest" | "highest" | "lowest" = "newest",
     skip = 0,
     limit = 10
 ) {
     {
-        const sortOptions: { [key: string]: any } = {
+        const sortOptions: { [key: string]: Record<string, 1 | -1> } = {
             newest: { createdAt: -1 },
             highest: { rating: -1 },
             lowest: { rating: 1 },
@@ -29,7 +30,7 @@ export async function getReviewsByRestaurantId(
             .skip(skip)
             .limit(limit);
 
-        const data = reviews.map((review: any) => ({
+        const data = reviews.map((review) => ({
             _id: review._id,
             restaurantId: review.restaurant,
             user: {
@@ -50,7 +51,7 @@ export async function getReviewsByRestaurantId(
     }
 }
 
-export async function createReview(restaurantId: string, userId: string, rating: number, content: string) {
+export async function createReview(restaurantId: ObjectIdLike, userId: ObjectIdLike, rating: number, content: string) {
     const review = await Review.create({
         restaurant: restaurantId,
         user: userId,
