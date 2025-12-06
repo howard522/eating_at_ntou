@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import debounce from 'lodash-es/debounce'
 import { useUserStore } from '@stores/user'
 
@@ -73,6 +73,11 @@ export function useInfiniteFetch<T>(options: UseInfiniteFetchOptions<T>) {
         } finally {
             pending.value = false
             loadingMore.value = false
+            nextTick(() => {
+                if (hasMore.value && document.documentElement.scrollHeight <= window.innerHeight) {
+                    fetchItems()
+                }
+            })
         }
     }
 

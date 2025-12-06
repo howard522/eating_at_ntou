@@ -12,8 +12,6 @@
           hide-details
           clearable
           append-inner-icon="mdi-magnify"
-          @keydown.enter="fetchAvailableOrders"
-          @click:append-inner="fetchAvailableOrders"
         ></v-text-field>
       </v-col>
 
@@ -62,17 +60,21 @@
         <CustomerOrderCard :order="order" />
       </v-col>
     </v-row>
+    <v-row v-if="loadingMore" class="mt-4">
+      <v-col cols="12" class="text-center">
+        <v-progress-circular indeterminate color="primary" size="32"></v-progress-circular>
+        <p class="mt-2 text-medium-emphasis">載入更多訂單...</p>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
 <script setup lang="ts">
 import { useUserStore } from '@stores/user';
 import type { ApiOrderAvailable as ApiOrder, ApiResponse, AvailableDisplayOrder as DisplayOrder } from '@types/order'
+import { useInfiniteFetch } from '@/composable/useInfiniteFetch'
 
 const userStore = useUserStore();
-const allOrders = ref<DisplayOrder[]>([]);
-const pending = ref(true);
-const error = ref<Error | null>(null);
 const keyword = ref('');
 const sortOption = ref('newest');
 const latitude = ref<number | null>(null);
@@ -93,75 +95,57 @@ const sortMap: Record<string, { sortBy: string, order: 'asc' | 'desc' }> = {
   'distance': { sortBy: 'distance', order: 'asc' },
 };
 
-const fetchAvailableOrders = async () => {
-  if (!userStore.token) {
-    error.value = new Error('請先登入');
-    pending.value = false;
-    return;
-  }
-  pending.value = true;
-  error.value = null;
-  try {
-    const params = new URLSearchParams();
-    if (keyword.value) {
-      params.append('keyword', keyword.value);
-    }
+const { items: rawOrders, pending, loadingMore, hasMore, error, fetchItems } = useInfiniteFetch<ApiOrder>({
+  api: '/api/orders/available',
+  limit: 10,
+  buildQuery: (skip) => {
+    const params: Record<string, any> = { skip, limit: 10 }
+    if (keyword.value) params.keyword = keyword.value
     if (latitude.value && longitude.value) {
-      params.append('lat', latitude.value.toString());
-      params.append('lon', longitude.value.toString());
+      params.lat = latitude.value
+      params.lon = longitude.value
     }
-    let selectedSort = sortMap[sortOption.value];
+    let selectedSort = sortMap[sortOption.value]
     if (selectedSort.sortBy === 'distance' && (!latitude.value || !longitude.value)) {
-      selectedSort = sortMap['newest'];
+      selectedSort = sortMap['newest']
     }
-    params.append('sortBy', selectedSort.sortBy);
-    params.append('order', selectedSort.order);
+    params.sortBy = selectedSort.sortBy
+    params.order = selectedSort.order
+    return params
+  },
+  immediate: false
+});
 
-    const response = await $fetch<ApiResponse<ApiOrder[]>>('/api/orders/available', {
-      headers: { 'Authorization': `Bearer ${userStore.token}` },
-      query: { ...Object.fromEntries(params) },
-    });
-
-    if (!response.success) throw new Error('無法取得可接訂單');
-    allOrders.value = response.data.map(order => {
-      const uniqueNamesArray = Array.from(
-          new Set(order.items.map(item => item.restaurant.name))
-      );
-      return {
-        id: order._id,
-        restaurantNameDisplay: uniqueNamesArray.join(', '),
-        restaurantNamesArray: uniqueNamesArray,
-        deliveryAddress: order.deliveryInfo.address,
-        deliveryFee: order.deliveryFee,
-        deliveryTime: order.arriveTime!,
-        createdAt: order.createdAt,
-        distance: order._distance,
-      };
-    });
-  } catch (err: any) {
-    console.error('Error fetching orders:', err);
-    error.value = err;
-  } finally {
-    pending.value = false;
-  }
-};
+const allOrders = computed(() => rawOrders.value.map(order => {
+  const uniqueNamesArray = Array.from(
+      new Set(order.items.map(item => item.restaurant.name))
+  );
+  return {
+    id: order._id,
+    restaurantNameDisplay: uniqueNamesArray.join(', '),
+    restaurantNamesArray: uniqueNamesArray,
+    deliveryAddress: order.deliveryInfo.address,
+    deliveryFee: order.deliveryFee,
+    deliveryTime: order.arriveTime!,
+    createdAt: order.createdAt,
+    distance: order._distance,
+  };
+}));
 
 onMounted(() => {
   navigator.geolocation.getCurrentPosition(
-    // 成功
     (position) => {
       latitude.value = position.coords.latitude;
       longitude.value = position.coords.longitude;
       geolocationError.value = null;
-      fetchAvailableOrders();
+      fetchItems({ reset: true });
     },
-    // 失敗
     (error) => {
       console.error("Geolocation error:", error.message);
       geolocationError.value = error.message;
       latitude.value = null;
       longitude.value = null;
-      fetchAvailableOrders();
+      fetchItems({ reset: true });
     },
     { enableHighAccuracy: true }
   );
@@ -169,29 +153,29 @@ onMounted(() => {
 
 onActivated(() => {
   navigator.geolocation.getCurrentPosition(
-      // 成功
-      (position) => {
-        latitude.value = position.coords.latitude;
-        longitude.value = position.coords.longitude;
-        geolocationError.value = null;
-        fetchAvailableOrders();
-      },
-      // 失敗
-      (error) => {
-        console.error("Geolocation error:", error.message);
-        geolocationError.value = error.message;
-        latitude.value = null;
-        longitude.value = null;
-        fetchAvailableOrders();
-      },
-      { enableHighAccuracy: true }
+    (position) => {
+      latitude.value = position.coords.latitude;
+      longitude.value = position.coords.longitude;
+      geolocationError.value = null;
+      fetchItems({ reset: true });
+    },
+    (error) => {
+      console.error("Geolocation error:", error.message);
+      geolocationError.value = error.message;
+      latitude.value = null;
+      longitude.value = null;
+      fetchItems({ reset: true });
+    },
+    { enableHighAccuracy: true }
   );
 });
 
-watch(sortOption, (newValue, oldValue) => {
-  if (newValue !== oldValue) {
-    fetchAvailableOrders();
-  }
+watch(sortOption, () => {
+  fetchItems({ reset: true });
+});
+
+watch(keyword, () => {
+  fetchItems({ reset: true });
 });
 
 useHead({ title: '瀏覽可接訂單' });
