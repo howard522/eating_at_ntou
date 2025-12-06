@@ -1,16 +1,18 @@
-// api/admin/restaurants/[id]/menu/[menuId].patch.ts
-import { defineEventHandler, readMultipartFormData } from 'h3'
-import Restaurant from '@server/models/restaurant.model'
+// server/api/admin/restaurants/[id]/menu/[menuId].patch.ts
+
+import { updateMenuItemById } from "@server/services/restaurants.service";
+import { parseForm } from "@server/utils/parseForm";
+import type { UpdateMenuItemBody } from "@server/interfaces/restaurant.interface";
 
 /**
  * @openapi
  * /api/admin/restaurants/{id}/menu/{menuId}:
  *   patch:
  *     summary: 更新餐廳菜單項目（支援圖片上傳）
- *     description: >
- *       僅限管理員使用。  
- *       允許部分欄位更新，未提供的欄位將保持不變。  
- *       若上傳圖片檔案，系統會自動上傳至 Imgbb 並更新該項目的 `image` URL。
+ *     description: |
+ *       僅限管理員使用。
+ *       允許部分欄位更新，未提供的欄位將保持不變。
+ *       若上傳圖片檔案，系統會自動上傳至 ImgBB 並更新該項目的 `image` URL。
  *     tags:
  *       - Admin
  *     security:
@@ -46,10 +48,14 @@ import Restaurant from '@server/models/restaurant.model'
  *               info:
  *                 type: string
  *                 example: "附湯與小菜，限午餐供應"
+ *               imageURL:
+ *                 type: string
+ *                 format: uri
+ *                 description: 圖片的 URL
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: 新圖片檔案，會自動上傳至 Imgbb 並更新 URL
+ *                 description: 新圖片檔案，會自動上傳至 ImgBB 並更新 URL
  *     responses:
  *       200:
  *         description: 成功更新菜單項目
@@ -74,39 +80,21 @@ import Restaurant from '@server/models/restaurant.model'
  *       500:
  *         description: 伺服器內部錯誤
  */
-
-
 export default defineEventHandler(async (event) => {
-    const restaurantId = event.context.params?.id as string
-    const menuId = event.context.params?.menuId
-    const form = await readMultipartFormData(event)
-    const data: any = {}
+    const restaurantId = getRouterParam(event, "id") as string;
+    const menuId = getRouterParam(event, "menuId") as string;
+    const form = await readMultipartFormData(event);
+    const data = await parseForm<UpdateMenuItemBody>(form);
 
-    for (const field of form || []) {
-        if (field.name === 'image' && field.type?.startsWith('image/')) {
-            const blob = new Blob([new Uint8Array(field.data)], { type: field.type })
-            const fd = new FormData()
-            fd.append('image', blob, field.filename)
-            const res = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.IMAGEBB_API_KEY}`, {
-                method: 'POST',
-                body: fd
-            })
-            const json = await res.json()
-            if (json.success) data.image = json.data.url
-        } else {
-            const val = field.data.toString().trim()
-            if (val !== '') data[field.name] = val
-        }
+    if (data.imageURL) {
+        data.image = data.imageURL;
+        delete data.imageURL;
     }
 
-    const restaurant = await Restaurant.findById(restaurantId)
-    if (!restaurant) throw createError({ statusCode: 404, message: 'Restaurant not found' })
+    const menu = await updateMenuItemById(restaurantId, menuId, data);
 
-    const item = restaurant.menu.id(menuId)
-    if (!item) throw createError({ statusCode: 404, message: 'Menu item not found' })
-
-    Object.assign(item, data)
-    await restaurant.save()
-
-    return { success: true, menu: item }
-})
+    return {
+        success: true,
+        menu,
+    };
+});

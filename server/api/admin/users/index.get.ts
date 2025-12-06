@@ -1,7 +1,5 @@
-import { defineEventHandler, getQuery, createError } from 'h3'
-import connectDB from '@server/utils/db'
-import User from '@server/models/user.model'
-import { verifyJwtFromEvent, toPublicUser } from '@server/utils/auth'
+import type { UserRole } from "@server/interfaces/user.interface";
+import { searchUsers } from "@server/services/user.service";
 
 /**
  * @openapi
@@ -52,47 +50,28 @@ import { verifyJwtFromEvent, toPublicUser } from '@server/utils/auth'
  *         description: 成功回傳使用者清單
  */
 export default defineEventHandler(async (event) => {
-    await connectDB()
-    await verifyJwtFromEvent(event) // middleware/admin.global.ts 會再檢查是否為 admin
+    const query = getQuery(event);
 
-    try {
-        const query = getQuery(event) as Record<string, any>
-        const mongoQuery: any = {}
+    const role = query.role as UserRole | undefined;
 
-        // 角色篩選
-        if (query.role) {
-            mongoQuery.role = query.role
-        }
+    const DEFAULT_LIMIT = 50;
+    const MAX_LIMIT = 200;
 
-        // name 或 email 模糊搜尋
-        if (query.q) {
-            const q = String(query.q).trim()
-            const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
-            mongoQuery.$or = [{ name: re }, { email: re }]
-        }
+    let limit = Number(query.limit) || DEFAULT_LIMIT;
+    limit = Math.min(limit, MAX_LIMIT);
+    const skip = Number(query.skip) || 0;
 
-        const DEFAULT_LIMIT = 50
-        const MAX_LIMIT = 200
+    const sortBy = (query.sortBy as string | undefined) || "createdAt";
+    const order = (query.order as "asc" | "desc" | undefined) || "desc";
 
-        let limit = Number(query.limit) || DEFAULT_LIMIT
-        limit = Math.min(limit, MAX_LIMIT)
-        const skip = Number(query.skip) || 0
+    const users = await searchUsers({
+        role,
+        query: query.q as string | undefined,
+        limit,
+        skip,
+        sortBy,
+        order,
+    });
 
-        const sortBy = query.sortBy || 'createdAt'
-        const order = query.order === 'asc' ? 1 : -1
-
-        const users = await User.find(mongoQuery)
-            .sort({ [sortBy]: order })
-            .skip(skip)
-            .limit(limit)
-            .lean()
-
-        const data = users.map((u: any) => toPublicUser(u))
-
-        return { success: true, count: data.length, data }
-    } catch (err) {
-        console.error('Admin list users failed:', err)
-        throw createError({ statusCode: 500, statusMessage: 'Failed to list users' })
-    }
-})
-
+    return { success: true, count: users.length, data: users };
+});

@@ -3,7 +3,7 @@
 import mongoose from "mongoose";
 import Restaurant from "@server/models/restaurant.model";
 import dotenv from "dotenv";
-import { geocodeAddress, sleep } from "./nominatim";
+import { geocodeAddress, sleep } from "@server/utils/nominatim";
 
 dotenv.config();
 

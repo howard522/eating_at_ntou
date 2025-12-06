@@ -1,21 +1,22 @@
-import Restaurant from '@server/models/restaurant.model'
-import connectDB from "@server/utils/db";
+// server/api/restaurants/[id].get.ts
+
+import { getRestaurantById } from "@server/services/restaurants.service";
 
 /**
  * @openapi
  * /api/restaurants/{id}:
- *      
+ *
  *   get:
  *     summary: 取得單一餐廳
  *     tags:
  *       - Restaurants
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
+ *         description: 餐廳 ID
  *         schema:
  *           type: string
- *         description: 餐廳 ID
  *     responses:
  *       200:
  *         description: 成功回傳餐廳
@@ -34,18 +35,12 @@ import connectDB from "@server/utils/db";
  *         description: 找不到餐廳
  */
 export default defineEventHandler(async (event) => {
-    await connectDB();
-    const id = getRouterParam(event, 'id');
-    const restaurant = await Restaurant.findById(id);
-    if (!restaurant) {
-        throw createError({
-            statusCode: 404,
-            statusMessage: 'Restaurant not found'
-        });
-    }
+    const id = getRouterParam(event, "id") as string;
+    const restaurant = await getRestaurantById(id);
+
     return {
         success: true,
         count: 1,
-        data: restaurant
-    }
-})
+        data: restaurant,
+    };
+});

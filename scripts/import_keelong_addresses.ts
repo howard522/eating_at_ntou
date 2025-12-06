@@ -8,9 +8,9 @@ import fs from 'fs';
 import path from 'path';
 import csv from 'csv-parser';
 import mongoose from 'mongoose';
-import connectDB from '../utils/db.ts';
-import KeelongAddressMap from '../models/KeelongAddressMap.ts';
-import { normalizeAddress } from '../utils/nominatim.ts';
+import connectDB from '@server/utils/db.js';
+import KeelongAddressMap from '@server/models/KeelongAddressMap.js';
+import { normalizeAddress } from '@server/utils/nominatim.js';
 import dotenv from 'dotenv';
 dotenv.config();
 

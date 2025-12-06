@@ -1,5 +1,10 @@
 // FILE: server/api/auth/me/password.patch.ts  (新增/更新)
 // ============================================================================
+
+import type { UpdatePasswordBody } from "@server/interfaces/user.interface";
+import { changeUserPassword } from "@server/services/auth.service";
+import { getUserFromEvent } from "@server/utils/auth";
+
 /**
  * @openapi
  * /api/auth/me/password:
@@ -23,22 +28,15 @@
  *       400: { description: 參數錯誤 }
  *       401: { description: 密碼不正確 / 未授權 }
  */
-import { defineEventHandler, readBody, createError } from 'h3'
-import { getUserFromEvent } from '@server/utils/auth'
-import bcrypt from 'bcryptjs'
-
 export default defineEventHandler(async (event) => {
-  const me: any = await getUserFromEvent(event)
-  const { currentPassword, newPassword } = await readBody(event) || {}
-  if (!currentPassword || !newPassword) {
-    throw createError({ statusCode: 400, statusMessage: 'currentPassword and newPassword are required' })
-  }
-  if (String(newPassword).length < 6) {
-    throw createError({ statusCode: 400, statusMessage: 'newPassword must be at least 6 characters' })
-  }
-  const ok = await bcrypt.compare(String(currentPassword), me.password)
-  if (!ok) throw createError({ statusCode: 401, statusMessage: 'current password incorrect' })
-  me.password = String(newPassword) // pre('save') 自動 hash
-  await me.save()
-  return { success: true }
-})
+    const me = await getUserFromEvent(event);
+    const { currentPassword, newPassword } = await readBody<UpdatePasswordBody>(event);
+
+    if (!currentPassword || !newPassword) {
+        throw createError({ statusCode: 400, message: "currentPassword and newPassword are required" });
+    }
+
+    await changeUserPassword(me._id, currentPassword, newPassword);
+
+    return { success: true };
+});

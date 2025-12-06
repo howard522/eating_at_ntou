@@ -46,6 +46,58 @@
           </v-stepper>
 
           <v-card flat border rounded="lg" class="mb-6">
+            <v-card-title class="text-h6 font-weight-bold d-flex align-center">
+              <v-icon icon="mdi-map-marker-radius" start color="green" class="mr-2"></v-icon>
+              取餐資訊
+            </v-card-title>
+            
+            <v-divider></v-divider>
+
+            <v-card-text class="pa-5">
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <div class="text-caption text-medium-emphasis mb-1">取餐人暱稱</div>
+                  <div class="text-body-1 font-weight-medium d-flex align-center">
+                    <v-icon icon="mdi-account-outline" size="small" class="mr-2 text-medium-emphasis"></v-icon>
+                    {{ orderData.deliveryInfo?.contactName }}
+                  </div>
+                </v-col>
+
+                <v-col cols="12" sm="6">
+                  <div class="text-caption text-medium-emphasis mb-1 mt-3 mt-sm-0">連絡電話</div>
+                  <div class="text-body-1 font-weight-medium d-flex align-center">
+                    <v-icon icon="mdi-phone-outline" size="small" class="mr-2 text-medium-emphasis"></v-icon>
+                    {{ orderData.deliveryInfo?.contactPhone }}
+                  </div>
+                </v-col>
+
+                <v-col cols="12">
+                  <div class="text-caption text-medium-emphasis mb-1 mt-3">取餐地點</div>
+                  <div class="text-body-1 font-weight-medium d-flex align-center">
+                    <v-icon icon="mdi-map-marker-outline" size="small" class="mr-2 text-medium-emphasis"></v-icon>
+                    {{ orderData.deliveryInfo?.address }}
+                  </div>
+                </v-col>
+
+                <v-col cols="12">
+                  <v-alert
+                    color="info"
+                    variant="tonal"
+                    density="compact"
+                    class="mt-3"
+                    icon="mdi-note-text-outline"
+                  >
+                    <div class="text-caption text-medium-emphasis">備註</div>
+                    <div class="text-body-2 font-weight-medium">
+                      {{ orderData.deliveryInfo?.note || '無' }}
+                    </div>
+                  </v-alert>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+
+          <v-card flat border rounded="lg" class="mb-6">
             <v-list-item lines="two" class="pa-5">
               <template v-slot:prepend>
                 <v-avatar size="56" class="me-4">
