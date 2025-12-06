@@ -42,65 +42,40 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '@stores/user'
 import type { ApiOrder, ApiResponse, DisplayOrder } from '@types/order'
+import { useInfiniteFetch } from '@/composable/useInfiniteFetch'
 
 const tab = ref('inProgress');
-const userStore = useUserStore();
-const allOrders = ref<DisplayOrder[]>([]);
-const pending = ref(false);
-const error = ref<Error | null>(null);
 
-const fetchOrders = async () => {
-  if (!userStore.token) {
-    console.warn('No user token, skipping order fetch.');
-    error.value = new Error('請先登入以查看訂單');
-    return;
-  }
-  pending.value = true;
-  error.value = null;
-  try {
-    const response = await $fetch<ApiResponse<ApiOrder[]>>('/api/orders', {
-      method: 'GET',
-      query: { role: 'customer' },
-      headers: {
-        'Authorization': `Bearer ${userStore.token}`,
-        'Accept': 'application/json',
-      }
-    });
-    if (response && response.success) {
-      allOrders.value = response.data.map(order => {
-        const restaurantNames = Array.from(
-            new Set(order.items.map(item => item.restaurant.name))
-        ).join(', ');
-        const d = new Date(order.createdAt);
-        const date = `${d.getFullYear()}年${(d.getMonth() + 1).toString().padStart(2, '0')}月${d.getDate().toString().padStart(2, '0')}日`;
-        const ad = new Date(order.arriveTime);
-        const arriveTimeFormatted = `${ad.getHours().toString().padStart(2, '0')}:${ad.getMinutes().toString().padStart(2, '0')}`;
-        const displayItems = order.items.map(item => ({
-          name: item.name,
-          quantity: item.quantity
-        }));
-        return {
-          id: order._id,
-          restaurantNames: restaurantNames,
-          date: date,
-          items: displayItems,
-          total: order.total,
-          status: order.customerStatus!,
-          arriveTime: arriveTimeFormatted,
-        };
-      });
-    } else {
-      throw new Error('API response indicates failure');
-    }
-  } catch (err: any) {
-    console.error('取得訂單失敗:', err);
-    error.value = err;
-  } finally {
-    pending.value = false;
-  }
-};
+const { items: rawOrders } = useInfiniteFetch<ApiOrder>({
+  api: '/api/orders',
+  limit: 7,
+  buildQuery: (skip) => ({ role: 'customer', skip, limit: 7 }),
+  immediate: true
+});
+
+const allOrders = computed(() => rawOrders.value.map(order => {
+  const restaurantNames = Array.from(
+      new Set(order.items.map(item => item.restaurant.name))
+  ).join(', ');
+  const d = new Date(order.createdAt);
+  const date = `${d.getFullYear()}年${(d.getMonth() + 1).toString().padStart(2, '0')}月${d.getDate().toString().padStart(2, '0')}日`;
+  const ad = new Date(order.arriveTime);
+  const arriveTimeFormatted = `${ad.getHours().toString().padStart(2, '0')}:${ad.getMinutes().toString().padStart(2, '0')}`;
+  const displayItems = order.items.map(item => ({
+    name: item.name,
+    quantity: item.quantity
+  }));
+  return {
+    id: order._id,
+    restaurantNames: restaurantNames,
+    date: date,
+    items: displayItems,
+    total: order.total,
+    status: order.customerStatus!,
+    arriveTime: arriveTimeFormatted,
+  };
+}));
 
 const inProgressStatuses = ['preparing', 'on_the_way', 'received'];
 const completedStatuses = ['completed'];
@@ -111,14 +86,6 @@ const inProgressOrders = computed(() =>
 const completedOrders = computed(() =>
     allOrders.value.filter(order => completedStatuses.includes(order.status))
 );
-
-onMounted(() => {
-  fetchOrders();
-});
-
-onActivated(() => {
-  fetchOrders();
-});
 
 useHead({
   title: '我的訂單',

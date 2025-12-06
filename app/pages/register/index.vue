@@ -96,6 +96,18 @@
       </v-col>
     </v-row>
   </v-container>
+
+  <v-snackbar
+    v-model="snackbarStore.show"
+    :color="snackbarStore.color"
+    :timeout="snackbarStore.timeout"
+    location="top"
+  >
+    {{ snackbarStore.text }}
+    <template v-slot:actions>
+      <v-btn variant="text" @click="snackbarStore.show = false">關閉</v-btn>
+    </template>
+  </v-snackbar>
 </template>
 
 <script setup lang="ts">
@@ -160,13 +172,24 @@ async function onSubmit() {
     snackbarStore.showSnackbar('註冊成功，請登入', 'success')
     setTimeout(() => router.push('/login'), 600)
   } catch (err: any) {
-    let msg = err?.message || err?.data?.message || '註冊失敗，請稍後再試'
-    if (
-      typeof msg === 'string' &&
-      (msg.toLowerCase().includes('email'))
-    ) {
+    let msg = '註冊失敗，請稍後再試'
+    
+    const status = err.response?.status || err.statusCode || err.status || err.data?.statusCode
+    const data = err.response?._data || err.data
+    const serverMsg = data?.message || err.message
+
+    if (serverMsg === '電子信箱已經註冊' || (typeof serverMsg === 'string' && serverMsg.includes('已註冊'))) {
       msg = '註冊失敗，該電子郵件已被註冊'
+    } else if (serverMsg && status && status !== 500) {
+      msg = serverMsg
+    } else if (status === 400) {
+      msg = '輸入資料有誤，請檢查後再試'
+    } else if (err.code === 'NETWORK_ERROR' || (!status && !err.response)) {
+      msg = '網路連線失敗，請檢查網路後再試'
+    } else if (status >= 500) {
+      msg = '伺服器錯誤，請稍後再試'
     }
+
     console.error(err)
     snackbarStore.showSnackbar(msg, 'error')
   } finally {
