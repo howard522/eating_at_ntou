@@ -1,6 +1,10 @@
 <template>
 
-  <v-card class="rounded-lg store-card" :to="`/customer/stores/${id}`">
+  <v-card 
+    class="rounded-lg store-card" 
+    :to="`/customer/stores/${id}`"
+    :style="{ '--hover-bg': hoverBgColor }"
+  >
 
     <div class="image-container">
       <v-img
@@ -33,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps({
+const props = defineProps({
   id: {
     type: String,
     required: true,
@@ -51,6 +55,45 @@ defineProps({
     default: '',
   },
 });
+
+const hoverBgColor = ref('#FFFFFF');
+
+const updateHoverColor = () => {
+  if (!props.image) return;
+  
+  const img = new Image();
+  img.crossOrigin = "Anonymous";
+  img.src = props.image;
+  
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = 1;
+    canvas.height = 1;
+    ctx.drawImage(img, 0, 0, 1, 1);
+    
+    try {
+      const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+
+      const mix = 0.85;
+      const newR = Math.round(r + (255 - r) * mix);
+      const newG = Math.round(g + (255 - g) * mix);
+      const newB = Math.round(b + (255 - b) * mix);
+      
+      hoverBgColor.value = `rgb(${newR}, ${newG}, ${newB})`;
+    } catch (e) {
+      console.warn('無法提取圖片顏色', e);
+    }
+  };
+};
+
+onMounted(() => {
+  updateHoverColor();
+});
+
+watch(() => props.image, updateHoverColor);
 </script>
 
 <style scoped>
@@ -63,7 +106,7 @@ defineProps({
 }
 
 .store-card:hover {
-  background-color: #FFFFFF !important;
+  background-color: var(--hover-bg, #FFFFFF) !important;
 }
 
 .image-container {
