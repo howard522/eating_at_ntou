@@ -11,7 +11,7 @@ import {
     searchRestaurantsNearByAddress,
     updateMenuItemById,
     updateRestaurantById,
-} from "./restaurants.service";
+} from "@server/services/restaurants.service";
 import Restaurant from "@server/models/restaurant.model";
 
 const mocks = vi.hoisted(() => ({

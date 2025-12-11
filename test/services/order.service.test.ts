@@ -9,7 +9,7 @@ import {
     getOrdersForAdmin,
     updateOrderDeliveryPerson,
     updateOrderStatusById,
-} from "./order.service";
+} from "@server/services/order.service";
 import Order from "@server/models/order.model";
 
 const mocks = vi.hoisted(() => {

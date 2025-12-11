@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createAd, deleteAd, getAdById, getAllAds, getRandomAd, updateAd } from "./ad.service";
+import { createAd, deleteAd, getAdById, getAllAds, getRandomAd, updateAd } from "@server/services/ad.service";
 import Ad from "@server/models/ad.model";
 
 const { mockSave, mockAggregate, mockFind, mockFindById, mockFindByIdAndUpdate, mockFindByIdAndDelete } = vi.hoisted(

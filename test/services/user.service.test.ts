@@ -7,7 +7,7 @@ import {
     updateUser,
     updateUserPasswordById,
     verifyUserPasswordById,
-} from "./user.service";
+} from "@server/services/user.service";
 import User from "@server/models/user.model";
 
 const mocks = vi.hoisted(() => {

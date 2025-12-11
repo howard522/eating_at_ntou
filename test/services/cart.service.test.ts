@@ -5,7 +5,7 @@ import {
     createCartForUser,
     getCartByUserId,
     updateCartByUserId,
-} from "./cart.service";
+} from "@server/services/cart.service";
 import Cart from "@server/models/cart.model";
 
 const mocks = vi.hoisted(() => {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createChatMessage, getChatMessages } from "./chat.service";
+import { createChatMessage, getChatMessages } from "@server/services/chat.service";
 import ChatMessage from "@server/models/chatMessage.model";
 
 const mocks = vi.hoisted(() => ({

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createReview, getReviewsByRestaurantId } from "./reviews.service";
+import { createReview, getReviewsByRestaurantId } from "@server/services/reviews.service";
 import Review from "@server/models/review.model";
 
 const mocks = vi.hoisted(() => ({

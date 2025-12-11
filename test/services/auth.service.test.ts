@@ -5,7 +5,7 @@ import {
     loginUser,
     registerUser,
     unbanUser,
-} from "./auth.service";
+} from "@server/services/auth.service";
 
 const mocks = vi.hoisted(() => {
     return {
