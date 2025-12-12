@@ -79,7 +79,7 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const { total, reviews } = await getReviewsByRestaurantId(restaurantId, sort, skip, limit);
+    const { total, reviews } = await getReviewsByRestaurantId(restaurantId, sort, { skip, limit });
 
     return {
         success: true,

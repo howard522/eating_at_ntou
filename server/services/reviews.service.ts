@@ -1,63 +1,62 @@
-import type { ObjectIdLike } from "@server/interfaces/common.interface";
+import type { ObjectIdLike, QueryPaginationOptions } from "@server/interfaces/common.interface";
+import type { IReviewCreate, IReviewResponse } from "@server/interfaces/review.interface";
 import Review from "@server/models/review.model";
 
 /**
- * 取得特定餐廳的評論列表，包含使用者資訊（暱稱、頭像），支援排序與分頁
+ * 取得特定餐廳的評論列表
+ * 包含使用者資訊，並支援排序與分頁
  *
  * @param restaurantId 餐廳 ID
  * @param sort 排序方式 (newest: 最新, highest: 最高分, lowest: 最低分)
- * @param skip 跳過筆數
- * @param limit 每頁筆數
+ * @param options.limit 每頁筆數
+ * @param options.skip 跳過筆數
  * @returns 評論列表及分頁資訊
  */
 export async function getReviewsByRestaurantId(
     restaurantId: ObjectIdLike,
     sort: "newest" | "highest" | "lowest" = "newest",
-    skip = 0,
-    limit = 10
+    options: QueryPaginationOptions
 ) {
-    {
-        const sortOptions: { [key: string]: Record<string, 1 | -1> } = {
-            newest: { createdAt: -1 },
-            highest: { rating: -1 },
-            lowest: { rating: 1 },
-        };
+    const SORT_OPTIONS: { [key: string]: Record<string, 1 | -1> } = {
+        newest: { createdAt: -1 },
+        highest: { rating: -1, createdAt: -1 }, // 同分時以最新的在前
+        lowest: { rating: 1, createdAt: -1 }, // 同分時以最新的在前
+    } as const;
 
-        const total = await Review.countDocuments({ restaurant: restaurantId });
-        const reviews = await Review.find({ restaurant: restaurantId })
-            .populate("user", "name img")
-            .sort(sortOptions[sort])
+    const skip = options.skip || 0;
+    const limit = options.limit || 10;
+
+    const query = { restaurant: restaurantId };
+
+    // 同時取得總數與評論列表
+    const [total, reviews] = await Promise.all([
+        await Review.countDocuments(query),
+        await Review.find(query)
+            .populate("user", "id name img")
+            .sort(SORT_OPTIONS[sort] || { createdAt: -1 })
             .skip(skip)
-            .limit(limit);
+            .limit(limit)
+            .lean<IReviewResponse[]>(),
+    ]);
 
-        const data = reviews.map((review) => ({
-            _id: review._id,
-            restaurantId: review.restaurant,
-            user: {
-                _id: review.user?._id,
-                name: review.user?.name,
-                img: review.user?.img,
-            },
-            rating: review.rating,
-            content: review.content,
-            createdAt: review.createdAt,
-            updatedAt: review.updatedAt,
-        }));
+    // 有可能需要轉換 review.restaurant -> restaurantId ?
 
-        return {
-            total,
-            reviews: data,
-        };
-    }
+    return { total, reviews };
 }
 
-export async function createReview(restaurantId: ObjectIdLike, userId: ObjectIdLike, rating: number, content: string) {
-    const review = await Review.create({
-        restaurant: restaurantId,
-        user: userId,
-        rating,
-        content,
-    });
+/**
+ * 建立新的評論
+ *
+ * @param restaurantId 餐廳 ID
+ * @param userId 使用者 ID
+ * @param rating 評分
+ * @param content 評論內容
+ * @returns 新建立的評論
+ */
+export async function createReview(data: IReviewCreate) {
+    const reviewDoc = await Review.create(data);
 
-    return review;
+    const review = await reviewDoc.populate("user", "id name img");
+
+    return review.toObject<IReviewResponse>();
 }

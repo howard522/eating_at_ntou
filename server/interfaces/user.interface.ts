@@ -15,7 +15,7 @@ export type ActiveUserRole = "customer" | "delivery"; // 使用者目前的活�
  * 由於安全性考量，在一般情況下不會回傳密碼欄位。
  */
 export interface IUser extends WithTimestamps {
-    id: ObjectIdLike; // QUESTION: 會必須存在嗎？
+    id: ObjectIdLike;
     name: string;
     email: string;
     role: UserRole;
@@ -40,6 +40,8 @@ export interface IUserMethods {
 // --------------------
 // 使用者相關 DTO
 // --------------------
+
+export type IUserSummary = Pick<IUser, "id" | "name" | "img">;
 
 export type LoginBody = Pick<IUserWithPassword, "email" | "password">;
 
