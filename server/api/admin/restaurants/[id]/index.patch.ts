@@ -1,6 +1,6 @@
 // server/api/admin/restaurants/[id]/index.patch.ts
 
-import type { UpdateRestaurantBody } from "@server/interfaces/restaurant.interface";
+import type { IUpdateRestaurant } from "@server/interfaces/restaurant.interface";
 import { updateRestaurantById } from "@server/services/restaurants.service";
 import { parseForm } from "@server/utils/parseForm";
 
@@ -11,7 +11,7 @@ import { parseForm } from "@server/utils/parseForm";
  *     summary: 管理員 - 更新餐廳（支援圖片上傳與地理編碼）
  *     description: |
  *       僅限管理員使用。
- * 
+ *
  *       用於更新餐廳主體資料（不含菜單）。
  *       若傳入地址，系統會自動根據地址取得地理座標。
  *       若傳入圖片，系統會自動上傳至 ImgBB 並回傳圖片 URL。
@@ -87,7 +87,7 @@ import { parseForm } from "@server/utils/parseForm";
 export default defineEventHandler(async (event) => {
     const id = getRouterParam(event, "id") as string;
     const form = await readMultipartFormData(event);
-    const data = await parseForm<UpdateRestaurantBody>(form, ["tags"]);
+    const data = await parseForm<IUpdateRestaurant>(form, ["tags"]);
 
     if (!id) {
         throw createError({

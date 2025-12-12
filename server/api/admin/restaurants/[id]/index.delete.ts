@@ -9,7 +9,7 @@ import { deleteRestaurantById } from "@server/services/restaurants.service";
  *     summary: 管理員 - 刪除餐廳
  *     description: |
  *       僅限管理員使用。
- * 
+ *
  *       會從資料庫中永久刪除指定餐廳及其所有關聯資料（例如菜單項目）。
  *       若該餐廳不存在，則回傳 404。
  *     tags:

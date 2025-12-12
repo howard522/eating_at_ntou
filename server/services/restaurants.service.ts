@@ -2,20 +2,21 @@
 
 import type { ObjectIdLike, QueryPaginationOptions } from "@server/interfaces/common.interface";
 import type {
-    CreateMenuItemBody,
-    CreateRestaurantBody,
-    IMenuItem,
+    ICreateMenuItem,
+    ICreateRestaurant,
+    IMenuItemResponse,
     IRestaurant,
-    UpdateMenuItemBody,
-    UpdateRestaurantBody,
+    IRestaurantResponse,
+    IUpdateMenuItem,
+    IUpdateRestaurant
 } from "@server/interfaces/restaurant.interface";
 import Restaurant from "@server/models/restaurant.model";
 import { buildRestaurantSearchQuery } from "@server/utils/mongoQuery";
 import { getGeocodeFromAddress } from "@server/utils/nominatim";
 import { cleanObject } from "@server/utils/object";
-import type { FilterQuery, ObjectId, PipelineStage } from "mongoose";
+import type { FilterQuery, PipelineStage } from "mongoose";
 
-async function findRestaurantDocumentById(restaurantId: ObjectIdLike) {
+async function findRestaurantDocById(restaurantId: ObjectIdLike) {
     const restaurant = await Restaurant.findById(restaurantId);
 
     // 找不到餐廳拋出 404 錯誤
@@ -40,7 +41,7 @@ async function findRestaurantDocumentById(restaurantId: ObjectIdLike) {
  * @param data 餐廳資料
  * @returns 新增的餐廳
  */
-export async function createRestaurant(data: CreateRestaurantBody): Promise<IRestaurant> {
+export async function createRestaurant(data: ICreateRestaurant) {
     // 自動地理編碼
     if (data.address) {
         const geocode = await getGeocodeFromAddress(data.address);
@@ -57,7 +58,7 @@ export async function createRestaurant(data: CreateRestaurantBody): Promise<IRes
     const restaurant = new Restaurant(data);
     await restaurant.save();
 
-    return restaurant.toObject<IRestaurant>(); // return as plain object
+    return restaurant.toObject<IRestaurantResponse>(); // return as plain object
 }
 
 /**
@@ -66,10 +67,10 @@ export async function createRestaurant(data: CreateRestaurantBody): Promise<IRes
  * @param id 餐廳 ID
  * @returns 餐廳
  */
-export async function getRestaurantById(id: ObjectIdLike): Promise<IRestaurant> {
-    const restaurant = await findRestaurantDocumentById(id);
+export async function getRestaurantById(id: ObjectIdLike) {
+    const restaurant = await findRestaurantDocById(id);
 
-    return restaurant.toObject<IRestaurant>();
+    return restaurant.toObject<IRestaurantResponse>();
 }
 
 /**
@@ -79,7 +80,7 @@ export async function getRestaurantById(id: ObjectIdLike): Promise<IRestaurant> 
  * @param data 要更新的餐廳資料
  * @returns 更新後的餐廳
  */
-export async function updateRestaurantById(id: ObjectIdLike, data: UpdateRestaurantBody): Promise<IRestaurant> {
+export async function updateRestaurantById(id: ObjectIdLike, data: IUpdateRestaurant) {
     data = cleanObject(data); // 清理空白欄位
 
     // 自動地理編碼
@@ -99,7 +100,7 @@ export async function updateRestaurantById(id: ObjectIdLike, data: UpdateRestaur
     const restaurant = await Restaurant.findByIdAndUpdate(id, data, {
         new: true,
         runValidators: true,
-    });
+    }).lean<IRestaurantResponse>();
 
     if (!restaurant) {
         throw createError({
@@ -109,7 +110,7 @@ export async function updateRestaurantById(id: ObjectIdLike, data: UpdateRestaur
         });
     }
 
-    return restaurant.toObject<IRestaurant>();
+    return restaurant;
 }
 
 /**
@@ -118,7 +119,7 @@ export async function updateRestaurantById(id: ObjectIdLike, data: UpdateRestaur
  * @param id 餐廳 ID
  * @returns 被刪除的餐廳
  */
-export async function deleteRestaurantById(id: string | ObjectId): Promise<void> {
+export async function deleteRestaurantById(id: ObjectIdLike) {
     if (!id) {
         throw createError({ statusCode: 400, message: "Restaurant ID is required" });
     }
@@ -142,16 +143,13 @@ export async function deleteRestaurantById(id: string | ObjectId): Promise<void>
  * @param options.skip 跳過筆數（預設 0）
  * @returns 符合條件的餐廳列表
  */
-export async function getRestaurantsByQuery(
-    query: FilterQuery<IRestaurant>,
-    options?: QueryPaginationOptions
-): Promise<IRestaurant[]> {
+export async function getRestaurantsByQuery(query: FilterQuery<IRestaurant>, options?: QueryPaginationOptions) {
     const limit = options?.limit ?? 50;
     const skip = options?.skip ?? 0;
 
-    const restaurants = await Restaurant.find(query).limit(limit).skip(skip);
+    const restaurants = await Restaurant.find(query).skip(skip).limit(limit).lean<IRestaurantResponse[]>();
 
-    return restaurants.map((r) => r.toObject<IRestaurant>());
+    return restaurants;
 }
 
 /**
@@ -163,18 +161,16 @@ export async function getRestaurantsByQuery(
  * @param options.activeOnly 是否只搜尋上架的餐廳，預設為 true
  * @returns 符合條件的餐廳列表
  */
-export async function searchRestaurants(
-    search: string,
-    options?: QueryPaginationOptions & { activeOnly?: boolean }
-): Promise<IRestaurant[]> {
+export async function searchRestaurants(search: string, options?: QueryPaginationOptions & { activeOnly?: boolean }) {
+    const MAX_TERMS = 5;
+    const MAX_TERM_LENGTH = 50;
+
     const limit = options?.limit ?? 50;
     const skip = options?.skip ?? 0;
     const activeOnly = options?.activeOnly ?? true; // 預設只搜尋上架的餐廳
-    const maxTerms = 5;
-    const maxTermLength = 50;
 
     // 關鍵字查詢條件
-    const mongoQuery = buildRestaurantSearchQuery(search, { maxTerms, maxTermLength });
+    const mongoQuery = buildRestaurantSearchQuery(search, { maxTerms: MAX_TERMS, maxTermLength: MAX_TERM_LENGTH });
 
     // 只搜尋上架的餐廳
     if (activeOnly) {
@@ -201,13 +197,14 @@ export async function searchRestaurantsNearByAddress(
     address: string,
     search: string,
     options?: QueryPaginationOptions & { maxDistance?: number; activeOnly?: boolean }
-): Promise<IRestaurant[]> {
+) {
+    const MAX_TERMS = 5;
+    const MAX_TERM_LENGTH = 50;
+
     const limit = options?.limit ?? 50;
     const skip = options?.skip ?? 0;
     const maxDistance = options?.maxDistance;
     const activeOnly = options?.activeOnly ?? true; // 預設只搜尋上架的餐廳
-    const maxTerms = 5;
-    const maxTermLength = 50;
 
     const geocode = await getGeocodeFromAddress(address);
 
@@ -216,7 +213,7 @@ export async function searchRestaurantsNearByAddress(
     }
 
     // 關鍵字查詢條件
-    const mongoQuery = buildRestaurantSearchQuery(search, { maxTerms, maxTermLength });
+    const mongoQuery = buildRestaurantSearchQuery(search, { maxTerms: MAX_TERMS, maxTermLength: MAX_TERM_LENGTH });
 
     // 只搜尋上架的餐廳
     if (activeOnly) {
@@ -243,7 +240,7 @@ export async function searchRestaurantsNearByAddress(
 
     const pipeline: PipelineStage[] = [geoNearStage, { $skip: skip }, { $limit: limit }];
 
-    const results = await Restaurant.aggregate(pipeline);
+    const results = await Restaurant.aggregate<IRestaurantResponse & { distance: number }>(pipeline);
 
     return results;
 }
@@ -259,20 +256,20 @@ export async function searchRestaurantsNearByAddress(
  * @param data 菜單項目資料
  * @returns 新增的菜單項目
  */
-export async function createMenuItem(restaurantId: ObjectIdLike, data: CreateMenuItemBody): Promise<IMenuItem> {
+export async function createMenuItem(restaurantId: ObjectIdLike, data: ICreateMenuItem) {
     // 使用 imageURL 更新圖片欄位
     if (data.imageURL) {
         data.image = data.imageURL;
         delete data.imageURL;
     }
 
-    const restaurant = await findRestaurantDocumentById(restaurantId);
+    const restaurant = await findRestaurantDocById(restaurantId);
     const menuItem = restaurant.menu.create(data);
 
     restaurant.menu.push(menuItem);
     await restaurant.save();
 
-    return menuItem.toObject<IMenuItem>();
+    return menuItem.toObject<IMenuItemResponse>();
 }
 
 /**
@@ -282,13 +279,9 @@ export async function createMenuItem(restaurantId: ObjectIdLike, data: CreateMen
  * @param menuId 菜單項目 ID
  * @returns 指定的菜單項目
  */
-export async function getMenuItemById(restaurantId: ObjectIdLike, menuId: ObjectIdLike): Promise<IMenuItem> {
-    const restaurant = await findRestaurantDocumentById(restaurantId);
+export async function getMenuItemById(restaurantId: ObjectIdLike, menuId: ObjectIdLike) {
+    const restaurant = await findRestaurantDocById(restaurantId);
     const menuItem = restaurant.menu.id(menuId);
-
-    if (!menuItem) {
-        throw createError({ statusCode: 404, message: "Menu item not found" });
-    }
 
     if (!menuItem) {
         throw createError({
@@ -298,7 +291,7 @@ export async function getMenuItemById(restaurantId: ObjectIdLike, menuId: Object
         });
     }
 
-    return menuItem.toObject<IMenuItem>();
+    return menuItem.toObject<IMenuItemResponse>();
 }
 
 /**
@@ -309,11 +302,7 @@ export async function getMenuItemById(restaurantId: ObjectIdLike, menuId: Object
  * @param data 要更新的菜單項目資料
  * @returns 更新後的菜單項目
  */
-export async function updateMenuItemById(
-    restaurantId: ObjectIdLike,
-    menuId: ObjectIdLike,
-    data: UpdateMenuItemBody
-): Promise<IMenuItem> {
+export async function updateMenuItemById(restaurantId: ObjectIdLike, menuId: ObjectIdLike, data: IUpdateMenuItem) {
     // 使用 imageURL 更新圖片欄位
     if (data.imageURL) {
         data.image = data.imageURL;
@@ -322,7 +311,7 @@ export async function updateMenuItemById(
 
     data = cleanObject(data); // 清理空白欄位
 
-    const restaurant = await findRestaurantDocumentById(restaurantId);
+    const restaurant = await findRestaurantDocById(restaurantId);
     const menuItem = restaurant.menu.id(menuId);
 
     if (!menuItem) {
@@ -337,7 +326,7 @@ export async function updateMenuItemById(
     Object.assign(menuItem, data);
     await restaurant.save();
 
-    return menuItem.toObject<IMenuItem>();
+    return menuItem.toObject<IMenuItemResponse>();
 }
 
 /**
@@ -346,8 +335,8 @@ export async function updateMenuItemById(
  * @param restaurantId 餐廳 ID
  * @param menuId 菜單項目 ID
  */
-export async function deleteMenuItemById(restaurantId: ObjectIdLike, menuId: ObjectIdLike): Promise<void> {
-    const restaurant = await findRestaurantDocumentById(restaurantId);
+export async function deleteMenuItemById(restaurantId: ObjectIdLike, menuId: ObjectIdLike) {
+    const restaurant = await findRestaurantDocById(restaurantId);
     const menuItem = restaurant.menu.id(menuId);
 
     if (!menuItem) {

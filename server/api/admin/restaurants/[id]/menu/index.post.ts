@@ -1,8 +1,8 @@
 // server/api/admin/restaurants/[id]/menu/index.post.ts
 
+import type { ICreateMenuItem } from "@server/interfaces/restaurant.interface";
 import { createMenuItem } from "@server/services/restaurants.service";
 import { parseForm } from "@server/utils/parseForm";
-import type { CreateMenuItemBody } from "@server/interfaces/restaurant.interface";
 
 /**
  * @openapi
@@ -81,7 +81,7 @@ import type { CreateMenuItemBody } from "@server/interfaces/restaurant.interface
 export default defineEventHandler(async (event) => {
     const restaurantId = getRouterParam(event, "id") as string;
     const form = await readMultipartFormData(event);
-    const data = await parseForm<CreateMenuItemBody>(form);
+    const data = await parseForm<ICreateMenuItem>(form);
 
     if (!restaurantId) {
         throw createError({ statusCode: 400, statusMessage: "Bad Request", message: "Missing required parameter: id" });
