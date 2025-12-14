@@ -55,8 +55,8 @@ export function useInfiniteFetch<T>(options: UseInfiniteFetchOptions<T>) {
             if (userStore.token) {
                 headers.Authorization = `Bearer ${userStore.token}`
             }
-            const response = await $fetch<{ data: T[]; count?: number }>(api, { query, headers })
-            const items = response.data ?? []
+            const response = await $fetch<{ data?: T[]; reviews?: T[]; count?: number }>(api, { query, headers })
+            const items: T[] = response.data ?? response.reviews ?? []
 
             if (reset) {
                 allItems.value = items
