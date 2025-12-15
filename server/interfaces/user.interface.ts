@@ -42,7 +42,7 @@ export interface IUserMethods {
 // 使用者相關 DTO
 // --------------------
 
-export type IUserSummary = Pick<IUser, "id" | "name" | "img">;
+export type IUserSummary = Pick<IUser, "id" | "_id" | "name" | "img">;
 
 export type IUserLogin = Pick<IUserWithPassword, "email" | "password">;
 
