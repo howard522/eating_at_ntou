@@ -1,14 +1,27 @@
+// server/models/review.model.ts
+
+import type { IReview } from "@server/interfaces/review.interface";
+import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
 
-const reviewSchema = new mongoose.Schema(
+const { Schema, model } = mongoose;
+
+// 文件類型定義
+type ReviewDocument = HydratedDocument<IReview>;
+
+// --------------------
+// 評論
+// --------------------
+
+const reviewSchema = new Schema<ReviewDocument>(
     {
         user: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
         restaurant: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: Schema.Types.ObjectId,
             ref: "Restaurant",
             required: true,
         },
@@ -27,4 +40,11 @@ const reviewSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-export default mongoose.models.Review || mongoose.model("Review", reviewSchema);
+// --------------------
+// Model export
+// --------------------
+
+export const Review =
+    (mongoose.models.Review as Model<ReviewDocument>) || model<ReviewDocument>("Review", reviewSchema);
+
+export default Review;

@@ -1,6 +1,8 @@
-import { verifyJwtFromEvent } from "@server/utils/auth";
+// server/api/cart/items.post.ts
+
+import type { ICartUpdate } from "@server/interfaces/cart.interface";
 import { updateCartByUserId } from "@server/services/cart.service";
-import type { CartPostBody } from "@server/interfaces/cart.interface";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 
 /**
  * @openapi
@@ -73,18 +75,27 @@ import type { CartPostBody } from "@server/interfaces/cart.interface";
  *                       辣度: "小辣"
  *                 currency: "TWD"
  *                 total: 420
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       423:
+ *         $ref: '#/components/responses/Locked'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-    const body = await readBody<CartPostBody>(event);
+    const userId = getCurrentUser(event).id;
 
-    // Auth
-    const payload = await verifyJwtFromEvent(event);
-    const userId = payload.id;
+    const body = await readBody<ICartUpdate>(event);
 
     // Expect body.items: array of { name, price, quantity, restaurantId?, menuItemId?, options? }
     const items = Array.isArray(body.items) ? body.items : [];
 
     const cart = await updateCartByUserId(userId, items);
 
-    return { success: true, data: cart };
+    return {
+        success: true,
+        data: cart,
+    };
 });

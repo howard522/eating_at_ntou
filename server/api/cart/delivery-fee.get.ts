@@ -1,14 +1,15 @@
 // server/api/cart/delivery-fee.get.ts
 
-import { verifyJwtFromEvent } from "@server/utils/auth";
 import { calculateDeliveryFee } from "@server/services/cart.service";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 
 /**
  * @openapi
  * /api/cart/delivery-fee:
  *   get:
- *     summary: 取得目前使用者的外送費用
- *     description: 驗證 JWT 後，根據使用者的購物車內容與外送地址，計算並回傳外送費用。
+ *     summary: 計算外送費用
+ *     description: |
+ *       根據使用者的購物車內容與外送地址，計算並回傳外送費用。
  *     tags:
  *       - Cart
  *     security:
@@ -40,24 +41,32 @@ import { calculateDeliveryFee } from "@server/services/cart.service";
  *                     deliveryFee:
  *                       type: number
  *                       example: 30
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-    // Auth
-    const payload = await verifyJwtFromEvent(event);
-    const userId = payload.id;
+    const userId = getCurrentUser(event).id;
 
     const address = getQuery(event).address as string;
 
     if (!address) {
-        throw createError({ statusCode: 400, statusMessage: "缺少必要的地址參數" });
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: address.",
+        });
     }
 
     const deliveryFee = await calculateDeliveryFee(userId, address);
 
     return {
         success: true,
-        data: {
-            deliveryFee,
-        },
+        data: { deliveryFee },
     };
 });

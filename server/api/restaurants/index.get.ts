@@ -11,9 +11,6 @@ import { parseInteger } from "@server/utils/parseNumber";
  *     description: |
  *       根據關鍵字（name / info / address / menu.name）進行不區分大小寫的搜尋。
  *       多個關鍵字可用空白分隔；若未提供則回傳符合分頁條件的全部餐廳。
- *
- *       若查詢參數帶上 `geocode=true`，伺服器會嘗試呼叫 Nominatim 將缺少經緯度的餐廳地址轉換為座標，並把座標寫回資料庫（此為有副作用的測試功能）。
- *       注意：Nominatim 使用條款要求每秒請求數量不得超過限制，本 API 在批次更新時會進行節流。
  *     tags:
  *       - Restaurants
  *     parameters:
@@ -27,11 +24,16 @@ import { parseInteger } from "@server/utils/parseNumber";
  *         description: 最大回傳筆數（預設 50，限制為 100）
  *         schema:
  *           type: integer
+ *           default: 50
+ *           minimum: 1
+ *           maximum: 100
  *       - name: skip
  *         in: query
  *         description: 跳過筆數（用於分頁）
  *         schema:
  *           type: integer
+ *           default: 0
+ *           minimum: 0
  *     responses:
  *       200:
  *         description: 成功回傳餐廳清單
@@ -48,6 +50,12 @@ import { parseInteger } from "@server/utils/parseNumber";
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Restaurant'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     // 防止過長造成效能問題
@@ -62,7 +70,7 @@ export default defineEventHandler(async (event) => {
     const skip = parseInteger(query.skip, 0, 0);
 
     // 查詢餐廳
-    const restaurants = await searchRestaurants(search, true, { limit, skip });
+    const restaurants = await searchRestaurants(search, { limit, skip, activeOnly: true });
 
     return {
         success: true,

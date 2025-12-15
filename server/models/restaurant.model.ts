@@ -1,19 +1,27 @@
 // server/models/restaurant.model.ts
 
-import mongoose from "mongoose";
-import type { Model } from "mongoose";
 import type { IMenuItem, IRestaurant } from "@server/interfaces/restaurant.interface";
+import type { HydratedDocument, Model, Types } from "mongoose";
+import mongoose from "mongoose";
 
 const { Schema, model } = mongoose;
 
-const menuItemSchema = new Schema<IMenuItem>({
+// 文件類型定義
+type MenuItemSubdocument = HydratedDocument<IMenuItem>;
+type RestaurantDocument = Omit<HydratedDocument<IRestaurant>, "menu"> & {
+    menu: Types.DocumentArray<MenuItemSubdocument>;
+};
+
+// 菜單項目子文件結構
+const menuItemSchema = new Schema<MenuItemSubdocument>({
     name: String,
     price: Number,
     image: String,
     info: String,
 });
 
-const restaurantSchema = new Schema<IRestaurant>({
+// 餐廳文件結構
+const restaurantSchema = new Schema<RestaurantDocument>({
     name: String,
     address: String,
     phone: String,
@@ -41,4 +49,8 @@ restaurantSchema.add({
 // 2dsphere index for geospatial queries
 restaurantSchema.index({ locationGeo: "2dsphere" });
 
-export default (mongoose.models.Restaurant as Model<IRestaurant>) || model<IRestaurant>("Restaurant", restaurantSchema);
+export const Restaurant =
+    (mongoose.models.Restaurant as Model<RestaurantDocument>) ||
+    model<RestaurantDocument>("Restaurant", restaurantSchema);
+
+export default Restaurant;

@@ -31,11 +31,24 @@ import { getRestaurantById } from "@server/services/restaurants.service";
  *                   type: integer
  *                 data:
  *                   $ref: '#/components/schemas/Restaurant'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
  *       404:
- *         description: 找不到餐廳
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     const id = getRouterParam(event, "id") as string;
+
+    if (!id) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: restaurant id.",
+        });
+    }
+
     const restaurant = await getRestaurantById(id);
 
     return {

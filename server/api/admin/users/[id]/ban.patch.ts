@@ -1,24 +1,26 @@
+// server/api/admin/users/[id]/ban.patch.ts
+
 import { banUser } from "@server/services/auth.service";
 
 /**
  * @openapi
  * /api/admin/users/{id}/ban:
  *   patch:
- *     summary: 管理員停用會員帳號
+ *     summary: 管理員 - 停用會員帳號
  *     description: |
  *       將指定會員帳號標記為停用狀態（role = "banned"）。
  *       停用後，該會員無法登入、下單或接單。
  *     tags:
- *       - Admin
+ *       - Admin - Users
  *     security:
  *       - BearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
+ *         description: 目標會員的使用者 ID
  *         schema:
  *           type: string
- *         description: 目標會員的使用者 ID
  *     responses:
  *       200:
  *         description: 停用成功
@@ -42,6 +44,8 @@ import { banUser } from "@server/services/auth.service";
  *         description: 非管理員無權操作
  *       404:
  *         description: 找不到目標使用者
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     // 取得呼叫者（必須是 admin）
@@ -49,7 +53,11 @@ export default defineEventHandler(async (event) => {
 
     const userId = getRouterParam(event, "id");
     if (!userId) {
-        throw createError({ statusCode: 400, statusMessage: "Bad Request", message: "缺少使用者 ID" });
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: user id.",
+        });
     }
 
     const { userId: bannedUserId, role } = await banUser(userId);

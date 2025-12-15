@@ -209,6 +209,198 @@ export const components = {
                 scheme: 'bearer',
                 bearerFormat: 'JWT'
             }
-        }
-    }
-}
+        },
+
+        responses: {
+            // 400
+            BadRequest: {
+                description: "缺少必要的欄位或格式錯誤",
+                // content: {
+                //     "application/json": {
+                //         schema: {
+                //             type: "object",
+                //             properties: {
+                //                 success: { type: "boolean", example: false },
+                //                 error: { type: "string", example: "Bad Request" },
+                //                 message: { type: "string", example: "Required fields are missing or invalid." },
+                //             },
+                //         },
+                //     },
+                // },
+            },
+
+            // 401
+            Unauthorized: {
+                description: "未登入或無效的 Token",
+                // content: {
+                //     "application/json": {
+                //         schema: {
+                //             type: "object",
+                //             properties: {
+                //                 success: { type: "boolean", example: false },
+                //                 error: { type: "string", example: "Unauthorized" },
+                //                 message: { type: "string", example: "Authentication required. Please log in." },
+                //             },
+                //         },
+                //     },
+                // },
+            },
+            LoginFailed: {
+                description: "登入失敗，帳號不存在或密碼錯誤",
+            },
+
+            // 403
+            Forbidden: {
+                description: "權限不足",
+                // content: {
+                //     "application/json": {
+                //         schema: {
+                //             type: "object",
+                //             properties: {
+                //                 success: { type: "boolean", example: false },
+                //                 error: { type: "string", example: "Forbidden" },
+                //                 message: {
+                //                     type: "string",
+                //                     example: "You do not have permission to access this resource.",
+                //                 },
+                //             },
+                //         },
+                //     },
+                // },
+            },
+
+            // 404
+            NotFound: {
+                description: "找不到指定資源",
+                // content: {
+                //     "application/json": {
+                //         schema: {
+                //             type: "object",
+                //             properties: {
+                //                 success: { type: "boolean", example: false },
+                //                 error: { type: "string", example: "Not Found" },
+                //                 message: { type: "string", example: "The requested resource was not found." },
+                //             },
+                //         },
+                //     },
+                // },
+            },
+
+            // 409
+            Conflict: {
+                description: "資源衝突，例如名稱重複",
+                // content: {
+                //     "application/json": {
+                //         schema: {
+                //             type: "object",
+                //             properties: {
+                //                 success: { type: "boolean", example: false },
+                //                 error: { type: "string", example: "Conflict" },
+                //                 message: { type: "string", example: "Resource conflict occurred." },
+                //             },
+                //         },
+                //     },
+                // },
+            },
+
+            // 418
+            ImATeapot: {
+                description: "伺服器拒絕沖泡咖啡，因為它是一個茶壺",
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            properties: {
+                                success: { type: "boolean", example: false },
+                                error: { type: "string", example: "I'm a teapot" },
+                                message: {
+                                    type: "string",
+                                    example: "The server refuses to brew coffee because it is a teapot.",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+
+            // 422
+            UnprocessableEntity: {
+                description: "無效的參數",
+                // content: {
+                //     "application/json": {
+                //         schema: {
+                //             type: "object",
+                //             properties: {
+                //                 success: { type: "boolean", example: false },
+                //                 error: { type: "string", example: "UnprocessableEntity" },
+                //                 message: { type: "string", example: "The request parameters are invalid." },
+                //             },
+                //         },
+                //     },
+                // },
+            },
+
+            // 423
+            Locked: {
+                description: "資源被鎖定無法修改",
+            },
+
+            // 429
+            TooManyRequests: {
+                description: "請求過於頻繁",
+                // content: {
+                //     "application/json": {
+                //         schema: {
+                //             type: "object",
+                //             properties: {
+                //                 success: { type: "boolean", example: false },
+                //                 error: { type: "string", example: "Too Many Requests" },
+                //                 message: {
+                //                     type: "string",
+                //                     example: "You have sent too many requests. Please try again later.",
+                //                 },
+                //             },
+                //         },
+                //     },
+                // },
+            },
+
+            // 500
+            InternalServerError: {
+                description: "伺服器內部錯誤",
+                // content: {
+                //     "application/json": {
+                //         schema: {
+                //             type: "object",
+                //             properties: {
+                //                 success: { type: "boolean", example: false },
+                //                 error: { type: "string", example: "Internal Server Error" },
+                //                 message: { type: "string", example: "An unexpected error occurred on the server." },
+                //             },
+                //         },
+                //     },
+                // },
+            },
+
+            // 503
+            ServiceUnavailable: {
+                description: "系統維護或暫時無法提供服務",
+                // content: {
+                //     "application/json": {
+                //         schema: {
+                //             type: "object",
+                //             properties: {
+                //                 success: { type: "boolean", example: false },
+                //                 error: { type: "string", example: "Service Unavailable" },
+                //                 message: {
+                //                     type: "string",
+                //                     example: "The service is temporarily unavailable. Please try again later.",
+                //                 },
+                //             },
+                //         },
+                //     },
+                // },
+            },
+        },
+    },
+};

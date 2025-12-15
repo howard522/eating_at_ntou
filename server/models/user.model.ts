@@ -1,13 +1,20 @@
 // server/models/user.model.ts
 
+import type { IUserMethods, IUserWithPassword } from "@server/interfaces/user.interface";
+import { comparePassword, generatePasswordHash } from "@server/utils/auth";
+import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
-import { genSalt, hash } from "bcryptjs";
-import type { Model } from "mongoose";
-import type { IUser } from "@server/interfaces/user.interface";
 
 const { Schema, model } = mongoose;
 
-const userSchema = new Schema<IUser>(
+// 文件類型定義
+type UserDocument = HydratedDocument<IUserWithPassword, IUserMethods>;
+
+// --------------------
+// 使用者
+// --------------------
+
+const userSchema = new Schema<UserDocument>(
     {
         name: String,
         email: {
@@ -28,19 +35,38 @@ const userSchema = new Schema<IUser>(
         phone: { type: String, default: "" },
         // activeRole: { type: String, enum: ["customer", "delivery", null], default: null },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
+    }
 );
+
+// --------------------
+// 密碼雜湊
+// --------------------
 
 // Hash password before save if modified
 userSchema.pre("save", async function (next) {
     try {
         if (!this.isModified("password")) return next();
-        const salt = await genSalt(10);
-        this.password = await hash(this.password, salt);
+        this.password = await generatePasswordHash(this.password);
         next();
     } catch (e) {
         next(e as any);
     }
 });
 
-export default (mongoose.models.User as Model<IUser>) || model<IUser>("User", userSchema);
+// 驗證密碼
+userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+    const isMatch = await comparePassword(candidatePassword, this.password);
+    return isMatch;
+};
+
+// --------------------
+// Model export
+// --------------------
+
+export const User = (mongoose.models.User as Model<UserDocument>) || model<UserDocument>("User", userSchema);
+
+export default User;

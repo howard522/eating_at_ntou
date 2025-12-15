@@ -1,37 +1,36 @@
 // server/api/admin/restaurants/[id]/menu/[menuId].patch.ts
 
+import type { IUpdateMenuItem } from "@server/interfaces/restaurant.interface";
 import { updateMenuItemById } from "@server/services/restaurants.service";
 import { parseForm } from "@server/utils/parseForm";
-import type { UpdateMenuItemBody } from "@server/interfaces/restaurant.interface";
 
 /**
  * @openapi
  * /api/admin/restaurants/{id}/menu/{menuId}:
  *   patch:
- *     summary: 更新餐廳菜單項目（支援圖片上傳）
+ *     summary: 管理員 - 更新菜單項目（支援圖片上傳）
  *     description: |
  *       僅限管理員使用。
+ *
  *       允許部分欄位更新，未提供的欄位將保持不變。
- *       若上傳圖片檔案，系統會自動上傳至 ImgBB 並更新該項目的 `image` URL。
+ *       若傳入圖片，系統會自動上傳至 ImgBB 並回傳圖片 URL。
  *     tags:
- *       - Admin
+ *       - Admin - Restaurants
  *     security:
- *       - BearerAuth: []   # JWT 驗證
+ *       - BearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: 餐廳的唯一 MongoDB ObjectId
+ *         description: 餐廳 ID
  *         schema:
  *           type: string
- *           example: "6731e8adfb75b5f214ecb321"
  *       - name: menuId
  *         in: path
  *         required: true
- *         description: 菜單項目的 MongoDB ObjectId
+ *         description: 菜單項目 ID
  *         schema:
  *           type: string
- *           example: "6750b9fc97d3a11504e1d9a5"
  *     requestBody:
  *       required: true
  *       content:
@@ -51,11 +50,11 @@ import type { UpdateMenuItemBody } from "@server/interfaces/restaurant.interface
  *               imageURL:
  *                 type: string
  *                 format: uri
- *                 description: 圖片的 URL
+ *                 description: 直接使用圖片的 URL
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: 新圖片檔案，會自動上傳至 ImgBB 並更新 URL
+ *                 description: 菜單項目圖片（由後端自動上傳至 ImgBB）
  *     responses:
  *       200:
  *         description: 成功更新菜單項目
@@ -70,21 +69,31 @@ import type { UpdateMenuItemBody } from "@server/interfaces/restaurant.interface
  *                 menu:
  *                   $ref: '#/components/schemas/MenuItem'
  *       400:
- *         description: 無效請求或圖片上傳失敗
+ *         $ref: '#/components/responses/BadRequest'
  *       401:
- *         description: 未登入或 Token 無效
+ *         $ref: '#/components/responses/Unauthorized'
  *       403:
- *         description: 權限不足（非管理員）
+ *         $ref: '#/components/responses/Forbidden'
  *       404:
- *         description: 找不到餐廳或菜單項目
+ *         $ref: '#/components/responses/NotFound'
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
  *       500:
- *         description: 伺服器內部錯誤
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     const restaurantId = getRouterParam(event, "id") as string;
     const menuId = getRouterParam(event, "menuId") as string;
     const form = await readMultipartFormData(event);
-    const data = await parseForm<UpdateMenuItemBody>(form);
+    const data = await parseForm<IUpdateMenuItem>(form);
+
+    if (!restaurantId || !menuId) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameters: id, menuId.",
+        });
+    }
 
     if (data.imageURL) {
         data.image = data.imageURL;

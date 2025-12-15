@@ -12,6 +12,7 @@ export function parseFormField(field: string): any {
     let val = field.trim();
     if (val.startsWith("{") || val.startsWith("[")) {
         try {
+            // QUESTION: 可能會遇到 { $xxx: ... } 的注入攻擊嗎？
             val = JSON.parse(val);
         } catch {
             return field; // 回傳原始字串
