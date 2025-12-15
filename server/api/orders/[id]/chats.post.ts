@@ -56,24 +56,36 @@ import { getCurrentUser } from "@server/utils/getCurrentUser";
  *         description: 訂單不存在
  */
 export default defineEventHandler(async (event) => {
-    const userId = getCurrentUser(event).id;
+    const user = getCurrentUser(event);
     const orderId = getRouterParam(event, "id") as string;
 
     if (!orderId) {
-        throw createError({ statusCode: 400, statusMessage: "Missing order id" });
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: order id.",
+        });
     }
 
-    const ownership = await getOrderOwnership(orderId, userId);
+    const ownership = await getOrderOwnership(orderId, user._id);
     const status = await getOrderStatus(orderId);
 
-    // 權限檢查：顧客、外送員（只能查自己的訂單）
-    if (!ownership.isOwner && !ownership.isDeliveryPerson) {
-        throw createError({ statusCode: 403, statusMessage: "Not allowed to view this order" });
+    // 權限檢查：顧客、外送員（只能查自己的訂單）或管理員
+    if (!ownership.isOwner && !ownership.isDeliveryPerson && user.role !== "admin") {
+        throw createError({
+            statusCode: 403,
+            statusMessage: "Forbidden",
+            message: "Not allowed to view this order.",
+        });
     }
 
     // 已完成訂單禁止發送訊息
     if (status.customerStatus === "completed" && status.deliveryStatus === "completed") {
-        throw createError({ statusCode: 403, statusMessage: "Cannot send messages to completed orders" });
+        throw createError({
+            statusCode: 403,
+            statusMessage: "Forbidden",
+            message: "Not allowed to send messages to completed orders.",
+        });
     }
 
     const body = await readBody(event);
@@ -82,20 +94,33 @@ export default defineEventHandler(async (event) => {
 
     // 不能傳送空訊息
     if (!content || typeof content !== "string" || content.trim() === "") {
-        throw createError({ statusCode: 400, statusMessage: "Message content is required" });
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required field: content.",
+        });
     }
 
     // role 必須是 customer 或 delivery（若有提供）
     if (role && role !== "customer" && role !== "delivery") {
-        throw createError({ statusCode: 400, statusMessage: "Invalid role value" });
+        throw createError({
+            statusCode: 422,
+            statusMessage: "Unprocessable Entity",
+            message: "Invalid role value. Must be 'customer' or 'delivery'.",
+        });
     }
 
-    const chatMessage = await createChatMessage(
-        orderId,
-        userId,
-        role || (ownership.isOwner ? "customer" : "delivery"),
-        content.trim()
-    );
+    const chatMessage = await createChatMessage({
+        order: orderId,
+        sender: user._id,
+        senderRole: role || (ownership.isOwner ? "customer" : "delivery"),
+        content: content.trim(),
+    });
 
-    return { success: true, data: chatMessage };
+    setResponseStatus(event, 201); // 201 Created
+
+    return {
+        success: true,
+        data: chatMessage,
+    };
 });

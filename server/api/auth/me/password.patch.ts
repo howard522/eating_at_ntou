@@ -46,7 +46,11 @@ export default defineEventHandler(async (event) => {
     const { currentPassword, newPassword } = await readBody<UpdatePasswordBody>(event);
 
     if (!currentPassword || !newPassword) {
-        throw createError({ statusCode: 400, message: "currentPassword and newPassword are required" });
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required fields: currentPassword, newPassword.",
+        });
     }
 
     await changeUserPassword(userId, currentPassword, newPassword);

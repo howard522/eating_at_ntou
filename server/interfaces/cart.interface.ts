@@ -1,7 +1,7 @@
-// server/interfaces/order.interface.ts
+// server/interfaces/cart.interface.ts
 
-import type { Mixed } from "mongoose";
-import type { ObjectIdLike, UpdateBody, WithTimestamps } from "./common.interface";
+import type { ObjectIdLike, WithTimestamps } from "./common.interface";
+import type { IRestaurant } from "./restaurant.interface";
 
 export type CartStatus = "open" | "locked";
 
@@ -13,23 +13,24 @@ export type CartStatus = "open" | "locked";
  * 購物車商品介面
  */
 export interface ICartItem {
-    _id?: ObjectIdLike;
+    _id: ObjectIdLike;
     restaurantId: ObjectIdLike;
     menuItemId: ObjectIdLike;
+    restaurant?: Pick<IRestaurant, "_id" | "name" | "menu" | "locationGeo">;
     name: string;
     price: number;
     quantity: number;
-    options?: Mixed; // QUESTION: 是 Record<string, any> 嗎？
+    options?: any; // QUESTION: 這是什麼？
 }
 
 /**
  * 用於回應的購物車商品介面
  */
-export interface ICartItemResponse extends ICartItem {
-    restaurantName?: string;
-    image?: string;
-    info?: string;
-}
+export type ICartItemResponse = Omit<ICartItem, "restaurant"> & {
+    restaurantName: string;
+    image: string;
+    info: string;
+};
 
 // --------------------
 // 購物車
@@ -39,7 +40,7 @@ export interface ICartItemResponse extends ICartItem {
  * 購物車介面
  */
 export interface ICart extends WithTimestamps {
-    _id?: ObjectIdLike;
+    _id: ObjectIdLike;
     user: ObjectIdLike;
     items: ICartItem[];
     currency: string;
@@ -50,16 +51,14 @@ export interface ICart extends WithTimestamps {
 /**
  * 用於回應的購物車介面
  */
-export interface ICartResponse extends ICart {
+export type ICartResponse = Omit<ICart, "items"> & {
     items: ICartItemResponse[];
-}
+};
 
 // --------------------
 // 購物車相關 DTO
 // --------------------
 
-type CartItemUpdate = UpdateBody<ICartItem>;
-
-export interface CartItemUpdateBody {
-    items: CartItemUpdate[];
+export interface ICartUpdate {
+    items: ICartItem[];
 }

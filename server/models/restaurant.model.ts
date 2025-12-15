@@ -1,14 +1,14 @@
 // server/models/restaurant.model.ts
 
-import mongoose from "mongoose";
-import type { Model, HydratedDocument, Types } from "mongoose";
 import type { IMenuItem, IRestaurant } from "@server/interfaces/restaurant.interface";
+import type { HydratedDocument, Model, Types } from "mongoose";
+import mongoose from "mongoose";
 
 const { Schema, model } = mongoose;
 
 // 文件類型定義
 type MenuItemSubdocument = HydratedDocument<IMenuItem>;
-type RestaurantDocument = HydratedDocument<IRestaurant> & {
+type RestaurantDocument = Omit<HydratedDocument<IRestaurant>, "menu"> & {
     menu: Types.DocumentArray<MenuItemSubdocument>;
 };
 

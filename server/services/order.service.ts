@@ -19,7 +19,12 @@ import { getRestaurantsByQuery } from "./restaurants.service";
 export async function getOrderOwnership(orderId: ObjectIdLike, userId: ObjectIdLike) {
     const order = await Order.findById(orderId).select("user deliveryPerson");
 
-    if (!order) throw createError({ statusCode: 404, message: "Order not found" });
+    if (!order)
+        throw createError({
+            statusCode: 404,
+            statusMessage: "Not Found",
+            message: "Order not found",
+        });
 
     return {
         isOwner: String(order.user) === String(userId),
@@ -36,7 +41,12 @@ export async function getOrderOwnership(orderId: ObjectIdLike, userId: ObjectIdL
 export async function getOrderStatus(orderId: ObjectIdLike) {
     const order = await Order.findById(orderId).select("customerStatus deliveryStatus");
 
-    if (!order) throw createError({ statusCode: 404, message: "Order not found" });
+    if (!order)
+        throw createError({
+            statusCode: 404,
+            statusMessage: "Not Found",
+            message: "Order not found",
+        });
 
     return {
         customerStatus: order.customerStatus,
@@ -445,10 +455,19 @@ export async function getOrdersForAdmin(
 export async function updateOrderDeliveryPerson(orderId: ObjectIdLike, deliveryPersonId: ObjectIdLike) {
     const order = await Order.findById(orderId);
 
-    if (!order) throw createError({ statusCode: 404, statusMessage: "Order not found" });
+    if (!order)
+        throw createError({
+            statusCode: 404,
+            statusMessage: "Not Found",
+            message: "Order not found.",
+        });
 
     if (order.deliveryPerson) {
-        throw createError({ statusCode: 409, message: "Order already accepted" });
+        throw createError({
+            statusCode: 409,
+            statusMessage: "Conflict",
+            message: "Order already accepted.",
+        });
     }
 
     order.deliveryPerson = deliveryPersonId;

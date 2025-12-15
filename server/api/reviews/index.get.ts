@@ -75,11 +75,12 @@ export default defineEventHandler(async (event) => {
     if (!restaurantId) {
         throw createError({
             statusCode: 400,
-            statusMessage: "Missing required parameter: restaurantId",
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: restaurantId.",
         });
     }
 
-    const { total, reviews } = await getReviewsByRestaurantId(restaurantId, sort, skip, limit);
+    const { total, reviews } = await getReviewsByRestaurantId(restaurantId, sort, { skip, limit });
 
     return {
         success: true,

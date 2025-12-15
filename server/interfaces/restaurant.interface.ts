@@ -8,7 +8,7 @@ import type { IGeoPoint } from "./geo.interface";
 // --------------------
 
 export interface IMenuItem {
-    _id?: ObjectIdLike;
+    _id: ObjectIdLike;
     name: string;
     price: number;
     image: string;
@@ -23,7 +23,7 @@ export interface IMenuItem {
  * 餐廳介面
  */
 export interface IRestaurant {
-    _id?: ObjectIdLike;
+    _id: ObjectIdLike;
     name: string;
     address: string;
     phone: string;
@@ -32,7 +32,7 @@ export interface IRestaurant {
     tags: string[];
     menu: IMenuItem[];
     isActive: boolean;
-    locationGeo?: IGeoPoint;
+    locationGeo: IGeoPoint;
 }
 
 // --------------------
@@ -40,21 +40,31 @@ export interface IRestaurant {
 // --------------------
 
 /**
+ * 回應菜單項目資料
+ */
+export type IMenuItemResponse = IMenuItem;
+
+/**
  * 新增菜單項目
  */
-export type CreateMenuItemBody = CreateBody<IMenuItem, "name" | "price"> & ImageURL;
+export type ICreateMenuItem = CreateBody<IMenuItem, "name" | "price"> & ImageURL;
 
 /**
  * 更新菜單項目
  */
-export type UpdateMenuItemBody = UpdateBody<IMenuItem> & ImageURL;
+export type IUpdateMenuItem = UpdateBody<IMenuItem> & ImageURL;
+
+/**
+ * 回應餐廳資料
+ */
+export type IRestaurantResponse = IRestaurant;
 
 /**
  * 新增餐廳
  */
-export type CreateRestaurantBody = CreateBody<IRestaurant, "name" | "address" | "phone"> & ImageURL;
+export type ICreateRestaurant = CreateBody<IRestaurant, "name" | "address" | "phone"> & ImageURL;
 
 /**
  * 更新餐廳
  */
-export type UpdateRestaurantBody = UpdateBody<IRestaurant> & ImageURL;
+export type IUpdateRestaurant = UpdateBody<IRestaurant> & ImageURL;

@@ -54,6 +54,8 @@ import { getCurrentUser } from "@server/utils/getCurrentUser";
  *         description: 未授權
  *       404:
  *         description: 找不到餐廳
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
  */
 export default defineEventHandler(async (event) => {
     const userId = getCurrentUser(event).id;
@@ -65,14 +67,16 @@ export default defineEventHandler(async (event) => {
     if (!restaurantId || !rating || !content) {
         throw createError({
             statusCode: 400,
-            statusMessage: "Missing required fields: restaurantId, rating, content",
+            statusMessage: "Bad Request",
+            message: "Missing required fields: restaurantId, rating, content.",
         });
     }
 
     if (rating < 1 || rating > 5) {
         throw createError({
-            statusCode: 400,
-            statusMessage: "Rating must be between 1 and 5",
+            statusCode: 422,
+            statusMessage: "Unprocessable Entity",
+            message: "Rating must be between 1 and 5.",
         });
     }
 
@@ -80,11 +84,17 @@ export default defineEventHandler(async (event) => {
     if (!restaurant) {
         throw createError({
             statusCode: 404,
-            statusMessage: "Restaurant not found",
+            statusMessage: "Not Found",
+            message: "Restaurant not found.",
         });
     }
 
-    const review = await createReview(restaurantId, userId, rating, content);
+    const review = await createReview({
+        restaurant: restaurantId,
+        user: userId,
+        rating,
+        content,
+    });
 
     return {
         success: true,

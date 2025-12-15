@@ -55,7 +55,12 @@ export default defineEventHandler(async (event) => {
 
     const orderId = getRouterParam(event, "id") as string;
 
-    if (!orderId) throw createError({ statusCode: 400, message: "Missing order id" });
+    if (!orderId)
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: order id.",
+        });
 
     const ownership = await getOrderOwnership(orderId, user.id);
 
@@ -64,7 +69,11 @@ export default defineEventHandler(async (event) => {
     // 權限判斷：必須是訂單擁有者或外送員才能更新狀態
     // QUESTION: 顧客可以更新 deliveryStatus 嗎？目前允許但實際上應該不會這樣做
     if (user.role !== "admin" && !ownership.isOwner && !ownership.isDeliveryPerson) {
-        throw createError({ statusCode: 403, message: "Not allowed to update this status" });
+        throw createError({
+            statusCode: 403,
+            statusMessage: "Forbidden",
+            message: "Not allowed to update this status.",
+        });
     }
 
     const updatedOrder = await updateOrderStatusById(orderId, body);

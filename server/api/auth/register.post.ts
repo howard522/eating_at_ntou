@@ -1,6 +1,6 @@
 // server/api/auth/register.post.ts
 
-import type { RegisterBody } from "@server/interfaces/user.interface";
+import type { IUserCreate } from "@server/interfaces/user.interface";
 import { registerUser } from "@server/services/auth.service";
 
 /**
@@ -56,17 +56,25 @@ import { registerUser } from "@server/services/auth.service";
  *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-    const body = await readBody<RegisterBody>(event);
+    const body = await readBody<IUserCreate>(event);
     body.name ??= "這個人很懶，不想取暱稱";
     body.role ??= "multi";
 
     if (!body.email || !body.password) {
-        throw createError({ statusCode: 400, statusMessage: "缺少電子信箱或密碼" });
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required fields: email, password.",
+        });
     }
 
     const { user, token } = await registerUser(body);
 
-    setResponseStatus(event, 201);
+    setResponseStatus(event, 201); // 201 Created
 
-    return { success: true, token, user };
+    return {
+        success: true,
+        token,
+        user,
+    };
 });

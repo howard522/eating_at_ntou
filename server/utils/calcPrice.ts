@@ -24,7 +24,7 @@ export function calculateDeliveryFeeByDistance(distance: number): number {
 
     // 2 ~ 5 公里間，每公里 4 元
     if (distance <= 5) {
-        let fee = calculateDeliveryFeeByDistance(2) +(distance - 2) * 4 + 30;
+        let fee = calculateDeliveryFeeByDistance(2) + (distance - 2) * 4 + 30;
         return Math.round(fee);
     }
 

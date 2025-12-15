@@ -9,7 +9,7 @@ import { deleteMenuItemById } from "@server/services/restaurants.service";
  *     summary: 管理員 - 刪除菜單項目
  *     description: |
  *       僅限管理員使用。
- * 
+ *
  *       會從該餐廳的 `menu` 陣列中移除指定的項目。
  *       若該餐廳或菜單項目不存在，則回傳 404。
  *     tags:
@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
-            message: "Missing required parameters: id, menuId",
+            message: "Missing required parameters: id, menuId.",
         });
     }
 
@@ -68,6 +68,6 @@ export default defineEventHandler(async (event) => {
 
     return {
         success: true,
-        message: "Menu item deleted successfully",
+        message: "Menu item deleted successfully.",
     };
 });

@@ -1,6 +1,6 @@
 // server/api/admin/restaurants/[id]/menu/[menuId].patch.ts
 
-import type { UpdateMenuItemBody } from "@server/interfaces/restaurant.interface";
+import type { IUpdateMenuItem } from "@server/interfaces/restaurant.interface";
 import { updateMenuItemById } from "@server/services/restaurants.service";
 import { parseForm } from "@server/utils/parseForm";
 
@@ -11,7 +11,7 @@ import { parseForm } from "@server/utils/parseForm";
  *     summary: 管理員 - 更新菜單項目（支援圖片上傳）
  *     description: |
  *       僅限管理員使用。
- * 
+ *
  *       允許部分欄位更新，未提供的欄位將保持不變。
  *       若傳入圖片，系統會自動上傳至 ImgBB 並回傳圖片 URL。
  *     tags:
@@ -85,13 +85,13 @@ export default defineEventHandler(async (event) => {
     const restaurantId = getRouterParam(event, "id") as string;
     const menuId = getRouterParam(event, "menuId") as string;
     const form = await readMultipartFormData(event);
-    const data = await parseForm<UpdateMenuItemBody>(form);
+    const data = await parseForm<IUpdateMenuItem>(form);
 
     if (!restaurantId || !menuId) {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
-            message: "Missing required parameters: id, menuId",
+            message: "Missing required parameters: id, menuId.",
         });
     }
 

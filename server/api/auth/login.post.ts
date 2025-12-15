@@ -1,6 +1,6 @@
 // server/api/auth/login.post.ts
 
-import type { LoginBody } from "@server/interfaces/user.interface";
+import type { IUserLogin } from "@server/interfaces/user.interface";
 import { loginUser } from "@server/services/auth.service";
 
 /**
@@ -53,9 +53,21 @@ import { loginUser } from "@server/services/auth.service";
  *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-    const { email, password } = await readBody<LoginBody>(event);
+    const { email, password } = await readBody<IUserLogin>(event);
+
+    if (!email || !password) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required fields: email, password.",
+        });
+    }
 
     const { user, token } = await loginUser(email, password);
 
-    return { success: true, token, user };
+    return {
+        success: true,
+        token,
+        user,
+    };
 });

@@ -9,7 +9,7 @@ const { Schema, model } = mongoose;
 
 // 文件類型定義
 type CartItemSubdocument = HydratedDocument<ICartItem>;
-type CartDocument = HydratedDocument<ICart> & {
+type CartDocument = Omit<HydratedDocument<ICart>, "items"> & {
     items: mongoose.Types.DocumentArray<CartItemSubdocument>;
 };
 
@@ -17,21 +17,35 @@ type CartDocument = HydratedDocument<ICart> & {
 // 購物車商品
 // --------------------
 
-const cartItemSchema = new Schema<CartItemSubdocument>({
-    restaurantId: {
-        type: Schema.Types.ObjectId,
-        ref: "Restaurant",
-        required: true,
+const cartItemSchema = new Schema<CartItemSubdocument>(
+    {
+        restaurantId: {
+            type: Schema.Types.ObjectId,
+            ref: "Restaurant",
+            required: true,
+        },
+        menuItemId: {
+            type: Schema.Types.ObjectId,
+            ref: "MenuItem",
+            required: true,
+        },
+        name: { type: String, required: true },
+        price: { type: Number, required: true }, // price snapshot in cents
+        quantity: { type: Number, default: 1, min: 1 },
+        options: { type: Schema.Types.Mixed }, // arbitrary options / modifiers
     },
-    menuItemId: {
-        type: Schema.Types.ObjectId,
-        ref: "MenuItem",
-        required: true,
-    },
-    name: { type: String, required: true },
-    price: { type: Number, required: true }, // price snapshot in cents
-    quantity: { type: Number, default: 1, min: 1 },
-    options: { type: Schema.Types.Mixed }, // arbitrary options / modifiers
+    {
+        id: false, // 不要自動產生虛擬的 id 欄位
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
+    }
+);
+
+cartItemSchema.virtual("restaurant", {
+    ref: "Restaurant",
+    localField: "restaurantId",
+    foreignField: "_id",
+    justOne: true,
 });
 
 // --------------------

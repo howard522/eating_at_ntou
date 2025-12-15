@@ -1,6 +1,6 @@
 // server/api/admin/restaurants/index.post.ts
 
-import type { CreateRestaurantBody } from "@server/interfaces/restaurant.interface";
+import type { ICreateRestaurant } from "@server/interfaces/restaurant.interface";
 import { createRestaurant } from "@server/services/restaurants.service";
 import { parseForm } from "@server/utils/parseForm";
 
@@ -81,14 +81,14 @@ import { parseForm } from "@server/utils/parseForm";
  */
 export default defineEventHandler(async (event) => {
     const form = await readMultipartFormData(event);
-    const data = await parseForm<CreateRestaurantBody>(form, ["tags"]);
+    const data = await parseForm<ICreateRestaurant>(form, ["tags"]);
 
     // 檢查必填欄位
     if (!data.name || !data.address || !data.phone) {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
-            message: "Missing required fields: name, address, phone",
+            message: "Missing required fields: name, address, phone.",
         });
     }
 

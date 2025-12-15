@@ -15,7 +15,8 @@ export type ActiveUserRole = "customer" | "delivery"; // 使用者目前的活�
  * 由於安全性考量，在一般情況下不會回傳密碼欄位。
  */
 export interface IUser extends WithTimestamps {
-    id: ObjectIdLike; // QUESTION: 會必須存在嗎？
+    _id: ObjectIdLike;
+    id: ObjectIdLike;
     name: string;
     email: string;
     role: UserRole;
@@ -41,18 +42,20 @@ export interface IUserMethods {
 // 使用者相關 DTO
 // --------------------
 
-export type LoginBody = Pick<IUserWithPassword, "email" | "password">;
+export type IUserSummary = Pick<IUser, "id" | "_id" | "name" | "img">;
 
-export type RegisterBody = CreateBody<IUserWithPassword, "email" | "password">;
+export type IUserLogin = Pick<IUserWithPassword, "email" | "password">;
+
+export type IUserCreate = CreateBody<IUserWithPassword, "email" | "password">;
+
+export type IUserUpdate = UpdateBody<IUser>;
+
+export type IUserResponse = IUser;
 
 export interface UpdatePasswordBody {
     currentPassword: string;
     newPassword: string;
 }
-
-export type UpdateUserBody = UpdateBody<IUser>;
-
-export type UserResponse = Required<IUser>;
 
 // --------------------
 // JWT 負載介面

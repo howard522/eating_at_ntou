@@ -41,22 +41,38 @@ export default defineEventHandler(async (event) => {
     // 解析 Bearer 格式
     let m = authHeader.match(/^Bearer\s+((?:\.?[0-9A-Za-z\-_=]+){3})$/);
     if (!m || !m[1]) {
-        throw createError({ statusCode: 401, statusMessage: "Unauthorized", message: "Invalid token format" });
+        throw createError({
+            statusCode: 401,
+            statusMessage: "Unauthorized",
+            message: "Invalid token format.",
+        });
     }
 
     const payload = verifyJwt(m[1]);
 
     if (!payload || !payload.id) {
-        throw createError({ statusCode: 401, statusMessage: "Unauthorized", message: "Invalid token" });
+        throw createError({
+            statusCode: 401,
+            statusMessage: "Unauthorized",
+            message: "Invalid token.",
+        });
     }
 
     const user = await getUserById(payload.id);
     if (!user) {
-        throw createError({ statusCode: 401, statusMessage: "Unauthorized", message: "User not found" });
+        throw createError({
+            statusCode: 401,
+            statusMessage: "Unauthorized",
+            message: "Account does not exist.",
+        });
     }
 
     if (user.role === "banned") {
-        throw createError({ statusCode: 403, statusMessage: "Forbidden", message: "Account has been banned" });
+        throw createError({
+            statusCode: 403,
+            statusMessage: "Forbidden",
+            message: "Account has been banned.",
+        });
     }
 
     // 將使用者資訊附加到 event 上，供後續處理使用
