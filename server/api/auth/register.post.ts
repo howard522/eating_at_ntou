@@ -1,6 +1,6 @@
 // server/api/auth/register.post.ts
 
-import type { RegisterBody } from "@server/interfaces/user.interface";
+import type { IUserCreate } from "@server/interfaces/user.interface";
 import { registerUser } from "@server/services/auth.service";
 
 /**
@@ -56,7 +56,7 @@ import { registerUser } from "@server/services/auth.service";
  *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-    const body = await readBody<RegisterBody>(event);
+    const body = await readBody<IUserCreate>(event);
     body.name ??= "這個人很懶，不想取暱稱";
     body.role ??= "multi";
 

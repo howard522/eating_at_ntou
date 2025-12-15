@@ -35,7 +35,11 @@ const userSchema = new Schema<UserDocument>(
         phone: { type: String, default: "" },
         // activeRole: { type: String, enum: ["customer", "delivery", null], default: null },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
+    }
 );
 
 // --------------------

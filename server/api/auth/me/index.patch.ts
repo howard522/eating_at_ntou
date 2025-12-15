@@ -1,6 +1,6 @@
 // server/api/auth/me.patch.ts
 
-import type { UpdateUserBody } from "@server/interfaces/user.interface";
+import type { IUserUpdate } from "@server/interfaces/user.interface";
 import { updateUser } from "@server/services/user.service";
 import { getCurrentUser } from "@server/utils/getCurrentUser";
 import { parseForm } from "@server/utils/parseForm";
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
     const userId = getCurrentUser(event).id;
 
     const form = await readMultipartFormData(event);
-    const data = await parseForm<UpdateUserBody>(form);
+    const data = await parseForm<IUserUpdate>(form);
 
     const updated = await updateUser(userId, data);
 

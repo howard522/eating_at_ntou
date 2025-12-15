@@ -1,22 +1,15 @@
 // server/services/user.service.ts
 
 import type { ObjectIdLike, QueryPaginationOptions } from "@server/interfaces/common.interface";
-import type { IUser, RegisterBody, UserRole } from "@server/interfaces/user.interface";
+import type { IUserCreate, IUserResponse, IUserUpdate, UserRole } from "@server/interfaces/user.interface";
 import User from "@server/models/user.model";
 import type { FilterQuery } from "mongoose";
 
 /**
  * 很奇妙的，唯獨在使用者這邊，我們需要使用 `id` 屬性來代表使用者 ID，
  * 但在資料庫模型中，使用的是 `_id` 屬性。
- * 因此，我們需要一個輔助函式來將 Mongoose 文件轉換為包含 `id` 屬性的物件。
- *
- * @param user Mongoose 使用者文件
- * @returns 包含 `id` 屬性的使用者物件
+ * 因此，我們暫時使用 virtuals 解決
  */
-function replaceIdField(user: Omit<IUser, "id"> & { _id: ObjectIdLike }): IUser {
-    const id = user._id;
-    return { id, ...user };
-}
 
 // --------------------
 
@@ -46,16 +39,19 @@ export async function verifyUserPasswordById(userId: ObjectIdLike, password: str
  *
  * @param userId 使用者 ID
  * @param newPassword 新密碼
- * @returns 回傳更新後的使用者資料物件，若找不到使用者則回傳 null
+ * @returns 是否成功變更密碼
  */
 export async function updateUserPasswordById(userId: ObjectIdLike, newPassword: string) {
-    const user = await User.findByIdAndUpdate(userId, { password: newPassword }, { new: true }).select("-password");
+    const user = await User.findById(userId);
 
     if (!user) {
-        return null;
+        return false;
     }
 
-    return replaceIdField(user.toObject<IUser>());
+    user.password = newPassword;
+    await user.save(); // 觸發 pre-save hook 進行密碼雜湊
+
+    return true;
 }
 
 /**
@@ -64,13 +60,20 @@ export async function updateUserPasswordById(userId: ObjectIdLike, newPassword: 
  * @param data 使用者註冊資料
  * @returns 回傳建立的使用者資料物件
  */
-export async function createUser(data: RegisterBody): Promise<IUser> {
+export async function createUser(data: IUserCreate) {
     // 預設不指定 img/address/phone?
     const user = new User(data);
 
     await user.save();
 
-    return replaceIdField(user.toObject<IUser>());
+    // 避免回傳密碼欄位，所以重新查詢一次
+    const savedUser = await getUserById(user._id);
+
+    if (!savedUser) {
+        throw createError({ statusCode: 500, statusMessage: "Internal Server Error", message: "使用者建立失敗" });
+    }
+
+    return savedUser;
 }
 
 /**
@@ -86,7 +89,7 @@ export async function getUserById(userId: ObjectIdLike) {
         return null;
     }
 
-    return replaceIdField(user.toObject<IUser>());
+    return user.toObject<IUserResponse>();
 }
 
 /**
@@ -102,7 +105,7 @@ export async function getUserByEmail(email: string) {
         return null;
     }
 
-    return replaceIdField(user.toObject<IUser>());
+    return user.toObject<IUserResponse>();
 }
 
 /**
@@ -124,7 +127,7 @@ export async function searchUsers(
     const skip = options.skip ?? 0;
     const sortBy = options.sortBy ?? { createdAt: -1 };
 
-    const filter: FilterQuery<IUser> = {};
+    const filter: FilterQuery<IUserResponse> = {};
 
     // 角色篩選
     if (options.role) {
@@ -139,17 +142,17 @@ export async function searchUsers(
 
     const users = await User.find(filter).select("-password").sort(sortBy).skip(skip).limit(limit);
 
-    const data = users.map((user) => replaceIdField(user.toObject<IUser>()));
-
-    return data;
+    return users.map((user) => user.toObject<IUserResponse>());
 }
 
-export async function updateUser(userId: ObjectIdLike, updateData: Partial<IUser>) {
+export async function updateUser(userId: ObjectIdLike, updateData: IUserUpdate) {
+    updateData = cleanObject(updateData);
+
     const user = await User.findByIdAndUpdate(userId, updateData, { new: true }).select("-password");
 
     if (!user) {
         return null;
     }
 
-    return replaceIdField(user.toObject<IUser>());
+    return user.toObject<IUserResponse>();
 }

@@ -1,7 +1,7 @@
 // server/services/auth.service.ts
 
 import type { ObjectIdLike } from "@server/interfaces/common.interface";
-import type { RegisterBody } from "@server/interfaces/user.interface";
+import type { IUserCreate } from "@server/interfaces/user.interface";
 import {
     createUser,
     getUserByEmail,
@@ -21,7 +21,7 @@ import { signJwt } from "@server/utils/auth";
  * @param role 使用者角色，預設為 "multi"
  * @returns 新註冊的使用者資料及 JWT token
  */
-export async function registerUser(data: RegisterBody) {
+export async function registerUser(data: IUserCreate) {
     const existingUser = await getUserByEmail(data.email);
     if (existingUser) {
         throw createError({ statusCode: 409, statusMessage: "Conflict", message: "電子信箱已經註冊" });
@@ -51,7 +51,7 @@ export async function loginUser(email: string, password: string) {
         throw createError({ statusCode: 401, statusMessage: "Unauthorized", message: "帳號不存在" });
     }
 
-    const isMatch = await verifyUserPasswordById(user.id, password);
+    const isMatch = await verifyUserPasswordById(user._id, password);
     if (!isMatch) {
         throw createError({ statusCode: 401, statusMessage: "Unauthorized", message: "密碼錯誤" });
     }
@@ -60,7 +60,7 @@ export async function loginUser(email: string, password: string) {
         throw createError({ statusCode: 403, statusMessage: "Forbidden", message: "帳號已被封鎖" });
     }
 
-    const token = signJwt(String(user.id), user.role);
+    const token = signJwt(String(user._id), user.role);
 
     return { user, token };
 }
