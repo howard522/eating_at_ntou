@@ -81,5 +81,9 @@ export default defineEventHandler(async (event) => {
         sortBy: { [sortBy]: order === "asc" ? 1 : -1 },
     });
 
-    return { success: true, count: users.length, data: users };
+    return {
+        success: true,
+        count: users.length,
+        data: users,
+    };
 });

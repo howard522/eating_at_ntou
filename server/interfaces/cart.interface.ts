@@ -1,4 +1,4 @@
-// server/interfaces/order.interface.ts
+// server/interfaces/cart.interface.ts
 
 import type { ObjectIdLike, WithTimestamps } from "./common.interface";
 import type { IRestaurant } from "./restaurant.interface";

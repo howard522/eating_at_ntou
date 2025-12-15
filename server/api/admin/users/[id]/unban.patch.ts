@@ -35,7 +35,11 @@ import { unbanUser } from "@server/services/auth.service";
 export default defineEventHandler(async (event) => {
     const userId = getRouterParam(event, "id");
     if (!userId) {
-        throw createError({ statusCode: 400, statusMessage: "缺少使用者 ID" });
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: user id.",
+        });
     }
 
     const { userId: unbannedUserId, role } = await unbanUser(userId);

@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
-            message: "Missing order id",
+            message: "Missing required parameter: order id.",
         });
     }
 
@@ -75,7 +75,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
             statusCode: 403,
             statusMessage: "Forbidden",
-            message: "Not allowed to view this order",
+            message: "Not allowed to view this order.",
         });
     }
 
@@ -84,7 +84,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
             statusCode: 403,
             statusMessage: "Forbidden",
-            message: "Cannot send messages to completed orders",
+            message: "Not allowed to send messages to completed orders.",
         });
     }
 
@@ -97,16 +97,16 @@ export default defineEventHandler(async (event) => {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
-            message: "Message content is required",
+            message: "Missing required field: content.",
         });
     }
 
     // role 必須是 customer 或 delivery（若有提供）
     if (role && role !== "customer" && role !== "delivery") {
         throw createError({
-            statusCode: 400,
-            statusMessage: "Bad Request",
-            message: "Invalid role value",
+            statusCode: 422,
+            statusMessage: "Unprocessable Entity",
+            message: "Invalid role value. Must be 'customer' or 'delivery'.",
         });
     }
 
@@ -117,5 +117,10 @@ export default defineEventHandler(async (event) => {
         content: content.trim(),
     });
 
-    return { success: true, data: chatMessage };
+    setResponseStatus(event, 201); // 201 Created
+
+    return {
+        success: true,
+        data: chatMessage,
+    };
 });

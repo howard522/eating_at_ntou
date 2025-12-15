@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
-            message: "Missing required parameters: id, menuId",
+            message: "Missing required parameters: id, menuId.",
         });
     }
 
@@ -68,6 +68,6 @@ export default defineEventHandler(async (event) => {
 
     return {
         success: true,
-        message: "Menu item deleted successfully",
+        message: "Menu item deleted successfully.",
     };
 });

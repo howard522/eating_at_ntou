@@ -38,7 +38,7 @@ export interface WithTimestamps {
 
 /**
  * 查詢分頁選項介面
- * 
+ *
  * @property limit 每頁筆數
  * @property skip 跳過筆數
  * @property sortBy 排序方式 (例如 { createdAt: -1 } 表示依建立時間由新到舊排序)

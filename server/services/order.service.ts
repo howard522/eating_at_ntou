@@ -455,10 +455,19 @@ export async function getOrdersForAdmin(
 export async function updateOrderDeliveryPerson(orderId: ObjectIdLike, deliveryPersonId: ObjectIdLike) {
     const order = await Order.findById(orderId);
 
-    if (!order) throw createError({ statusCode: 404, statusMessage: "Order not found" });
+    if (!order)
+        throw createError({
+            statusCode: 404,
+            statusMessage: "Not Found",
+            message: "Order not found.",
+        });
 
     if (order.deliveryPerson) {
-        throw createError({ statusCode: 409, message: "Order already accepted" });
+        throw createError({
+            statusCode: 409,
+            statusMessage: "Conflict",
+            message: "Order already accepted.",
+        });
     }
 
     order.deliveryPerson = deliveryPersonId;

@@ -1,3 +1,5 @@
+// server/services/cart.service.ts
+
 import type { ICart, ICartResponse, ICartUpdate } from "@server/interfaces/cart.interface";
 import type { ObjectIdLike } from "@server/interfaces/common.interface";
 import Cart from "@server/models/cart.model";
@@ -53,7 +55,7 @@ export async function createCartForUser(userId: ObjectIdLike) {
         throw createError({
             statusCode: 409,
             statusMessage: "Conflict",
-            message: "Cart already exists for this user",
+            message: "Cart already exists for this user.",
         });
     }
 
@@ -178,7 +180,7 @@ export async function calculateDeliveryFee(userId: ObjectIdLike, address: string
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
-            message: "Failed to get geocode from address",
+            message: "Failed to get geocode from address.",
         });
     }
 

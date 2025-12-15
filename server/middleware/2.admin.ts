@@ -13,6 +13,10 @@ export default defineEventHandler(async (event) => {
     const user = getCurrentUser(event);
 
     if (user.role !== "admin") {
-        throw createError({ statusCode: 403, statusMessage: "Forbidden", message: "Permission denied" });
+        throw createError({
+            statusCode: 403,
+            statusMessage: "Forbidden",
+            message: "Permission denied.",
+        });
     }
 });

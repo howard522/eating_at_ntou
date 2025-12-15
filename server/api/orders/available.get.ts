@@ -177,7 +177,11 @@ export default defineEventHandler(async (event) => {
     const skip = Number(query.skip) || 0;
 
     if (!["createdAt", "deliveryFee", "arriveTime", "distance"].includes(sortBy as string)) {
-        throw createError({ statusCode: 422, statusMessage: "Unprocessable Entity", message: "Invalid sortBy value" });
+        throw createError({
+            statusCode: 422,
+            statusMessage: "Unprocessable Entity",
+            message: "Invalid sortBy parameter. Must be one of createdAt, deliveryFee, arriveTime, distance.",
+        });
     }
 
     // 查詢訂單

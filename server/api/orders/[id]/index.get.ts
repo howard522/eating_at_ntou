@@ -72,7 +72,12 @@ export default defineEventHandler(async (event) => {
 
     const orderId = getRouterParam(event, "id");
 
-    if (!orderId) throw createError({ statusCode: 400, message: "Missing order id" });
+    if (!orderId)
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: order id.",
+        });
 
     // 權限檢查：顧客、外送員（只能查自己的訂單）
     // 或 Admin 都可查詢
@@ -80,7 +85,11 @@ export default defineEventHandler(async (event) => {
     const isAdmin = user.role === "admin" || user.role === "multi"; // QUESTION: multi 角色是否有此權限？
 
     if (!ownership.isOwner && !ownership.isDeliveryPerson && !isAdmin) {
-        throw createError({ statusCode: 403, message: "Not allowed to view this order" });
+        throw createError({
+            statusCode: 403,
+            statusMessage: "Forbidden",
+            message: "Not allowed to view this order.",
+        });
     }
 
     const order = await getOrderById(orderId);

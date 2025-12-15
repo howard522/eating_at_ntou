@@ -10,5 +10,9 @@ import { HttpStatus, HttpStatusMessage } from "@server/interfaces/httpStatus";
  * @returns HTTP 錯誤物件
  */
 export function createHttpError(status: HttpStatus, message: string) {
-    return createError({ statusCode: status, statusMessage: HttpStatusMessage[status], message });
+    const statusMessage = HttpStatusMessage[status] || "Unknown Error";
+
+    return createError({ statusCode: status, statusMessage, message });
 }
+
+export { HttpStatus }; // 重新導出 HttpStatus 列舉，以便其他模組使用

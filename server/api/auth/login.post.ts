@@ -56,10 +56,18 @@ export default defineEventHandler(async (event) => {
     const { email, password } = await readBody<IUserLogin>(event);
 
     if (!email || !password) {
-        throw createError({ statusCode: 400, statusMessage: "Bad Request", message: "缺少必要的欄位" });
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required fields: email, password.",
+        });
     }
 
     const { user, token } = await loginUser(email, password);
 
-    return { success: true, token, user };
+    return {
+        success: true,
+        token,
+        user,
+    };
 });

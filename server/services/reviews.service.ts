@@ -1,3 +1,5 @@
+// server/services/reviews.service.ts
+
 import type { ObjectIdLike, QueryPaginationOptions } from "@server/interfaces/common.interface";
 import type { IReviewCreate, IReviewResponse } from "@server/interfaces/review.interface";
 import Review from "@server/models/review.model";

@@ -61,12 +61,20 @@ export default defineEventHandler(async (event) => {
     body.role ??= "multi";
 
     if (!body.email || !body.password) {
-        throw createError({ statusCode: 400, statusMessage: "缺少電子信箱或密碼" });
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required fields: email, password.",
+        });
     }
 
     const { user, token } = await registerUser(body);
 
-    setResponseStatus(event, 201);
+    setResponseStatus(event, 201); // 201 Created
 
-    return { success: true, token, user };
+    return {
+        success: true,
+        token,
+        user,
+    };
 });

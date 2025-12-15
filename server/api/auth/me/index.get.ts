@@ -32,5 +32,8 @@ import { getCurrentUser } from "@server/utils/getCurrentUser";
 export default defineEventHandler(async (event) => {
     const user = getCurrentUser(event);
 
-    return { success: true, user };
+    return {
+        success: true,
+        user,
+    };
 });

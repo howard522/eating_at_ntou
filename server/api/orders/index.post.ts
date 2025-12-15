@@ -76,7 +76,12 @@ import { getCurrentUser } from "@server/utils/getCurrentUser";
 export default defineEventHandler(async (event) => {
     const userId = getCurrentUser(event).id;
 
-    if (!userId) throw createError({ statusCode: 401, statusMessage: "Invalid token payload" });
+    if (!userId)
+        throw createError({
+            statusCode: 401,
+            statusMessage: "Unauthorized",
+            message: "Invalid or missing authentication token.",
+        });
 
     const body = await readBody<OrderInfo>(event);
 

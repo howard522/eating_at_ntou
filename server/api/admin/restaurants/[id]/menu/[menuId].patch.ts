@@ -91,7 +91,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
-            message: "Missing required parameters: id, menuId",
+            message: "Missing required parameters: id, menuId.",
         });
     }
 

@@ -70,7 +70,11 @@ export async function createUser(data: IUserCreate) {
     const savedUser = await getUserById(user._id);
 
     if (!savedUser) {
-        throw createError({ statusCode: 500, statusMessage: "Internal Server Error", message: "使用者建立失敗" });
+        throw createError({
+            statusCode: 500,
+            statusMessage: "Internal Server Error",
+            message: "Failed to retrieve created user.",
+        });
     }
 
     return savedUser;

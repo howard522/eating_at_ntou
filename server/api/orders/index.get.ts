@@ -79,7 +79,12 @@ import { getCurrentUser } from "@server/utils/getCurrentUser";
 export default defineEventHandler(async (event) => {
     const userId = getCurrentUser(event).id;
 
-    if (!userId) throw createError({ statusCode: 401, statusMessage: "invalid token payload" });
+    if (!userId)
+        throw createError({
+            statusCode: 401,
+            statusMessage: "Unauthorized",
+            message: "Invalid or missing authentication token.",
+        });
 
     // 取得角色參數（預設為 customer）
     const query = getQuery(event);

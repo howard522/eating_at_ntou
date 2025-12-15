@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
-            message: "Missing order id",
+            message: "Missing required parameter: order id.",
         });
     }
 
@@ -84,7 +84,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
             statusCode: 403,
             statusMessage: "Forbidden",
-            message: "Not allowed to view this order",
+            message: "Not allowed to view this order.",
         });
     }
 

@@ -47,11 +47,21 @@ import { getCurrentUser } from "@server/utils/getCurrentUser";
 export default defineEventHandler(async (event) => {
     const userId = getCurrentUser(event).id;
 
-    if (!userId) throw createError({ statusCode: 401, statusMessage: "Invalid token payload" });
+    if (!userId)
+        throw createError({
+            statusCode: 401,
+            statusMessage: "Unauthorized",
+            message: "Invalid or missing authentication token.",
+        });
 
     const orderId = getRouterParam(event, "id") as string;
 
-    if (!orderId) throw createError({ statusCode: 400, statusMessage: "Missing order id" });
+    if (!orderId)
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: order id.",
+        });
 
     const order = await updateOrderDeliveryPerson(orderId, userId);
 

@@ -48,5 +48,8 @@ export default defineEventHandler(async (event) => {
 
     const updated = await updateUser(userId, data);
 
-    return { success: true, user: updated };
+    return {
+        success: true,
+        user: updated,
+    };
 });

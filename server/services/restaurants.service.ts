@@ -8,7 +8,7 @@ import type {
     IRestaurant,
     IRestaurantResponse,
     IUpdateMenuItem,
-    IUpdateRestaurant
+    IUpdateRestaurant,
 } from "@server/interfaces/restaurant.interface";
 import Restaurant from "@server/models/restaurant.model";
 import { buildRestaurantSearchQuery } from "@server/utils/mongoQuery";
@@ -24,7 +24,7 @@ async function findRestaurantDocById(restaurantId: ObjectIdLike) {
         throw createError({
             statusCode: 404,
             statusMessage: "Not Found",
-            message: `Restaurant with id "${restaurantId}" not found`,
+            message: `Restaurant with id "${restaurantId}" not found.`,
         });
     }
 
@@ -51,7 +51,11 @@ export async function createRestaurant(data: ICreateRestaurant) {
             // 地址無法成功地理編碼
             console.warn(`Geocoding failed for address: ${data.address}`);
 
-            throw createError({ statusCode: 400, message: "Bad Address for Geocoding" });
+            throw createError({
+                statusCode: 400,
+                statusMessage: "Bad Request",
+                message: "Failed to get geocode from address.",
+            });
         }
     }
 
@@ -92,7 +96,11 @@ export async function updateRestaurantById(id: ObjectIdLike, data: IUpdateRestau
             // 地址無法成功地理編碼
             console.warn(`Geocoding failed for address: ${data.address}`);
 
-            throw createError({ statusCode: 400, message: "Bad Address for Geocoding" });
+            throw createError({
+                statusCode: 400,
+                statusMessage: "Bad Request",
+                message: "Failed to get geocode from address.",
+            });
         }
     }
 
@@ -106,7 +114,7 @@ export async function updateRestaurantById(id: ObjectIdLike, data: IUpdateRestau
         throw createError({
             statusCode: 404,
             statusMessage: "Not Found",
-            message: `Restaurant with id "${id}" not found`,
+            message: `Restaurant with id "${id}" not found.`,
         });
     }
 
@@ -120,17 +128,13 @@ export async function updateRestaurantById(id: ObjectIdLike, data: IUpdateRestau
  * @returns 被刪除的餐廳
  */
 export async function deleteRestaurantById(id: ObjectIdLike) {
-    if (!id) {
-        throw createError({ statusCode: 400, message: "Restaurant ID is required" });
-    }
-
     const restaurant = await Restaurant.findByIdAndDelete(id);
 
     if (!restaurant) {
         throw createError({
             statusCode: 404,
             statusMessage: "Not Found",
-            message: `Restaurant with id "${id}" not found`,
+            message: `Restaurant with id "${id}" not found.`,
         });
     }
 }
@@ -209,7 +213,11 @@ export async function searchRestaurantsNearByAddress(
     const geocode = await getGeocodeFromAddress(address);
 
     if (!geocode) {
-        throw createError({ statusCode: 400, message: "Failed to geocode the provided address" });
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Failed to get geocode from address.",
+        });
     }
 
     // 關鍵字查詢條件
@@ -287,7 +295,7 @@ export async function getMenuItemById(restaurantId: ObjectIdLike, menuId: Object
         throw createError({
             statusCode: 404,
             statusMessage: "Not Found",
-            message: `Menu item with id "${menuId}" not found`,
+            message: `Menu item with id "${menuId}" not found.`,
         });
     }
 
@@ -318,7 +326,7 @@ export async function updateMenuItemById(restaurantId: ObjectIdLike, menuId: Obj
         throw createError({
             statusCode: 404,
             statusMessage: "Not Found",
-            message: `Menu item with id "${menuId}" not found`,
+            message: `Menu item with id "${menuId}" not found.`,
         });
     }
 
@@ -343,7 +351,7 @@ export async function deleteMenuItemById(restaurantId: ObjectIdLike, menuId: Obj
         throw createError({
             statusCode: 404,
             statusMessage: "Not Found",
-            message: `Menu item with id "${menuId}" not found`,
+            message: `Menu item with id "${menuId}" not found.`,
         });
     }
 

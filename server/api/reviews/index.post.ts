@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
-            message: "Missing required fields: restaurantId, rating, content",
+            message: "Missing required fields: restaurantId, rating, content.",
         });
     }
 
@@ -76,7 +76,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
             statusCode: 422,
             statusMessage: "Unprocessable Entity",
-            message: "Rating must be between 1 and 5",
+            message: "Rating must be between 1 and 5.",
         });
     }
 
@@ -84,7 +84,8 @@ export default defineEventHandler(async (event) => {
     if (!restaurant) {
         throw createError({
             statusCode: 404,
-            statusMessage: "Restaurant not found",
+            statusMessage: "Not Found",
+            message: "Restaurant not found.",
         });
     }
 
