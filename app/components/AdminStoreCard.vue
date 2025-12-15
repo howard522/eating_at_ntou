@@ -19,10 +19,19 @@
       </div>
 
       <v-btn
+          color="primary"
+          variant="flat"
+          :to="`/admin/stores/${id}/reviews`"
+          class="ms-4 me-2 flex-shrink-0"
+      >
+        查看評論
+      </v-btn>
+
+      <v-btn
           color="red-lighten-2"
           variant="flat"
           :to="`/admin/stores/${id}`"
-          class="ms-4 flex-shrink-0"
+          class="flex-shrink-0"
       >
         編輯
       </v-btn>
