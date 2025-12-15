@@ -1,6 +1,6 @@
 // server/api/cart/items.post.ts
 
-import type { CartItemUpdateBody } from "@server/interfaces/cart.interface";
+import type { ICartUpdate } from "@server/interfaces/cart.interface";
 import { updateCartByUserId } from "@server/services/cart.service";
 import { getCurrentUser } from "@server/utils/getCurrentUser";
 
@@ -87,12 +87,15 @@ import { getCurrentUser } from "@server/utils/getCurrentUser";
 export default defineEventHandler(async (event) => {
     const userId = getCurrentUser(event).id;
 
-    const body = await readBody<CartItemUpdateBody>(event);
+    const body = await readBody<ICartUpdate>(event);
 
     // Expect body.items: array of { name, price, quantity, restaurantId?, menuItemId?, options? }
     const items = Array.isArray(body.items) ? body.items : [];
 
     const cart = await updateCartByUserId(userId, items);
 
-    return { success: true, data: cart };
+    return {
+        success: true,
+        data: cart,
+    };
 });

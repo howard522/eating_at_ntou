@@ -48,5 +48,8 @@ export default defineEventHandler(async (event) => {
 
     const cart = await clearCartByUserId(userId);
 
-    return { success: true, data: cart };
+    return {
+        success: true,
+        data: cart,
+    };
 });

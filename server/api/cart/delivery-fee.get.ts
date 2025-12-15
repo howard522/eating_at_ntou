@@ -56,15 +56,13 @@ export default defineEventHandler(async (event) => {
     const address = getQuery(event).address as string;
 
     if (!address) {
-        throw createError({ statusCode: 400, statusMessage: "缺少必要的地址參數" });
+        throw createError({ statusCode: 400, statusMessage: "Bad Request", message: "缺少必要的地址參數" });
     }
 
     const deliveryFee = await calculateDeliveryFee(userId, address);
 
     return {
         success: true,
-        data: {
-            deliveryFee,
-        },
+        data: { deliveryFee },
     };
 });
