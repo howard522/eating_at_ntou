@@ -21,7 +21,7 @@ function isNeedAuth(path: string, method: string): boolean {
 
 export default defineEventHandler(async (event) => {
     const mothed = event.node.req.method?.toUpperCase() || "";
-    const url = getRequestURL(event).pathname;
+    const url = event.path;
 
     // 只處理需要驗證的路徑
     if (!isNeedAuth(url, mothed)) {
