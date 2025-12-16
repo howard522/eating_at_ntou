@@ -18,5 +18,6 @@ export default defineConfig({
     test: {
         globals: true,
         environment: "happy-dom",
+        setupFiles: "./test/vitest.setup.ts",
     },
 });
