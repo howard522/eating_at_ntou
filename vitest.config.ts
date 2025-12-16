@@ -1,5 +1,5 @@
-import { defineConfig } from "vitest/config";
 import path from "path";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
     resolve: {
@@ -11,6 +11,7 @@ export default defineConfig({
             "@types": path.resolve(__dirname, "./app/types"),
             "@utils": path.resolve(__dirname, "./app/utils"),
             "@server": path.resolve(__dirname, "./server"),
+            "@test": path.resolve(__dirname, "./test"),
             "#imports": path.resolve(__dirname, "./.nuxt/imports.d.ts"),
         },
     },

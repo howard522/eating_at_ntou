@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createAd, deleteAd, getAdById, getAllAds, getRandomAd, updateAd } from "@server/services/ad.service";
-import Ad from "@server/models/ad.model";
+import { createChainedQueryMock } from "@test/__mocks__/queryMock";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockSave, mockAggregate, mockFind, mockFindById, mockFindByIdAndUpdate, mockFindByIdAndDelete } = vi.hoisted(
     () => ({
@@ -18,8 +18,10 @@ vi.mock("@server/models/ad.model", () => {
         constructor(data: any) {
             Object.assign(this, data);
             this.save = mockSave;
+            this.toObject = () => data; // 支援 .toObject()
         }
         save!: typeof mockSave;
+        toObject!: () => any;
         static aggregate = mockAggregate;
         static find = mockFind;
         static findById = mockFindById;
@@ -53,7 +55,7 @@ describe("Ad Service", () => {
 
     it("應根據 ID 回傳廣告", async () => {
         const ad = { _id: "ad-1", title: "Ad Title" };
-        mockFindById.mockResolvedValue(ad);
+        mockFindById.mockReturnValue(createChainedQueryMock(ad));
 
         const result = await getAdById("ad-1");
 
@@ -73,19 +75,20 @@ describe("Ad Service", () => {
 
     it("應依建立時間排序回傳所有廣告", async () => {
         const ads = [{ _id: "ad-3" }];
-        const sortMock = vi.fn().mockResolvedValue(ads);
-        mockFind.mockReturnValue({ sort: sortMock });
+        mockFind.mockReturnValue(createChainedQueryMock(ads));
 
         const result = await getAllAds();
 
         expect(mockFind).toHaveBeenCalled();
-        expect(sortMock).toHaveBeenCalledWith({ createdAt: -1 });
+        expect(mockFind().sort).toHaveBeenCalledWith({ createdAt: -1 });
         expect(result).toEqual(ads);
     });
 
     it("應更新廣告並回傳最新內容", async () => {
         const updated = { _id: "ad-4", title: "Updated" };
-        mockFindByIdAndUpdate.mockResolvedValue(updated);
+        mockFindByIdAndUpdate.mockReturnValue({
+            lean: vi.fn().mockResolvedValue(updated), // 支援 .lean()
+        });
 
         const result = await updateAd("ad-4", { title: "Updated" });
 

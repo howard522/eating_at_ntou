@@ -25,6 +25,7 @@ export default defineNuxtConfig({
         "@types": path.resolve(__dirname, "./app/types"),
         "@utils": path.resolve(__dirname, "./app/utils"),
         "@server": path.resolve(__dirname, "./server"),
+        "@test": path.resolve(__dirname, "./test"),
     },
     nitro: {
         experimental: {

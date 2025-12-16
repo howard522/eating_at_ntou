@@ -9,7 +9,8 @@
             "@stores/*": ["./app/stores/*"],
             "@types/*": ["./app/types/*"],
             "@utils/*": ["./app/utils/*"],
-            "@server/*": ["./server/*"]
+            "@server/*": ["./server/*"],
+            "@test/*": ["./test/*"]
         },
         "moduleResolution": "bundler",
         "allowJs": true,
