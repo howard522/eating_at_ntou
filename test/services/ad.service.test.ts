@@ -1,115 +1,95 @@
+// test/services/ad.service.test.ts
+
 import { createAd, deleteAd, getAdById, getAllAds, getRandomAd, updateAd } from "@server/services/ad.service";
-import { createChainedQueryMock } from "@test/__mocks__/queryMock";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { adMocks as mocks } from "@test/__mocks__/ad.model.mock";
+import { createChainedQueryMock } from "@test/__mocks__/query.mock";
+import { beforeEach, describe, expect, it } from "vitest";
 
-const { mockSave, mockAggregate, mockFind, mockFindById, mockFindByIdAndUpdate, mockFindByIdAndDelete } = vi.hoisted(
-    () => ({
-        mockSave: vi.fn(),
-        mockAggregate: vi.fn(),
-        mockFind: vi.fn(),
-        mockFindById: vi.fn(),
-        mockFindByIdAndUpdate: vi.fn(),
-        mockFindByIdAndDelete: vi.fn(),
-    })
-);
+// ---------------------------------------------------------------------
+// 在這裡設定區域的 mocks 或測試前置條件
+// ---------------------------------------------------------------------
 
-vi.mock("@server/models/ad.model", () => {
-    class AdMock {
-        constructor(data: any) {
-            Object.assign(this, data);
-            this.save = mockSave;
-            this.toObject = () => data; // 支援 .toObject()
-        }
-        save!: typeof mockSave;
-        toObject!: () => any;
-        static aggregate = mockAggregate;
-        static find = mockFind;
-        static findById = mockFindById;
-        static findByIdAndUpdate = mockFindByIdAndUpdate;
-        static findByIdAndDelete = mockFindByIdAndDelete;
-    }
-
-    return { default: AdMock };
+beforeEach(() => {
+    mocks.aggregate.mockReset();
+    mocks.find.mockReset();
+    mocks.findById.mockReset();
+    mocks.findByIdAndUpdate.mockReset();
+    mocks.findByIdAndDelete.mockReset();
 });
 
-describe("Ad Service", () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mockSave.mockClear();
-        mockAggregate.mockReset();
-        mockFind.mockReset();
-        mockFindById.mockReset();
-        mockFindByIdAndUpdate.mockReset();
-        mockFindByIdAndDelete.mockReset();
-    });
+// ---------------------------------------------------------------------
+// 測試開始
+// ---------------------------------------------------------------------
 
-    it("建立廣告時應呼叫模型並保存資料", async () => {
+describe("ad.service - CRUD 操作", () => {
+    it("createAd - 應呼叫模型並保存新建的廣告資料", async () => {
         const adData = { title: "Test Ad", text: "Hello" };
-        mockSave.mockResolvedValue(undefined);
-
         const ad = await createAd(adData);
 
-        expect(mockSave).toHaveBeenCalledTimes(1);
+        expect(mocks.adInstances).toHaveLength(1);
+        expect(mocks.adInstances[0].save).toHaveBeenCalled();
         expect(ad).toMatchObject(adData);
     });
 
-    it("應根據 ID 回傳廣告", async () => {
+    it("getAdById - 應根據 ID 回傳對應的廣告資料", async () => {
         const ad = { _id: "ad-1", title: "Ad Title" };
-        mockFindById.mockReturnValue(createChainedQueryMock(ad));
+        mocks.findById.mockReturnValue(createChainedQueryMock(ad));
 
         const result = await getAdById("ad-1");
 
-        expect(mockFindById).toHaveBeenCalledWith("ad-1");
+        expect(mocks.findById).toHaveBeenCalledWith("ad-1");
+        expect(mocks.findById().lean).toHaveBeenCalled();
         expect(result).toBe(ad);
     });
 
-    it("應回傳隨機廣告", async () => {
+    it("getRandomAd - 應回傳隨機一則廣告", async () => {
         const ad = { _id: "ad-2", title: "Random Ad" };
-        mockAggregate.mockResolvedValue([ad]);
+        mocks.aggregate.mockResolvedValue([ad]);
 
         const result = await getRandomAd();
 
-        expect(mockAggregate).toHaveBeenCalledWith([{ $sample: { size: 1 } }]);
+        expect(mocks.aggregate).toHaveBeenCalledWith([{ $sample: { size: 1 } }]);
         expect(result).toBe(ad);
     });
 
-    it("應依建立時間排序回傳所有廣告", async () => {
+    it("getAllAds - 應回傳按建立時間排序的所有廣告", async () => {
         const ads = [{ _id: "ad-3" }];
-        mockFind.mockReturnValue(createChainedQueryMock(ads));
+        mocks.find.mockReturnValue(createChainedQueryMock(ads));
 
         const result = await getAllAds();
 
-        expect(mockFind).toHaveBeenCalled();
-        expect(mockFind().sort).toHaveBeenCalledWith({ createdAt: -1 });
+        expect(mocks.find).toHaveBeenCalled();
+        expect(mocks.find().sort).toHaveBeenCalledWith({ createdAt: -1 });
+        expect(mocks.find().sort().lean).toHaveBeenCalled();
         expect(result).toEqual(ads);
     });
 
-    it("應更新廣告並回傳最新內容", async () => {
+    it("updateAd - 應更新廣告資料並回傳最新內容", async () => {
         const updated = { _id: "ad-4", title: "Updated" };
-        mockFindByIdAndUpdate.mockReturnValue({
-            lean: vi.fn().mockResolvedValue(updated), // 支援 .lean()
-        });
+        mocks.findByIdAndUpdate.mockReturnValue(createChainedQueryMock(updated));
 
         const result = await updateAd("ad-4", { title: "Updated" });
 
-        expect(mockFindByIdAndUpdate).toHaveBeenCalledWith("ad-4", { title: "Updated" }, { new: true });
+        expect(mocks.findByIdAndUpdate).toHaveBeenCalledWith("ad-4", { title: "Updated" }, { new: true });
+        expect(mocks.findByIdAndUpdate().lean).toHaveBeenCalled();
         expect(result).toBe(updated);
     });
 
-    it("刪除廣告成功時回傳 true", async () => {
-        mockFindByIdAndDelete.mockResolvedValue({ _id: "ad-5" });
+    it("deleteAd - 刪除廣告成功時，應回傳 true", async () => {
+        mocks.findByIdAndDelete.mockResolvedValue({ _id: "ad-5" });
 
         const result = await deleteAd("ad-5");
 
-        expect(mockFindByIdAndDelete).toHaveBeenCalledWith("ad-5");
+        expect(mocks.findByIdAndDelete).toHaveBeenCalledWith("ad-5");
         expect(result).toBe(true);
     });
 
-    it("刪除不存在的廣告時回傳 false", async () => {
-        mockFindByIdAndDelete.mockResolvedValue(null);
+    it("deleteAd - 當廣告不存在時，應回傳 false", async () => {
+        mocks.findByIdAndDelete.mockResolvedValue(null);
 
         const result = await deleteAd("missing-id");
 
+        expect(mocks.findByIdAndDelete).toHaveBeenCalledWith("missing-id");
         expect(result).toBe(false);
     });
 });

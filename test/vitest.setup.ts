@@ -1,13 +1,15 @@
 // test/vitest.setup.ts
 
+import { mockAdModel } from "@test/__mocks__/ad.model.mock";
 import { mockReviewModel } from "@test/__mocks__/review.model.mock";
 import { mockUserModel } from "@test/__mocks__/user.model.mock";
-import { beforeEach, vi, afterAll } from "vitest";
+import { afterAll, beforeEach, vi } from "vitest";
 
 // ---------------------------------------------------------------------
 // 在這裡設定全域的 mocks 或測試前置條件
 // ---------------------------------------------------------------------
 
+mockAdModel();
 mockReviewModel();
 mockUserModel();
 
