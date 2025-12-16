@@ -3,6 +3,7 @@
 import type { ObjectIdLike, QueryPaginationOptions } from "@server/interfaces/common.interface";
 import type { IUserCreate, IUserResponse, IUserUpdate, UserRole } from "@server/interfaces/user.interface";
 import User from "@server/models/user.model";
+import { cleanObject } from "@server/utils/object";
 import type { FilterQuery } from "mongoose";
 
 /**

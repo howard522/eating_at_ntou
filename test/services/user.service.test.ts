@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+// test/services/user.service.test.ts
+
 import {
     createUser,
     getUserByEmail,
@@ -8,90 +9,90 @@ import {
     updateUserPasswordById,
     verifyUserPasswordById,
 } from "@server/services/user.service";
-import User from "@server/models/user.model";
+import { createDocumentMock } from "@test/__mocks__/document.mock";
+import { createChainedQueryMock } from "@test/__mocks__/query.mock";
+import { userMocks as mocks } from "@test/__mocks__/user.model.mock";
+import { mockObjectUtils } from "@test/__mocks__/utils/object.mock";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => {
-    return {
-        findByIdMock: vi.fn(),
-        findByIdAndUpdateMock: vi.fn(),
-        findOneMock: vi.fn(),
-        findMock: vi.fn(),
-        userInstances: [] as any[],
-    };
+// ---------------------------------------------------------------------
+// 在這裡設定區域的 mocks 或測試前置條件
+// ---------------------------------------------------------------------
+
+mockObjectUtils();
+
+beforeEach(() => {
+    mocks.userInstances.length = 0;
 });
 
-vi.mock("@server/models/user.model", () => {
-    class UserMock {
-        _id: any;
-        password?: string;
-        data: any;
-        constructor(data: any) {
-            this._id = data._id || "user-new";
-            this.password = data.password;
-            this.data = data;
-            mocks.userInstances.push(this);
-        }
-        save = vi.fn().mockResolvedValue(undefined);
-        toObject = () => ({ _id: this._id, ...this.data });
-        comparePassword = vi.fn((pwd: string) => this.password === pwd);
-        static findById = mocks.findByIdMock;
-        static findByIdAndUpdate = mocks.findByIdAndUpdateMock;
-        static findOne = mocks.findOneMock;
-        static find = mocks.findMock;
-    }
-    return { default: UserMock };
-});
+// ---------------------------------------------------------------------
+// 測試開始
+// ---------------------------------------------------------------------
 
-const createErrorStub = (err: any) => Object.assign(new Error(err.message || "Error"), err);
-vi.stubGlobal("createError", createErrorStub);
-
-describe("user.service", () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mocks.userInstances.length = 0;
-    });
-
-    it("verifyUserPasswordById - return true when password matches", async () => {
-        const userDoc = new (User as any)({ _id: "u1", password: "secret" });
-        mocks.findByIdMock.mockReturnValue({ select: vi.fn().mockResolvedValue(userDoc) });
+describe("user.service - 密碼相關功能", () => {
+    it("verifyUserPasswordById - 當使用者密碼正確時，應回傳 true", async () => {
+        const user = new mocks.UserMock({ _id: "u1", password: "secret" });
+        // 這裡是 select 需要回傳 user
+        mocks.findById.mockReturnValue(createChainedQueryMock(user, ["select"]));
 
         const result = await verifyUserPasswordById("u1", "secret");
 
-        expect(mocks.findByIdMock).toHaveBeenCalledWith("u1");
+        expect(mocks.findById).toHaveBeenCalledWith("u1");
         expect(result).toBe(true);
     });
 
-    it("verifyUserPasswordById - return false when user not found", async () => {
-        mocks.findByIdMock.mockReturnValue({ select: vi.fn().mockResolvedValue(null) });
+    it("verifyUserPasswordById - 當使用者密碼錯誤時，應回傳 false", async () => {
+        const user = new mocks.UserMock({ _id: "u1", password: "secret" });
+        // 這裡是 select 需要回傳 user
+        mocks.findById.mockReturnValue(createChainedQueryMock(user, ["select"]));
 
-        const result = await verifyUserPasswordById("missing", "pwd");
+        const result = await verifyUserPasswordById("u1", "wrongpwd");
 
+        expect(mocks.findById).toHaveBeenCalledWith("u1");
         expect(result).toBe(false);
     });
 
-    it("updateUserPasswordById - returns updated user when found", async () => {
-        const userDoc = {
-            _id: "u2",
-            toObject: () => ({ _id: "u2", name: "A" }),
-        } as any;
-        mocks.findByIdAndUpdateMock.mockReturnValue({ select: vi.fn().mockResolvedValue(userDoc) });
+    it("verifyUserPasswordById - 當使用者不存在時，應回傳 false", async () => {
+        mocks.findById.mockReturnValue(createChainedQueryMock(null, ["select"]));
+
+        const result = await verifyUserPasswordById("missing", "pwd");
+
+        expect(mocks.findById).toHaveBeenCalledWith("missing");
+        expect(result).toBe(false);
+    });
+
+    // -----------------------------
+
+    it("updateUserPasswordById - 當使用者存在並成功更新密碼時，應回傳 true", async () => {
+        const user = new mocks.UserMock({ _id: "u2", name: "A", password: "oldpass" });
+        mocks.findById.mockResolvedValue(user); // 這裡沒有 chained query
 
         const result = await updateUserPasswordById("u2", "newpass");
 
-        expect(mocks.findByIdAndUpdateMock).toHaveBeenCalledWith("u2", { password: "newpass" }, { new: true });
-        expect(result).toEqual({ id: "u2", _id: "u2", name: "A" });
+        expect(mocks.findById).toHaveBeenCalledWith("u2");
+        expect(user.password).toBe("hashed_newpass");
+        expect(user.save).toHaveBeenCalled();
+        expect(result).toEqual(true);
     });
 
-    it("updateUserPasswordById - returns null when user missing", async () => {
-        mocks.findByIdAndUpdateMock.mockReturnValue({ select: vi.fn().mockResolvedValue(null) });
+    it("updateUserPasswordById - 當使用者不存在時，應回傳 false", async () => {
+        mocks.findById.mockResolvedValue(null);
 
         const result = await updateUserPasswordById("missing", "pwd");
 
-        expect(result).toBeNull();
+        expect(mocks.findById).toHaveBeenCalledWith("missing");
+        expect(result).toEqual(false);
     });
+});
 
-    it("createUser - saves and returns object with id", async () => {
-        const data = { name: "New", email: "n@test", password: "pwd" } as any;
+// ---------------------------------------------------------------------
+
+describe("user.service - CRUD 操作", () => {
+    it("createUser - 當成功建立使用者時，應回傳包含 id 的使用者物件", async () => {
+        const data = { name: "New", email: "n@test", password: "pwd" };
+        const userDoc = createDocumentMock({ _id: "user-new", ...data }, { id: "user-new" }); // 假設儲存後的文件
+        mocks.findById.mockReturnValue(createChainedQueryMock(userDoc, ["select"]));
+
         const result = await createUser(data);
 
         expect(mocks.userInstances).toHaveLength(1);
@@ -99,80 +100,98 @@ describe("user.service", () => {
         expect(result).toMatchObject({ id: "user-new", name: "New", email: "n@test" });
     });
 
-    it("getUserById - returns object with id when found", async () => {
-        const userDoc = { _id: "u3", toObject: () => ({ _id: "u3", name: "User" }) } as any;
-        mocks.findByIdMock.mockReturnValue({ select: vi.fn().mockResolvedValue(userDoc) });
+    // -----------------------------
+
+    it("getUserById - 當成功找到使用者時，應回傳包含 id、name 的使用者物件", async () => {
+        // 這裡包含 virtual 屬性 id = _id
+        const userDoc = createDocumentMock({ _id: "u3", name: "User" }, { id: "u3" });
+        mocks.findById.mockReturnValue(createChainedQueryMock(userDoc, ["select"]));
 
         const result = await getUserById("u3");
 
+        expect(mocks.findById).toHaveBeenCalledWith("u3");
+        expect(mocks.findById().select).toHaveBeenCalledWith("-password");
+        expect(userDoc.toObject).toHaveBeenCalled();
         expect(result).toEqual({ id: "u3", _id: "u3", name: "User" });
     });
 
-    it("getUserById - returns null when not found", async () => {
-        mocks.findByIdMock.mockReturnValue({ select: vi.fn().mockResolvedValue(null) });
+    it("getUserById - 當找不到使用者時，應回傳 null", async () => {
+        mocks.findById.mockReturnValue(createChainedQueryMock(null, ["select"]));
 
         const result = await getUserById("missing");
 
+        expect(mocks.findById).toHaveBeenCalledWith("missing");
+        expect(mocks.findById().select).toHaveBeenCalledWith("-password");
         expect(result).toBeNull();
     });
 
-    it("getUserByEmail - returns object with id when found", async () => {
-        const userDoc = { _id: "u4", toObject: () => ({ _id: "u4", name: "User" }) } as any;
-        mocks.findOneMock.mockReturnValue({ select: vi.fn().mockResolvedValue(userDoc) });
+    // -----------------------------
+
+    it("getUserByEmail - 當成功找到使用者時，應回傳包含 id、name、email 的使用者物件", async () => {
+        const userDoc = createDocumentMock({ _id: "u4", name: "User", email: "u4@test" }, { id: "u4" });
+        mocks.findOne.mockReturnValue(createChainedQueryMock(userDoc, ["select"]));
 
         const result = await getUserByEmail("u4@test");
 
-        expect(mocks.findOneMock).toHaveBeenCalledWith({ email: "u4@test" });
-        expect(result).toEqual({ id: "u4", _id: "u4", name: "User" });
+        expect(mocks.findOne).toHaveBeenCalledWith({ email: "u4@test" });
+        expect(result).toEqual({ id: "u4", _id: "u4", name: "User", email: "u4@test" });
     });
 
-    it("getUserByEmail - returns null when not found", async () => {
-        mocks.findOneMock.mockReturnValue({ select: vi.fn().mockResolvedValue(null) });
+    it("getUserByEmail - 當找不到使用者時，應回傳 null", async () => {
+        mocks.findOne.mockReturnValue({ select: vi.fn().mockResolvedValue(null) });
 
         const result = await getUserByEmail("missing@test");
 
         expect(result).toBeNull();
     });
 
-    it("searchUsers - applies filters, pagination, and mapping", async () => {
+    // -----------------------------
+
+    it("searchUsers - 當應用過濾器、分頁與排序條件時，應回傳正確的使用者清單", async () => {
         const docs = [
-            { _id: "u5", toObject: () => ({ _id: "u5", name: "Ann" }) },
-            { _id: "u6", toObject: () => ({ _id: "u6", name: "Bob" }) },
-        ] as any;
-        const limit = vi.fn().mockResolvedValue(docs);
-        const skip = vi.fn().mockReturnValue({ limit });
-        const sort = vi.fn().mockReturnValue({ skip });
-        const select = vi.fn().mockReturnValue({ sort });
-        mocks.findMock.mockReturnValue({ select });
+            createDocumentMock({ _id: "u5", name: "Ann" }, { id: "u5" }),
+            createDocumentMock({ _id: "u6", name: "Bob" }, { id: "u6" }),
+        ];
+        // 這裡不用真的模擬篩選邏輯，只要確保 chained query 正確被呼叫即可
+        mocks.find.mockReturnValue(createChainedQueryMock(docs, ["limit"]));
 
-        const result = await searchUsers({ role: "delivery", query: "An", limit: 2, skip: 1, sortBy: { createdAt: 1 } } as any);
+        const result = await searchUsers({
+            role: "multi",
+            query: "An",
+            limit: 2,
+            skip: 1,
+            sortBy: { createdAt: 1 },
+        });
 
-        expect(mocks.findMock).toHaveBeenCalled();
-        const filterArg = mocks.findMock.mock.calls[0][0];
-        expect(filterArg.role).toBe("delivery");
+        expect(mocks.find).toHaveBeenCalled();
+        const filterArg = mocks.find.mock.calls[0]?.[0];
+        expect(filterArg.role).toBe("multi");
         expect(filterArg.$or?.length).toBe(2);
-        expect(select).toHaveBeenCalledWith("-password");
-        expect(sort).toHaveBeenCalledWith({ createdAt: 1 });
-        expect(skip).toHaveBeenCalledWith(1);
-        expect(limit).toHaveBeenCalledWith(2);
+        expect(mocks.find().select).toHaveBeenCalledWith("-password");
+        expect(mocks.find().sort).toHaveBeenCalledWith({ createdAt: 1 });
+        expect(mocks.find().skip).toHaveBeenCalledWith(1);
+        expect(mocks.find().limit).toHaveBeenCalledWith(2);
         expect(result).toEqual([
             { id: "u5", _id: "u5", name: "Ann" },
             { id: "u6", _id: "u6", name: "Bob" },
         ]);
     });
 
-    it("updateUser - returns updated user or null", async () => {
-        const userDoc = { _id: "u7", toObject: () => ({ _id: "u7", name: "New" }) } as any;
-        const select = vi.fn().mockResolvedValue(userDoc);
-        mocks.findByIdAndUpdateMock.mockReturnValue({ select });
+    // -----------------------------
 
-        const result = await updateUser("u7", { name: "New" } as any);
+    it("updateUser - 當成功更新使用者資料時，應回傳更新後的使用者物件", async () => {
+        const userDoc = createDocumentMock({ _id: "u7", name: "New" }, { id: "u7" });
+        mocks.findByIdAndUpdate.mockReturnValue(createChainedQueryMock(userDoc, ["select"]));
 
-        expect(mocks.findByIdAndUpdateMock).toHaveBeenCalledWith("u7", { name: "New" }, { new: true });
+        const result = await updateUser("u7", { name: "New" });
+
+        expect(mocks.findByIdAndUpdate).toHaveBeenCalledWith("u7", { name: "New" }, { new: true });
         expect(result).toEqual({ id: "u7", _id: "u7", name: "New" });
+    });
 
-        select.mockResolvedValueOnce(null);
-        const resultNull = await updateUser("u8", { name: "None" } as any);
+    it("updateUser - 當找不到使用者時，應回傳 null", async () => {
+        mocks.findByIdAndUpdate.mockReturnValue(createChainedQueryMock(null, ["select"]));
+        const resultNull = await updateUser("u8", { name: "None" });
         expect(resultNull).toBeNull();
     });
 });
