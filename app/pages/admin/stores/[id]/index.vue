@@ -11,8 +11,23 @@
 
     <v-form v-else-if="editableStore" ref="form">
       <v-card flat border>
-        <v-card-title class="text-h5 font-weight-bold border-b pa-4">
-          編輯餐廳：{{ editableStore.name }}
+        <v-card-title class="text-h5 font-weight-bold border-b pa-4 d-flex align-center justify-space-between">
+          <div class="d-flex align-center">
+            <span>編輯餐廳：{{ editableStore.name }}</span>
+          </div>
+
+          <div>
+            <v-btn
+                color="primary"
+                variant="text"
+                :to="`/admin/stores/${storeId}/reviews`"
+                density="comfortable"
+                prepend-icon="mdi-comment-multiple-outline"
+                class="ma-0"
+            >
+              查看評論
+            </v-btn>
+          </div>
         </v-card-title>
 
         <v-card-text class="pa-6">
