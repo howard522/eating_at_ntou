@@ -1,29 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+// test/services/reviews.service.test.ts
+
 import { createReview, getReviewsByRestaurantId } from "@server/services/reviews.service";
-import Review from "@server/models/review.model";
+import { createDocumentMock } from "@test/__mocks__/document.mock";
+import { createChainedQueryMock } from "@test/__mocks__/query.mock";
+import { reviewMocks as mocks } from "@test/__mocks__/review.model.mock";
+import { describe, expect, it } from "vitest";
 
-const mocks = vi.hoisted(() => ({
-    countDocuments: vi.fn(),
-    find: vi.fn(),
-    create: vi.fn(),
-}));
-
-vi.mock("@server/models/review.model", () => ({
-    default: {
-        countDocuments: mocks.countDocuments,
-        find: mocks.find,
-        create: mocks.create,
-    },
-}));
-
-vi.stubGlobal("createError", (err: any) => Object.assign(new Error(err.message || "Error"), err));
+// ---------------------------------------------------------------------
+// 測試開始
+// ---------------------------------------------------------------------
 
 describe("reviews.service", () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
-    it("getReviewsByRestaurantId returns paginated mapped data", async () => {
+    it("getReviewsByRestaurantId - 應回傳正確的分頁評論資料，並按評分與時間排序", async () => {
         const reviewsDocs = [
             {
                 _id: "rev1",
@@ -35,37 +23,40 @@ describe("reviews.service", () => {
                 updatedAt: new Date("2024-01-02"),
             },
         ];
-        const limit = vi.fn().mockResolvedValue(reviewsDocs);
-        const skip = vi.fn().mockReturnValue({ limit });
-        const sort = vi.fn().mockReturnValue({ skip });
-        const populate = vi.fn().mockReturnValue({ sort });
-        mocks.find.mockReturnValue({ populate });
+        mocks.find.mockReturnValue(createChainedQueryMock(reviewsDocs));
         mocks.countDocuments.mockResolvedValue(1);
 
-        const result = await getReviewsByRestaurantId("rest1", "highest", 5, 10);
+        const result = await getReviewsByRestaurantId("rest1", "highest", { skip: 5, limit: 10 });
 
         expect(mocks.countDocuments).toHaveBeenCalledWith({ restaurant: "rest1" });
-        expect(populate).toHaveBeenCalledWith("user", "name img");
-        expect(sort).toHaveBeenCalledWith({ rating: -1 });
-        expect(skip).toHaveBeenCalledWith(5);
-        expect(limit).toHaveBeenCalledWith(10);
+        expect(mocks.find().populate).toHaveBeenCalledWith("user", "id name img");
+        expect(mocks.find().sort).toHaveBeenCalledWith({ rating: -1, createdAt: -1 });
+        expect(mocks.find().skip).toHaveBeenCalledWith(5);
+        expect(mocks.find().limit).toHaveBeenCalledWith(10);
         expect(result.total).toBe(1);
         expect(result.reviews[0]).toMatchObject({
             _id: "rev1",
-            restaurantId: "rest1",
+            restaurant: "rest1",
             user: { _id: "u1", name: "A", img: "img" },
             rating: 5,
             content: "Great",
         });
     });
 
-    it("createReview forwards to model.create", async () => {
-        const reviewDoc = { _id: "rev2" };
-        mocks.create.mockResolvedValue(reviewDoc);
+    it("createReview - 應將資料轉發至 model.create 並回傳創建的評論", async () => {
+        // 建立完整 document mock
+        const reviewDoc = {
+            _id: "rev2",
+            restaurant: "rest1",
+            user: { _id: "u1", name: "A", img: "img" },
+            rating: 4,
+            content: "Nice",
+        };
+        mocks.create.mockReturnValue(createDocumentMock(reviewDoc));
 
-        const result = await createReview("rest1", "u1", 4, "Nice");
+        const result = await createReview({ restaurant: "rest1", user: "u1", rating: 4, content: "Nice" });
 
         expect(mocks.create).toHaveBeenCalledWith({ restaurant: "rest1", user: "u1", rating: 4, content: "Nice" });
-        expect(result).toBe(reviewDoc);
+        expect(result).toStrictEqual(reviewDoc);
     });
 });
