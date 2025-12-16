@@ -24,12 +24,13 @@ export default defineNuxtConfig({
     transpile: ['vuetify'],
   },
   alias: {
-    '@stores': path.resolve(__dirname, './stores'),
     '@app': path.resolve(__dirname, './app'),
-    '@server': path.resolve(__dirname, './server'),
-    '@utils': path.resolve(__dirname, './app/utils'),
     '@composable': path.resolve(__dirname, './app/composable'),
-    '@types': path.resolve(__dirname, './app/types')
+    '@components': path.resolve(__dirname, './app/components'),
+    '@stores': path.resolve(__dirname, './app/stores'),
+    '@types': path.resolve(__dirname, './app/types'),
+    '@utils': path.resolve(__dirname, './app/utils'),
+    '@server': path.resolve(__dirname, './server')
   },
   nitro: {
     experimental: {

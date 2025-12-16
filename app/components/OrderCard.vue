@@ -80,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import type { DisplayOrder } from '@types/order'
+import type { DisplayOrder } from '@types/order';
 
 const props = defineProps<{
   order: DisplayOrder;

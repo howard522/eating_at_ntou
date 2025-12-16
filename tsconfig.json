@@ -7,8 +7,12 @@
     "baseUrl": ".",
     "paths": {
       "@app/*": ["./app/*"],
-      "@server/*": ["./server/*"],
-      "@stores/*": ["./stores/*"]
+      "@composable/*": ["./app/composable/*"],
+      "@components/*": ["./app/components/*"],
+      "@stores/*": ["./app/stores/*"],
+      "@types/*": ["./app/types/*"],
+      "@utils/*": ["./app/utils/*"],
+      "@server/*": ["./server/*"]
     },
     "moduleResolution": "bundler",
     "allowJs": true,

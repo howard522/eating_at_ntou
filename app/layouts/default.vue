@@ -92,11 +92,11 @@
 </template>
 
 <script setup lang="ts">
-import AdLayout from './AdLayout.vue'
+import { useAdPopup } from '@composable/useAdPopup';
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
 import { useSnackbarStore } from '@utils/snackbar';
-import { useAdPopup } from '@composable/useAdPopup'
+import AdLayout from './AdLayout.vue';
 
 const { showAd, closeAd } = useAdPopup()
 

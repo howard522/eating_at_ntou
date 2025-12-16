@@ -70,9 +70,9 @@
 </template>
 
 <script setup lang="ts">
+import { useInfiniteFetch } from '@composable/useInfiniteFetch';
 import { useUserStore } from '@stores/user';
-import type { ApiOrderAvailable as ApiOrder, ApiResponse, AvailableDisplayOrder as DisplayOrder } from '@types/order'
-import { useInfiniteFetch } from '@/composable/useInfiniteFetch'
+import type { ApiOrderAvailable as ApiOrder } from '@types/order';
 
 const userStore = useUserStore();
 const keyword = ref('');

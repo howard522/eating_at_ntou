@@ -211,9 +211,9 @@
 </template>
 
 <script setup lang="ts">
+import DeliveryMap from "@components/DeliveryMap.vue";
+import { useOrderTracking } from "@composable/useOrderTracking";
 import { useUserStore } from "@stores/user";
-import DeliveryMap from "@/components/DeliveryMap.vue";
-import { useOrderTracking } from "@app/composable/useOrderTracking";
 
 type LatLng = [number, number];
 

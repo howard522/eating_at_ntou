@@ -42,9 +42,9 @@
 </template>
 
 <script setup lang="ts">
+import { useInfiniteFetch } from '@composable/useInfiniteFetch';
 import { useUserStore } from '@stores/user';
-import type { ApiOrder, ApiResponse, DisplayOrder } from '@types/order'
-import { useInfiniteFetch } from '@/composable/useInfiniteFetch'
+import type { ApiOrder } from '@types/order';
 
 const tab = ref('inProgress');
 const userStore = useUserStore();
