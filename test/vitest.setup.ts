@@ -1,6 +1,7 @@
 // test/vitest.setup.ts
 
 import { mockAdModel } from "@test/__mocks__/models/ad.model.mock";
+import { mockChatMessageModel } from "@test/__mocks__/models/chatMessage.model.mock";
 import { mockReviewModel } from "@test/__mocks__/models/review.model.mock";
 import { mockUserModel } from "@test/__mocks__/models/user.model.mock";
 import { afterAll, beforeEach, vi } from "vitest";
@@ -10,6 +11,7 @@ import { afterAll, beforeEach, vi } from "vitest";
 // ---------------------------------------------------------------------
 
 mockAdModel();
+mockChatMessageModel();
 mockReviewModel();
 mockUserModel();
 
