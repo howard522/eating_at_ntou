@@ -1,6 +1,5 @@
 // test/services/ad.service.test.ts
 
-import { createAd, deleteAd, getAdById, getAllAds, getRandomAd, updateAd } from "@server/services/ad.service";
 import { adMocks as mocks } from "@test/__mocks__/models/ad.model.mock";
 import { createChainedQueryMock } from "@test/__mocks__/query.mock";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -16,6 +15,12 @@ beforeEach(() => {
     mocks.findByIdAndUpdate.mockReset();
     mocks.findByIdAndDelete.mockReset();
 });
+
+// ---------------------------------------------------------------------
+// Import 要測試的功能
+// ---------------------------------------------------------------------
+
+import { createAd, deleteAd, getAdById, getAllAds, getRandomAd, updateAd } from "@server/services/ad.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

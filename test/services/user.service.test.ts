@@ -1,17 +1,8 @@
 // test/services/user.service.test.ts
 
-import {
-    createUser,
-    getUserByEmail,
-    getUserById,
-    searchUsers,
-    updateUser,
-    updateUserPasswordById,
-    verifyUserPasswordById,
-} from "@server/services/user.service";
 import { createDocumentMock } from "@test/__mocks__/document.mock";
-import { createChainedQueryMock } from "@test/__mocks__/query.mock";
 import { userMocks as mocks } from "@test/__mocks__/models/user.model.mock";
+import { createChainedQueryMock } from "@test/__mocks__/query.mock";
 import { mockObjectUtils } from "@test/__mocks__/utils/object.mock";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -24,6 +15,20 @@ mockObjectUtils();
 beforeEach(() => {
     mocks.userInstances.length = 0;
 });
+
+// ---------------------------------------------------------------------
+// Import 要測試的功能
+// ---------------------------------------------------------------------
+
+import {
+    createUser,
+    getUserByEmail,
+    getUserById,
+    searchUsers,
+    updateUser,
+    updateUserPasswordById,
+    verifyUserPasswordById,
+} from "@server/services/user.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

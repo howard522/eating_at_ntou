@@ -1,17 +1,5 @@
 // test/services/order.service.test.ts
 
-import Order from "@server/models/order.model";
-import {
-    createOrder,
-    getAvailableOrdersForDeliveryPerson,
-    getOrderById,
-    getOrderOwnership,
-    getOrderStatus,
-    getOrdersByUserRole,
-    getOrdersForAdmin,
-    updateOrderDeliveryPerson,
-    updateOrderStatusById,
-} from "@server/services/order.service";
 import { haversineDistanceMock, mockDistanceUtils } from "@test/__mocks__/utils/distance.mock";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -71,6 +59,23 @@ beforeAll(() => {
 beforeEach(() => {
     mocks.orderInstances.length = 0;
 });
+
+// ---------------------------------------------------------------------
+// Import 要測試的功能
+// ---------------------------------------------------------------------
+
+import Order from "@server/models/order.model";
+import {
+    createOrder,
+    getAvailableOrdersForDeliveryPerson,
+    getOrderById,
+    getOrderOwnership,
+    getOrderStatus,
+    getOrdersByUserRole,
+    getOrdersForAdmin,
+    updateOrderDeliveryPerson,
+    updateOrderStatusById,
+} from "@server/services/order.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

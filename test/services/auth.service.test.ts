@@ -1,6 +1,5 @@
 // test/services/auth.service.test.ts
 
-import { banUser, changeUserPassword, loginUser, registerUser, unbanUser } from "@server/services/auth.service";
 import { mockAuthUtils, signJwtMock } from "@test/__mocks__/utils/auth.mock";
 import { describe, expect, it, vi } from "vitest";
 
@@ -29,6 +28,12 @@ vi.mock("./user.service", () => ({
 }));
 
 mockAuthUtils();
+
+// ---------------------------------------------------------------------
+// Import 要測試的功能
+// ---------------------------------------------------------------------
+
+import { banUser, changeUserPassword, loginUser, registerUser, unbanUser } from "@server/services/auth.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

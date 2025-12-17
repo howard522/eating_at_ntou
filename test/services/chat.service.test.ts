@@ -1,6 +1,5 @@
 // test/services/chat.service.test.ts
 
-import { createChatMessage, getChatMessagesByOrderId } from "@server/services/chat.service";
 import { chatMessageMocks as mocks } from "@test/__mocks__/models/chatMessage.model.mock";
 import { createChainedQueryMock } from "@test/__mocks__/query.mock";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -12,6 +11,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 beforeEach(() => {
     mocks.chatInstances.length = 0;
 });
+
+// ---------------------------------------------------------------------
+// Import 要測試的功能
+// ---------------------------------------------------------------------
+
+import { createChatMessage, getChatMessagesByOrderId } from "@server/services/chat.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

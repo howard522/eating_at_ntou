@@ -1,10 +1,15 @@
 // test/services/reviews.service.test.ts
 
-import { createReview, getReviewsByRestaurantId } from "@server/services/reviews.service";
 import { createDocumentMock } from "@test/__mocks__/document.mock";
-import { createChainedQueryMock } from "@test/__mocks__/query.mock";
 import { reviewMocks as mocks } from "@test/__mocks__/models/review.model.mock";
+import { createChainedQueryMock } from "@test/__mocks__/query.mock";
 import { describe, expect, it } from "vitest";
+
+// ---------------------------------------------------------------------
+// Import 要測試的功能
+// ---------------------------------------------------------------------
+
+import { createReview, getReviewsByRestaurantId } from "@server/services/reviews.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

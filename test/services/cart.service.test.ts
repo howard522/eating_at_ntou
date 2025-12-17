@@ -1,13 +1,5 @@
 // test/services/cart.service.test.ts
 
-import Cart from "@server/models/cart.model";
-import {
-    calculateDeliveryFee,
-    clearCartByUserId,
-    createCartForUser,
-    getCartByUserId,
-    updateCartByUserId,
-} from "@server/services/cart.service";
 import { calculateDeliveryFeeMock, mockCalcPriceUtils } from "@test/__mocks__/utils/calcPrice.mock";
 import { haversineDistanceMock, mockDistanceUtils } from "@test/__mocks__/utils/distance.mock";
 import { getGeocodeFromAddressMock, mockNominatimUtils } from "@test/__mocks__/utils/nominatim.mock";
@@ -64,6 +56,19 @@ mockNominatimUtils();
 beforeEach(() => {
     mocks.cartInstances.length = 0;
 });
+
+// ---------------------------------------------------------------------
+// Import 要測試的功能
+// ---------------------------------------------------------------------
+
+import Cart from "@server/models/cart.model";
+import {
+    calculateDeliveryFee,
+    clearCartByUserId,
+    createCartForUser,
+    getCartByUserId,
+    updateCartByUserId,
+} from "@server/services/cart.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

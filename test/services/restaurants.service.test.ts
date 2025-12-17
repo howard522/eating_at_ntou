@@ -6,7 +6,6 @@ import { createChainedQueryMock } from "@test/__mocks__/query.mock";
 import { buildRestaurantSearchQueryMock, mockMongoQueryUtils } from "@test/__mocks__/utils/mongoQuery.mock";
 import { getGeocodeFromAddressMock, mockNominatimUtils } from "@test/__mocks__/utils/nominatim.mock";
 import { mockObjectUtils } from "@test/__mocks__/utils/object.mock";
-
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------
@@ -22,7 +21,7 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------
-// Import 要測試的服務功能
+// Import 要測試的功能
 // ---------------------------------------------------------------------
 
 import Restaurant from "@server/models/restaurant.model";
