@@ -1,4 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+// test/services/restaurants.service.test.ts
+
+import Restaurant from "@server/models/restaurant.model";
 import {
     createMenuItem,
     createRestaurant,
@@ -12,7 +14,14 @@ import {
     updateMenuItemById,
     updateRestaurantById,
 } from "@server/services/restaurants.service";
-import Restaurant from "@server/models/restaurant.model";
+import { buildRestaurantSearchQueryMock, mockMongoQueryUtils } from "@test/__mocks__/utils/mongoQuery.mock";
+import { getGeocodeFromAddressMock, mockNominatimUtils } from "@test/__mocks__/utils/nominatim.mock";
+import { mockObjectUtils } from "@test/__mocks__/utils/object.mock";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// ---------------------------------------------------------------------
+// 在這裡設定區域的 mocks 或測試前置條件
+// ---------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => ({
     findByIdMock: vi.fn(),
@@ -21,7 +30,6 @@ const mocks = vi.hoisted(() => ({
     findMock: vi.fn(),
     aggregateMock: vi.fn(),
     restaurantInstances: [] as any[],
-    getGeocodeFromAddress: vi.fn(),
     buildRestaurantSearchQuery: vi.fn(),
 }));
 
@@ -51,37 +59,36 @@ vi.mock("@server/models/restaurant.model", () => {
     return { default: RestaurantMock };
 });
 
-vi.mock("@server/utils/nominatim", () => ({
-    getGeocodeFromAddress: mocks.getGeocodeFromAddress,
-}));
+mockMongoQueryUtils();
+mockNominatimUtils();
+mockObjectUtils();
 
-vi.mock("@server/utils/mongoQuery", () => ({
-    buildRestaurantSearchQuery: mocks.buildRestaurantSearchQuery,
-}));
+beforeEach(() => {
+    mocks.restaurantInstances.length = 0;
+});
 
-const createErrorStub = (err: any) => Object.assign(new Error(err.message || "Error"), err);
-vi.stubGlobal("createError", createErrorStub);
+// ---------------------------------------------------------------------
+// 測試開始
+// ---------------------------------------------------------------------
 
 describe("restaurants.service", () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mocks.restaurantInstances.length = 0;
-    });
-
     it("createRestaurant geocodes address and saves", async () => {
-        mocks.getGeocodeFromAddress.mockResolvedValue({ coords: true });
+        getGeocodeFromAddressMock.mockResolvedValue({ coords: true });
         const result = await createRestaurant({ name: "R1", address: "addr" } as any);
 
-        expect(mocks.getGeocodeFromAddress).toHaveBeenCalledWith("addr");
+        expect(getGeocodeFromAddressMock).toHaveBeenCalledWith("addr");
         expect(result.locationGeo).toEqual({ coords: true });
         expect(mocks.restaurantInstances).toHaveLength(1);
         expect(mocks.restaurantInstances[0].save).toHaveBeenCalled();
     });
 
     it("createRestaurant throws on bad geocode", async () => {
-        mocks.getGeocodeFromAddress.mockResolvedValue(null);
+        getGeocodeFromAddressMock.mockResolvedValue(null);
 
-        await expect(createRestaurant({ name: "R1", address: "addr" } as any)).rejects.toHaveProperty("statusCode", 400);
+        await expect(createRestaurant({ name: "R1", address: "addr" } as any)).rejects.toHaveProperty(
+            "statusCode",
+            400
+        );
     });
 
     it("getRestaurantById returns object", async () => {
@@ -94,14 +101,14 @@ describe("restaurants.service", () => {
     });
 
     it("updateRestaurantById geocodes and returns updated", async () => {
-        mocks.getGeocodeFromAddress.mockResolvedValue({ coords: true });
+        getGeocodeFromAddressMock.mockResolvedValue({ coords: true });
         const doc = { _id: "r2", toObject: () => ({ _id: "r2", name: "New" }) } as any;
         const select = vi.fn();
         mocks.findByIdAndUpdateMock.mockResolvedValue(doc);
 
         const result = await updateRestaurantById("r2", { address: "addr" } as any);
 
-        expect(mocks.getGeocodeFromAddress).toHaveBeenCalledWith("addr");
+        expect(getGeocodeFromAddressMock).toHaveBeenCalledWith("addr");
         expect(result).toEqual({ _id: "r2", name: "New" });
     });
 
@@ -141,7 +148,7 @@ describe("restaurants.service", () => {
     });
 
     it("searchRestaurants builds query and filters active", async () => {
-        mocks.buildRestaurantSearchQuery.mockReturnValue({ name: /re/i });
+        buildRestaurantSearchQueryMock.mockReturnValue({ name: /re/i });
         const data = [{ _id: "r6", toObject: () => ({ _id: "r6" }) }];
         const skip = vi.fn().mockResolvedValue(data);
         const limit = vi.fn().mockReturnValue({ skip });
@@ -149,7 +156,7 @@ describe("restaurants.service", () => {
 
         const result = await searchRestaurants("re", { limit: 3, skip: 2, activeOnly: true });
 
-        expect(mocks.buildRestaurantSearchQuery).toHaveBeenCalled();
+        expect(buildRestaurantSearchQueryMock).toHaveBeenCalled();
         expect(mocks.findMock).toHaveBeenCalledWith({ name: /re/i, isActive: true });
         expect(limit).toHaveBeenCalledWith(3);
         expect(skip).toHaveBeenCalledWith(2);
@@ -157,11 +164,16 @@ describe("restaurants.service", () => {
     });
 
     it("searchRestaurantsNearByAddress runs geo pipeline", async () => {
-        mocks.getGeocodeFromAddress.mockResolvedValue({ type: "Point", coordinates: [1, 2] });
-        mocks.buildRestaurantSearchQuery.mockReturnValue({ name: /re/i });
+        getGeocodeFromAddressMock.mockResolvedValue({ type: "Point", coordinates: [1, 2] });
+        buildRestaurantSearchQueryMock.mockReturnValue({ name: /re/i });
         mocks.aggregateMock.mockResolvedValue([{ _id: "r7" }]);
 
-        const result = await searchRestaurantsNearByAddress("addr", "re", { limit: 5, skip: 1, maxDistance: 1000, activeOnly: false });
+        const result = await searchRestaurantsNearByAddress("addr", "re", {
+            limit: 5,
+            skip: 1,
+            maxDistance: 1000,
+            activeOnly: false,
+        });
 
         expect(mocks.aggregateMock).toHaveBeenCalled();
         expect(result).toEqual([{ _id: "r7" }]);

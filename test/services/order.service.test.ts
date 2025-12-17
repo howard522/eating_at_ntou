@@ -1,4 +1,6 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+// test/services/order.service.test.ts
+
+import Order from "@server/models/order.model";
 import {
     createOrder,
     getAvailableOrdersForDeliveryPerson,
@@ -10,7 +12,12 @@ import {
     updateOrderDeliveryPerson,
     updateOrderStatusById,
 } from "@server/services/order.service";
-import Order from "@server/models/order.model";
+import { haversineDistanceMock, mockDistanceUtils } from "@test/__mocks__/utils/distance.mock";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+// ---------------------------------------------------------------------
+// 在這裡設定區域的 mocks 或測試前置條件
+// ---------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => {
     return {
@@ -24,7 +31,6 @@ const mocks = vi.hoisted(() => {
         clearCartByUserIdMock: vi.fn(),
         geocodeMock: vi.fn(),
         getRestaurantsByQueryMock: vi.fn(),
-        haversineDistanceMock: vi.fn(),
     };
 });
 
@@ -56,26 +62,21 @@ vi.mock("./restaurants.service", () => ({
     getRestaurantsByQuery: mocks.getRestaurantsByQueryMock,
 }));
 
-vi.mock("@server/utils/distance", () => ({
-    haversineDistance: mocks.haversineDistanceMock,
-}));
+mockDistanceUtils();
 
-vi.mock("h3", () => ({
-    createError: (err: any) => Object.assign(new Error(err.message || "Error"), err),
-}));
-
-const createErrorStub = (err: any) => Object.assign(new Error(err.message || "Error"), err);
-vi.stubGlobal("createError", createErrorStub);
 beforeAll(() => {
     vi.stubGlobal("geocodeAddress", mocks.geocodeMock);
 });
 
-describe("Order Service - getOrderOwnership", () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mocks.orderInstances.length = 0;
-    });
+beforeEach(() => {
+    mocks.orderInstances.length = 0;
+});
 
+// ---------------------------------------------------------------------
+// 測試開始
+// ---------------------------------------------------------------------
+
+describe("Order Service - getOrderOwnership", () => {
     it("應正確判斷使用者是訂單擁有者", async () => {
         const mockOrder = {
             user: "user123",
@@ -155,7 +156,12 @@ describe("Order Service - updateOrderDeliveryPerson", () => {
     it("應設定外送員並更新狀態", async () => {
         const saveMock = vi.fn().mockResolvedValue(undefined);
         const populateMock = vi.fn().mockResolvedValue(undefined);
-        const order = { deliveryPerson: null, deliveryStatus: "preparing", save: saveMock, populate: populateMock } as any;
+        const order = {
+            deliveryPerson: null,
+            deliveryStatus: "preparing",
+            save: saveMock,
+            populate: populateMock,
+        } as any;
         mocks.findByIdMock.mockResolvedValue(order);
 
         const result = await updateOrderDeliveryPerson("order-1", "delivery-1");
@@ -331,9 +337,9 @@ describe("Order Service - createOrder", () => {
     });
 
     it("購物車非開放狀態時應拋出錯誤", async () => {
-        mocks.cartFindOneMock.mockReturnValue(
-            { populate: vi.fn().mockResolvedValue({ items: [{}], status: "locked" }) } as any
-        );
+        mocks.cartFindOneMock.mockReturnValue({
+            populate: vi.fn().mockResolvedValue({ items: [{}], status: "locked" }),
+        } as any);
 
         await expect(createOrder("user-1", { deliveryInfo: {}, arriveTime: new Date() } as any)).rejects.toHaveProperty(
             "statusCode",
@@ -418,7 +424,7 @@ describe("Order Service - getAvailableOrdersForDeliveryPerson", () => {
         const sort = vi.fn().mockReturnValue({ limit });
         const populate = vi.fn().mockReturnValue({ sort });
         mocks.findMock.mockReturnValue({ populate });
-        mocks.haversineDistanceMock.mockReturnValueOnce(5).mockReturnValueOnce(10);
+        haversineDistanceMock.mockReturnValueOnce(5).mockReturnValueOnce(10);
 
         const result = await getAvailableOrdersForDeliveryPerson(25, 121, "keyword", {
             sortBy: "distance",
@@ -432,7 +438,7 @@ describe("Order Service - getAvailableOrdersForDeliveryPerson", () => {
             "items.restaurant.id": { $in: ["rest-1"] },
         });
         expect(populate).toHaveBeenCalledWith("items.restaurant.id", "name locationGeo phone address");
-        expect(mocks.haversineDistanceMock).toHaveBeenCalledTimes(2);
+        expect(haversineDistanceMock).toHaveBeenCalledTimes(2);
         expect(result.map((o: any) => o._id)).toEqual(["order-1", "order-2"]);
     });
 });
@@ -463,10 +469,7 @@ describe("Order Service - getOrdersForAdmin", () => {
 
         expect(mocks.findMock).toHaveBeenCalledWith({
             _id: "order-1",
-            $and: [
-                { customerStatus: "completed" },
-                { deliveryStatus: "completed" },
-            ],
+            $and: [{ customerStatus: "completed" }, { deliveryStatus: "completed" }],
         });
         expect(sort).toHaveBeenCalledWith({ createdAt: 1 });
         expect(skip).toHaveBeenCalledWith(5);

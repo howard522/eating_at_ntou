@@ -1,4 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+// test/services/cart.service.test.ts
+
+import Cart from "@server/models/cart.model";
 import {
     calculateDeliveryFee,
     clearCartByUserId,
@@ -6,16 +8,20 @@ import {
     getCartByUserId,
     updateCartByUserId,
 } from "@server/services/cart.service";
-import Cart from "@server/models/cart.model";
+import { calculateDeliveryFeeMock, mockCalcPriceUtils } from "@test/__mocks__/utils/calcPrice.mock";
+import { haversineDistanceMock, mockDistanceUtils } from "@test/__mocks__/utils/distance.mock";
+import { getGeocodeFromAddressMock, mockNominatimUtils } from "@test/__mocks__/utils/nominatim.mock";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// ---------------------------------------------------------------------
+// 在這裡設定區域的 mocks 或測試前置條件
+// ---------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => {
     return {
         findOneMock: vi.fn(),
         cartInstances: [] as any[],
         getRestaurantsByQuery: vi.fn(),
-        getGeocodeFromAddress: vi.fn(),
-        haversineDistance: vi.fn(),
-        calculateDeliveryFeeByDistance: vi.fn(),
     };
 });
 
@@ -35,7 +41,13 @@ vi.mock("@server/models/cart.model", () => {
             mocks.cartInstances.push(this);
         }
         save = vi.fn().mockResolvedValue(undefined);
-        toObject = () => ({ user: this.user, items: this.items, status: this.status, total: this.total, currency: this.currency });
+        toObject = () => ({
+            user: this.user,
+            items: this.items,
+            status: this.status,
+            total: this.total,
+            currency: this.currency,
+        });
         static findOne = mocks.findOneMock;
     }
     return { default: CartMock };
@@ -45,27 +57,19 @@ vi.mock("./restaurants.service", () => ({
     getRestaurantsByQuery: mocks.getRestaurantsByQuery,
 }));
 
-vi.mock("@server/utils/nominatim", () => ({
-    getGeocodeFromAddress: mocks.getGeocodeFromAddress,
-}));
+mockCalcPriceUtils();
+mockDistanceUtils();
+mockNominatimUtils();
 
-vi.mock("@server/utils/distance", () => ({
-    haversineDistance: mocks.haversineDistance,
-}));
+beforeEach(() => {
+    mocks.cartInstances.length = 0;
+});
 
-vi.mock("@server/utils/calcPrice", () => ({
-    calculateDeliveryFeeByDistance: mocks.calculateDeliveryFeeByDistance,
-}));
-
-const createErrorStub = (err: any) => Object.assign(new Error(err.message || "Error"), err);
-vi.stubGlobal("createError", createErrorStub);
+// ---------------------------------------------------------------------
+// 測試開始
+// ---------------------------------------------------------------------
 
 describe("cart.service", () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mocks.cartInstances.length = 0;
-    });
-
     it("createCartForUser - creates and saves cart", async () => {
         const cart = await createCartForUser("u1");
 
@@ -78,9 +82,7 @@ describe("cart.service", () => {
     it("getCartByUserId - builds response with restaurant/menu info", async () => {
         const cart = new (Cart as any)({
             user: "u2",
-            items: [
-                { restaurantId: "r1", menuItemId: "m1", name: "old", price: 10, quantity: 1, options: [] },
-            ],
+            items: [{ restaurantId: "r1", menuItemId: "m1", name: "old", price: 10, quantity: 1, options: [] }],
         });
         mocks.findOneMock.mockResolvedValue(cart);
         mocks.getRestaurantsByQuery.mockResolvedValue([
@@ -90,7 +92,13 @@ describe("cart.service", () => {
         const result = await getCartByUserId("u2");
 
         expect(mocks.findOneMock).toHaveBeenCalledWith({ user: "u2" });
-        expect(result.items[0]).toMatchObject({ restaurantName: "Rest", name: "New", price: 15, image: "img", info: "info" });
+        expect(result.items[0]).toMatchObject({
+            restaurantName: "Rest",
+            name: "New",
+            price: 15,
+            image: "img",
+            info: "info",
+        });
     });
 
     it("updateCartByUserId - clears when items empty", async () => {
@@ -109,7 +117,9 @@ describe("cart.service", () => {
         const cart = new (Cart as any)({ user: "u4", items: [], status: "locked" });
         mocks.findOneMock.mockResolvedValue(cart);
 
-        await expect(updateCartByUserId("u4", [{ restaurantId: "r1", menuItemId: "m1", quantity: 1 } as any])).rejects.toHaveProperty("statusCode", 423);
+        await expect(
+            updateCartByUserId("u4", [{ restaurantId: "r1", menuItemId: "m1", quantity: 1 } as any])
+        ).rejects.toHaveProperty("statusCode", 423);
     });
 
     it("updateCartByUserId - replaces items and saves", async () => {
@@ -148,7 +158,7 @@ describe("cart.service", () => {
     it("calculateDeliveryFee - throws when geocode fails", async () => {
         const cart = new (Cart as any)({ user: "u8", items: [{ restaurantId: "r1", menuItemId: "m1" }] });
         mocks.findOneMock.mockResolvedValue(cart);
-        mocks.getGeocodeFromAddress.mockResolvedValue(null);
+        getGeocodeFromAddressMock.mockResolvedValue(null);
 
         await expect(calculateDeliveryFee("u8", "addr")).rejects.toHaveProperty("statusCode", 400);
     });
@@ -162,18 +172,18 @@ describe("cart.service", () => {
             ],
         });
         mocks.findOneMock.mockResolvedValue(cart);
-        mocks.getGeocodeFromAddress.mockResolvedValue({ coordinates: [121, 25] });
+        getGeocodeFromAddressMock.mockResolvedValue({ coordinates: [121, 25] });
         mocks.getRestaurantsByQuery.mockResolvedValue([
             { _id: "r1", locationGeo: { coordinates: [121, 25] }, name: "R1" },
             { _id: "r2", locationGeo: { coordinates: [122, 26] }, name: "R2" },
         ]);
-        mocks.haversineDistance.mockReturnValueOnce(1000).mockReturnValueOnce(3000);
-        mocks.calculateDeliveryFeeByDistance.mockReturnValue(50);
+        haversineDistanceMock.mockReturnValueOnce(1000).mockReturnValueOnce(3000);
+        calculateDeliveryFeeMock.mockReturnValue(50);
 
         const result = await calculateDeliveryFee("u9", "addr");
 
-        expect(mocks.haversineDistance).toHaveBeenCalledTimes(2);
-        expect(mocks.calculateDeliveryFeeByDistance).toHaveBeenCalledWith(2); // avg distance km
+        expect(haversineDistanceMock).toHaveBeenCalledTimes(2);
+        expect(calculateDeliveryFeeMock).toHaveBeenCalledWith(2); // avg distance km
         expect(result).toEqual({ distance: 2, fee: 50 });
     });
 });

@@ -1,6 +1,11 @@
+// test/services/chat.service.test.ts
+
+import { createChatMessage, getChatMessagesByOrderId } from "@server/services/chat.service";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createChatMessage, getChatMessages } from "@server/services/chat.service";
-import ChatMessage from "@server/models/chatMessage.model";
+
+// ---------------------------------------------------------------------
+// 在這裡設定區域的 mocks 或測試前置條件
+// ---------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => ({
     chatInstances: [] as any[],
@@ -23,16 +28,22 @@ vi.mock("@server/models/chatMessage.model", () => {
     return { default: ChatMock };
 });
 
-vi.stubGlobal("createError", (err: any) => Object.assign(new Error(err.message || "Error"), err));
+beforeEach(() => {
+    mocks.chatInstances.length = 0;
+});
+
+// ---------------------------------------------------------------------
+// 測試開始
+// ---------------------------------------------------------------------
 
 describe("chat.service", () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mocks.chatInstances.length = 0;
-    });
-
     it("createChatMessage saves trimmed content", async () => {
-        const result = await createChatMessage("order1", "user1", "customer", " hi ");
+        const result = await createChatMessage({
+            order: "order1",
+            sender: "user1",
+            senderRole: "customer",
+            content: " hi ",
+        });
 
         expect(mocks.chatInstances).toHaveLength(1);
         const msg = mocks.chatInstances[0];
@@ -44,7 +55,7 @@ describe("chat.service", () => {
         expect(result).toBe(msg);
     });
 
-    it("getChatMessages applies filters and population", async () => {
+    it("getChatMessagesByOrderId applies filters and population", async () => {
         const docs = [{ id: 1 }];
         const populate = vi.fn().mockResolvedValue(docs);
         const skip = vi.fn().mockReturnValue({ populate });
@@ -54,7 +65,7 @@ describe("chat.service", () => {
 
         const after = new Date("2024-01-01");
         const before = new Date("2024-02-01");
-        const result = await getChatMessages("order1", { limit: 10, skip: 5, after, before });
+        const result = await getChatMessagesByOrderId("order1", { limit: 10, skip: 5, after, before });
 
         expect(mocks.findMock).toHaveBeenCalledWith({ order: "order1", timestamp: { $gt: after, $lt: before } });
         expect(sort).toHaveBeenCalledWith({ timestamp: -1 });
