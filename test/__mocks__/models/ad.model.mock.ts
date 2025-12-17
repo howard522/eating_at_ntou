@@ -1,7 +1,7 @@
-// test/__mocks__/ad.model.mock.ts
+// test/__mocks__/models/ad.model.mock.ts
 
 import { vi } from "vitest";
-import { createDocumentMock } from "./document.mock";
+import { createDocumentMock } from "../document.mock";
 
 const adMocks = vi.hoisted(() => ({
     aggregate: vi.fn(),

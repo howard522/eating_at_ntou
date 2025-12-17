@@ -11,7 +11,7 @@ import {
 } from "@server/services/user.service";
 import { createDocumentMock } from "@test/__mocks__/document.mock";
 import { createChainedQueryMock } from "@test/__mocks__/query.mock";
-import { userMocks as mocks } from "@test/__mocks__/user.model.mock";
+import { userMocks as mocks } from "@test/__mocks__/models/user.model.mock";
 import { mockObjectUtils } from "@test/__mocks__/utils/object.mock";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

@@ -1,4 +1,4 @@
-// test/__mocks__/review.model.mock.ts
+// test/__mocks__/models/review.model.mock.ts
 
 import { vi } from "vitest";
 

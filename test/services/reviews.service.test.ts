@@ -3,7 +3,7 @@
 import { createReview, getReviewsByRestaurantId } from "@server/services/reviews.service";
 import { createDocumentMock } from "@test/__mocks__/document.mock";
 import { createChainedQueryMock } from "@test/__mocks__/query.mock";
-import { reviewMocks as mocks } from "@test/__mocks__/review.model.mock";
+import { reviewMocks as mocks } from "@test/__mocks__/models/review.model.mock";
 import { describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------

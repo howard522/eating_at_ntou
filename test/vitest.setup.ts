@@ -1,8 +1,8 @@
 // test/vitest.setup.ts
 
-import { mockAdModel } from "@test/__mocks__/ad.model.mock";
-import { mockReviewModel } from "@test/__mocks__/review.model.mock";
-import { mockUserModel } from "@test/__mocks__/user.model.mock";
+import { mockAdModel } from "@test/__mocks__/models/ad.model.mock";
+import { mockReviewModel } from "@test/__mocks__/models/review.model.mock";
+import { mockUserModel } from "@test/__mocks__/models/user.model.mock";
 import { afterAll, beforeEach, vi } from "vitest";
 
 // ---------------------------------------------------------------------
