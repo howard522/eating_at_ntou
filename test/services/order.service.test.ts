@@ -1,6 +1,6 @@
 // test/services/order.service.test.ts
 
-import { haversineDistanceMock, mockDistanceUtils } from "@test/__mocks__/utils/distance.mock";
+import { distanceUtilMocks, mockDistanceUtils } from "@test/__mocks__/utils/distance.mock";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------
@@ -51,6 +51,8 @@ vi.mock("./restaurants.service", () => ({
 }));
 
 mockDistanceUtils();
+
+const haversineDistanceMock = distanceUtilMocks.haversineDistance;
 
 beforeAll(() => {
     vi.stubGlobal("geocodeAddress", mocks.geocodeMock);
@@ -274,6 +276,7 @@ describe("Order Service - createOrder", () => {
     });
 
     it("應建立訂單並鎖定購物車", async () => {
+        // FIXME: 這個測試錯誤，不知道怎麼修正
         const cart = {
             user: "user-1",
             items: [
@@ -398,6 +401,7 @@ describe("Order Service - getAvailableOrdersForDeliveryPerson", () => {
     });
 
     it("應依關鍵字與距離排序回傳可接訂單", async () => {
+        // FIXME: 這個測試錯誤，不知道怎麼修正
         const orders = [
             {
                 _id: "order-1",
