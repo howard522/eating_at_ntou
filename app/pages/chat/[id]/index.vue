@@ -156,12 +156,31 @@
 
 <script setup lang="ts">
 import { useUserStore } from "@stores/user";
+import { useNotificationStore } from "@stores/notification";
 import { useChat } from "@app/composable/useChat";
 
 const router = useRouter();
 const route = useRoute();
 const orderId = route.params.id as string;
 const userStore = useUserStore();
+const notificationStore = useNotificationStore();
+
+// 清除該訂單的所有通知（訊息與狀態）
+const clearNotification = () => {
+    notificationStore.clearAll(orderId);
+};
+
+onMounted(() => {
+    clearNotification();
+});
+
+// 監聽通知狀態，若在頁面中收到通知（訊息或狀態更新）則立即清除
+watch(() => notificationStore.getNotification(orderId), (n) => {
+    // 增加路由判斷，避免 keep-alive 導致在其他頁面時誤清除通知
+    if ((n.hasMessage || n.hasStatusUpdate) && router.currentRoute.value.path.includes(`/chat/${orderId}`)) {
+        clearNotification();
+    }
+}, { deep: true });
 
 const { data: orderData } = await useFetch(`/api/orders/${orderId}`, {
     transform: (response: any) => response.data,
@@ -238,8 +257,9 @@ onMounted(() => {
     scrollToBottom();
 });
 
-// 若頁面被 keep-alive，啟用時也捲到底
+// 若頁面被 keep-alive，啟用時也捲到底，並清除通知
 onActivated(() => {
+    clearNotification();
     scrollToBottom();
 });
 

@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="flat" class="rounded-lg d-flex align-center pa-3 border-b menu-item-card" @click="onAddClick">
+  <v-card variant="flat" class="rounded-lg d-flex align-center pa-3 border-b menu-item-card" @click="onAddClick" :style="{ '--hover-bg': hoverBgColor }">
 
     <v-avatar size="80" rounded="lg" class="mr-4 image-container">
       <v-img :src="item.image" cover class="menu-item-image">
@@ -47,6 +47,7 @@
 
 <script setup lang="ts">
 import { useCartStore } from '@stores/cart';
+import { useImageHoverColor } from '../composable/useImageHoverColor';
 
 interface MenuItem {
   _id: string
@@ -63,6 +64,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'open-add-dialog', item: MenuItem): void
 }>();
+
+const { hoverBgColor } = useImageHoverColor(computed(() => props.item.image));
 
 const onAddClick = () => {
   emit('open-add-dialog', props.item);
@@ -95,7 +98,7 @@ const isInCart = computed(() => cartStore.items?.some(i => i.menuItemId === prop
 }
 
 .menu-item-card:hover {
-  background-color: #FFFFFF !important;
+  background-color: var(--hover-bg, #FFFFFF) !important;
 }
 
 .image-container {

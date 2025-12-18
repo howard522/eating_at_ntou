@@ -8,6 +8,7 @@ import { haversineDistance } from "@server/utils/distance";
 import type { FilterQuery } from "mongoose";
 import { clearCartByUserId } from "./cart.service";
 import { getRestaurantsByQuery } from "./restaurants.service";
+import { broadcastToOrder } from "@server/utils/wsContext";
 
 /**
  * 判斷使用者是否為訂單的擁有者或外送員
@@ -475,12 +476,20 @@ export async function updateOrderDeliveryPerson(orderId: ObjectIdLike, deliveryP
 
     await order.save();
 
-    // populate deliveryPerson so API 回傳格式與其他 endpoint 一致（含 name/img/phone）
     try {
         await order.populate("deliveryPerson", "name img phone");
     } catch (e) {
         // ignore populate errors
     }
+
+    // 廣播狀態更新
+    broadcastToOrder(String(order._id), {
+        type: "status",
+        data: {
+            deliveryPerson: order.deliveryPerson,
+            deliveryStatus: order.deliveryStatus,
+        },
+    });
 
     return order;
 }
@@ -511,12 +520,20 @@ export async function updateOrderStatusById(orderId: ObjectIdLike, status: Updat
 
     await order.save();
 
-    // 若有外送員，populate deliveryPerson 以回傳 name/img/phone（與其他 endpoint 保持一致）
     try {
         if (order.deliveryPerson) await order.populate("deliveryPerson", "name img phone");
     } catch (e) {
         // ignore
     }
+
+    // 廣播狀態更新
+    broadcastToOrder(String(order._id), {
+        type: "status",
+        data: {
+            customerStatus: order.customerStatus,
+            deliveryStatus: order.deliveryStatus,
+        },
+    });
 
     return order;
 }

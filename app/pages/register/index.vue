@@ -178,7 +178,7 @@ async function onSubmit() {
     const data = err.response?._data || err.data
     const serverMsg = data?.message || err.message
 
-    if (serverMsg === '電子信箱已經註冊' || (typeof serverMsg === 'string' && serverMsg.includes('已註冊'))) {
+    if (status === 409 || serverMsg === '電子信箱已經註冊' || (typeof serverMsg === 'string' && (serverMsg.includes('已註冊') || serverMsg.includes('Email has already been registered')))) {
       msg = '註冊失敗，該電子郵件已被註冊'
     } else if (serverMsg && status && status !== 500) {
       msg = serverMsg
