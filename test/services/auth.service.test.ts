@@ -1,32 +1,14 @@
 // test/services/auth.service.test.ts
 
+import { mockUserService, userServiceMocks as mocks } from "@test/__mocks__/services/user.service.mock";
 import { mockAuthUtils, signJwtMock } from "@test/__mocks__/utils/auth.mock";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------
 // 在這裡設定區域的 mocks 或測試前置條件
 // ---------------------------------------------------------------------
 
-const mocks = vi.hoisted(() => {
-    return {
-        getUserByEmail: vi.fn(),
-        createUser: vi.fn(),
-        verifyUserPasswordById: vi.fn(),
-        getUserById: vi.fn(),
-        updateUserPasswordById: vi.fn(),
-        updateUser: vi.fn(),
-    };
-});
-
-vi.mock("./user.service", () => ({
-    getUserByEmail: mocks.getUserByEmail,
-    createUser: mocks.createUser,
-    verifyUserPasswordById: mocks.verifyUserPasswordById,
-    getUserById: mocks.getUserById,
-    updateUserPasswordById: mocks.updateUserPasswordById,
-    updateUser: mocks.updateUser,
-}));
-
+mockUserService();
 mockAuthUtils();
 
 // ---------------------------------------------------------------------
@@ -39,145 +21,182 @@ import { banUser, changeUserPassword, loginUser, registerUser, unbanUser } from 
 // 測試開始
 // ---------------------------------------------------------------------
 
-describe("auth.service", () => {
-    describe("registerUser", () => {
-        it("should throw conflict if email already exists", async () => {
-            mocks.getUserByEmail.mockResolvedValue({ id: "u1" });
+describe("auth.service - 使用者驗證相關", () => {
+    describe("registerUser - 註冊使用者", () => {
+        it("當 email 已存在時，應該拋出衝突錯誤", async () => {
+            const user = { _id: "u1" };
+            mocks.getUserByEmail.mockResolvedValue(user);
 
-            await expect(
-                registerUser({ email: "a@test", password: "123456", name: "A", role: "multi" })
-            ).rejects.toHaveProperty("statusCode", 409);
+            const result = registerUser({ email: "a@test", password: "123456", name: "A", role: "multi" });
+
+            expect(mocks.getUserByEmail).toHaveBeenCalledWith("a@test");
+            expect(result).rejects.toHaveProperty("statusCode", 409);
         });
 
-        it("should throw 422 for short password", async () => {
+        it("當密碼過短時，應該拋出驗證錯誤", async () => {
             mocks.getUserByEmail.mockResolvedValue(null);
 
-            await expect(
-                registerUser({ email: "a@test", password: "123", name: "A", role: "multi" })
-            ).rejects.toHaveProperty("statusCode", 422);
+            const result = registerUser({ email: "a@test", password: "123", name: "A", role: "multi" });
+
+            expect(mocks.getUserByEmail).toHaveBeenCalledWith("a@test");
+            expect(result).rejects.toHaveProperty("statusCode", 422);
         });
 
-        it("should create user and return token", async () => {
-            const user = { id: "u2", role: "multi" };
+        it("當註冊成功時，應該建立使用者並回傳 token", async () => {
+            // 這裡應該要改成 _id 才對
+            const user = { id: "u2", role: "multi" },
+                token = "token-123";
             mocks.getUserByEmail.mockResolvedValue(null);
             mocks.createUser.mockResolvedValue(user);
-            signJwtMock.mockReturnValue("token-123");
+            signJwtMock.mockReturnValue(token);
 
             const result = await registerUser({ email: "a@test", password: "123456", name: "A", role: "multi" });
 
+            expect(mocks.getUserByEmail).toHaveBeenCalledWith("a@test");
             expect(mocks.createUser).toHaveBeenCalled();
             expect(signJwtMock).toHaveBeenCalledWith("u2", "multi");
-            expect(result).toEqual({ user, token: "token-123" });
+            expect(result).toStrictEqual({ user, token });
         });
     });
 
-    describe("loginUser", () => {
-        it("should 401 when user missing", async () => {
+    describe("loginUser - 登入使用者", () => {
+        it("當使用者不存在時，應該拋出未授權錯誤", async () => {
             mocks.getUserByEmail.mockResolvedValue(null);
 
-            await expect(loginUser("a@test", "pwd")).rejects.toHaveProperty("statusCode", 401);
+            const result = loginUser("a@test", "password");
+
+            expect(mocks.getUserByEmail).toHaveBeenCalledWith("a@test");
+            expect(result).rejects.toHaveProperty("statusCode", 401);
         });
 
-        it("should 401 when password mismatch", async () => {
-            const user = { id: "u3", role: "multi" };
+        it("當密碼不匹配時，應該拋出未授權錯誤", async () => {
+            const user = { _id: "u3", role: "multi" };
             mocks.getUserByEmail.mockResolvedValue(user);
             mocks.verifyUserPasswordById.mockResolvedValue(false);
 
-            await expect(loginUser("a@test", "pwd")).rejects.toHaveProperty("statusCode", 401);
+            const result = loginUser("a@test", "wrong_password");
+            expect(mocks.getUserByEmail).toHaveBeenCalledWith("a@test");
+            expect(result).rejects.toHaveProperty("statusCode", 401);
         });
 
-        it("should 403 when user banned", async () => {
-            const user = { id: "u4", role: "banned" };
+        it("當使用者被封鎖時，應該拋出禁止存取錯誤", async () => {
+            const user = { _id: "u4", role: "banned" };
             mocks.getUserByEmail.mockResolvedValue(user);
             mocks.verifyUserPasswordById.mockResolvedValue(true);
 
-            await expect(loginUser("a@test", "pwd")).rejects.toHaveProperty("statusCode", 403);
+            const result = loginUser("a@test", "password");
+
+            expect(mocks.getUserByEmail).toHaveBeenCalledWith("a@test");
+            expect(result).rejects.toHaveProperty("statusCode", 403);
         });
 
-        it("should return token when ok", async () => {
-            const user = { id: "u5", role: "delivery" };
+        it("當登入成功時，應該回傳 token", async () => {
+            const user = { _id: "u5", role: "multi" },
+                token = "token-xyz";
             mocks.getUserByEmail.mockResolvedValue(user);
             mocks.verifyUserPasswordById.mockResolvedValue(true);
-            signJwtMock.mockReturnValue("token-xyz");
+            signJwtMock.mockReturnValue(token);
 
-            const result = await loginUser("a@test", "pwd");
+            const result = await loginUser("a@test", "password");
 
-            expect(mocks.verifyUserPasswordById).toHaveBeenCalledWith("u5", "pwd");
-            expect(signJwtMock).toHaveBeenCalledWith("u5", "delivery");
-            expect(result).toEqual({ user, token: "token-xyz" });
+            expect(mocks.getUserByEmail).toHaveBeenCalledWith("a@test");
+            expect(mocks.verifyUserPasswordById).toHaveBeenCalledWith("u5", "password");
+            expect(signJwtMock).toHaveBeenCalledWith("u5", "multi");
+            expect(result).toEqual({ user, token });
         });
     });
 
-    describe("changeUserPassword", () => {
-        it("should 401 when user missing", async () => {
+    describe("changeUserPassword - 更改使用者密碼", () => {
+        it("當使用者不存在時，應該拋出未授權錯誤", async () => {
             mocks.getUserById.mockResolvedValue(null);
 
-            await expect(changeUserPassword("u1", "old", "newpass")).rejects.toHaveProperty("statusCode", 401);
+            const result = changeUserPassword("u1", "old", "newpass");
+
+            expect(mocks.getUserById).toHaveBeenCalledWith("u1");
+            expect(result).rejects.toHaveProperty("statusCode", 401);
         });
 
-        it("should 401 when current password wrong", async () => {
-            mocks.getUserById.mockResolvedValue({ id: "u1" });
+        it("當目前密碼錯誤時，應該拋出未授權錯誤", async () => {
+            mocks.getUserById.mockResolvedValue({ _id: "u1" });
             mocks.verifyUserPasswordById.mockResolvedValue(false);
 
-            await expect(changeUserPassword("u1", "old", "newpass")).rejects.toHaveProperty("statusCode", 401);
+            const result = changeUserPassword("u1", "old", "newpass");
+
+            expect(mocks.getUserById).toHaveBeenCalledWith("u1");
+            expect(result).rejects.toHaveProperty("statusCode", 401);
         });
 
-        it("should 400 when new password too short", async () => {
-            mocks.getUserById.mockResolvedValue({ id: "u1" });
+        it("當新密碼過短時，應該拋出錯誤", async () => {
+            mocks.getUserById.mockResolvedValue({ _id: "u1" });
             mocks.verifyUserPasswordById.mockResolvedValue(true);
 
-            await expect(changeUserPassword("u1", "old", "123")).rejects.toHaveProperty("statusCode", 400);
+            const result = changeUserPassword("u1", "old", "123");
+
+            expect(mocks.getUserById).toHaveBeenCalledWith("u1");
+            expect(result).rejects.toHaveProperty("statusCode", 400);
         });
 
-        it("should update password when valid", async () => {
+        it("當有效時，應該更新密碼", async () => {
             mocks.getUserById.mockResolvedValue({ id: "u1" });
             mocks.verifyUserPasswordById.mockResolvedValue(true);
             mocks.updateUserPasswordById.mockResolvedValue(undefined);
 
             await changeUserPassword("u1", "old", "newpass");
 
+            expect(mocks.getUserById).toHaveBeenCalledWith("u1");
             expect(mocks.updateUserPasswordById).toHaveBeenCalledWith("u1", "newpass");
         });
     });
+});
 
-    describe("banUser", () => {
-        it("should 404 when user missing", async () => {
+describe("auth.service - 使用者管理相關", () => {
+    describe("banUser - 封鎖使用者", () => {
+        it("當使用者不存在時，應該拋出找不到錯誤", async () => {
             mocks.getUserById.mockResolvedValue(null);
 
-            await expect(banUser("u1")).rejects.toHaveProperty("statusCode", 404);
+            const result = banUser("u1");
+
+            expect(result).rejects.toHaveProperty("statusCode", 404);
         });
 
-        it("should 403 when user admin", async () => {
+        it("當使用者為管理員時，應該拋出禁止存取錯誤", async () => {
             mocks.getUserById.mockResolvedValue({ id: "u1", role: "admin" });
 
-            await expect(banUser("u1")).rejects.toHaveProperty("statusCode", 403);
+            const result = banUser("u1");
+
+            expect(result).rejects.toHaveProperty("statusCode", 403);
         });
 
-        it("should update role to banned", async () => {
+        it("當使用者角色更新為封鎖時，應該成功更新", async () => {
+            const new_user = { id: "u1", role: "banned" };
             mocks.getUserById.mockResolvedValue({ id: "u1", role: "multi" });
-            mocks.updateUser.mockResolvedValue({ id: "u1", role: "banned" });
+            mocks.updateUser.mockResolvedValue(new_user);
 
             const result = await banUser("u1");
 
             expect(mocks.updateUser).toHaveBeenCalledWith("u1", { role: "banned" });
-            expect(result).toEqual({ userId: "u1", role: "banned" });
+            expect(result).toStrictEqual({ userId: "u1", role: "banned" });
         });
     });
 
-    describe("unbanUser", () => {
-        it("should 404 when user missing", async () => {
+    describe("unbanUser - 解除封鎖使用者", () => {
+        it("當使用者不存在時，應該拋出找不到錯誤", async () => {
             mocks.getUserById.mockResolvedValue(null);
 
-            await expect(unbanUser("u1")).rejects.toHaveProperty("statusCode", 404);
+            const result = unbanUser("u1");
+
+            expect(result).rejects.toHaveProperty("statusCode", 404);
         });
 
-        it("should 400 when not banned", async () => {
+        it("當使用者未被封鎖時，應該拋出錯誤", async () => {
             mocks.getUserById.mockResolvedValue({ id: "u1", role: "multi" });
 
-            await expect(unbanUser("u1")).rejects.toHaveProperty("statusCode", 400);
+            const result = unbanUser("u1");
+
+            expect(result).rejects.toHaveProperty("statusCode", 400);
         });
 
-        it("should set role to multi", async () => {
+        it("當解除封鎖成功時，應該更新角色為 multi", async () => {
             mocks.getUserById.mockResolvedValue({ id: "u1", role: "banned" });
             mocks.updateUser.mockResolvedValue({ id: "u1", role: "multi" });
 
