@@ -3,8 +3,8 @@
 import { createDocumentMock } from "@test/__mocks__/document.mock";
 import { restaurantMocks as mocks } from "@test/__mocks__/models/restaurant.model.mock";
 import { createChainedQueryMock } from "@test/__mocks__/query.mock";
-import { buildRestaurantSearchQueryMock, mockMongoQueryUtils } from "@test/__mocks__/utils/mongoQuery.mock";
-import { getGeocodeFromAddressMock, mockNominatimUtils } from "@test/__mocks__/utils/nominatim.mock";
+import { mongoQueryUtilMocks, mockMongoQueryUtils } from "@test/__mocks__/utils/mongoQuery.mock";
+import { nominatimUtilMocks, mockNominatimUtils } from "@test/__mocks__/utils/nominatim.mock";
 import { mockObjectUtils } from "@test/__mocks__/utils/object.mock";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -15,6 +15,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 mockObjectUtils();
 mockNominatimUtils();
 mockMongoQueryUtils();
+
+const getGeocodeFromAddressMock = nominatimUtilMocks.getGeocodeFromAddress;
+const buildRestaurantSearchQueryMock = mongoQueryUtilMocks.buildRestaurantSearchQuery;
 
 beforeEach(() => {
     mocks.restaurantInstances.length = 0;

@@ -2,12 +2,14 @@
 
 import { vi } from "vitest";
 
-const buildRestaurantSearchQueryMock = vi.fn();
+const mongoQueryUtilMocks = vi.hoisted(() => ({
+    buildRestaurantSearchQuery: vi.fn(),
+}));
 
 export const mockMongoQueryUtils = () => {
     vi.mock("@server/utils/mongoQuery", () => ({
-        buildRestaurantSearchQuery: buildRestaurantSearchQueryMock,
+        buildRestaurantSearchQuery: mongoQueryUtilMocks.buildRestaurantSearchQuery,
     }));
 };
 
-export { buildRestaurantSearchQueryMock };
+export { mongoQueryUtilMocks };

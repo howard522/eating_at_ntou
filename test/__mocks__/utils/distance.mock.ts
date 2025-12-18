@@ -2,12 +2,14 @@
 
 import { vi } from "vitest";
 
-const haversineDistanceMock = vi.fn();
+const distanceUtilMocks = vi.hoisted(() => ({
+    haversineDistance: vi.fn(),
+}));
 
 export const mockDistanceUtils = () => {
     vi.mock("@server/utils/distance", () => ({
-        haversineDistance: haversineDistanceMock,
+        haversineDistance: distanceUtilMocks.haversineDistance,
     }));
 };
 
-export { haversineDistanceMock };
+export { distanceUtilMocks };

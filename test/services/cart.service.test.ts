@@ -2,10 +2,9 @@
 
 import { cartMocks as mocks } from "@test/__mocks__/models/cart.model.mock";
 import { createChainedQueryMock } from "@test/__mocks__/query.mock";
-import { createDocumentMock } from "@test/__mocks__/document.mock";
-import { calculateDeliveryFeeMock, mockCalcPriceUtils } from "@test/__mocks__/utils/calcPrice.mock";
-import { haversineDistanceMock, mockDistanceUtils } from "@test/__mocks__/utils/distance.mock";
-import { getGeocodeFromAddressMock, mockNominatimUtils } from "@test/__mocks__/utils/nominatim.mock";
+import { calcPriceUtilMocks, mockCalcPriceUtils } from "@test/__mocks__/utils/calcPrice.mock";
+import { distanceUtilMocks, mockDistanceUtils } from "@test/__mocks__/utils/distance.mock";
+import { mockNominatimUtils, nominatimUtilMocks } from "@test/__mocks__/utils/nominatim.mock";
 import { beforeEach, describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------
@@ -15,6 +14,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 mockCalcPriceUtils();
 mockDistanceUtils();
 mockNominatimUtils();
+
+const calculateDeliveryFeeMock = calcPriceUtilMocks.calculateDeliveryFeeByDistance;
+const haversineDistanceMock = distanceUtilMocks.haversineDistance;
+const getGeocodeFromAddressMock = nominatimUtilMocks.getGeocodeFromAddress;
 
 beforeEach(() => {
     mocks.cartInstances.length = 0;

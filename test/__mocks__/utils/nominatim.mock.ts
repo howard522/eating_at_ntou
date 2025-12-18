@@ -2,12 +2,16 @@
 
 import { vi } from "vitest";
 
-const getGeocodeFromAddressMock = vi.fn();
+const nominatimUtilMocks = vi.hoisted(() => ({
+    geocodeAddress: vi.fn(),
+    getGeocodeFromAddress: vi.fn(),
+}));
 
 export const mockNominatimUtils = () => {
     vi.mock("@server/utils/nominatim", () => ({
-        getGeocodeFromAddress: getGeocodeFromAddressMock,
+        geocodeAddress: nominatimUtilMocks.geocodeAddress,
+        getGeocodeFromAddress: nominatimUtilMocks.getGeocodeFromAddress,
     }));
 };
 
-export { getGeocodeFromAddressMock };
+export { nominatimUtilMocks };

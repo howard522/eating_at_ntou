@@ -1,7 +1,7 @@
 // test/services/auth.service.test.ts
 
 import { mockUserService, userServiceMocks as mocks } from "@test/__mocks__/services/user.service.mock";
-import { mockAuthUtils, signJwtMock } from "@test/__mocks__/utils/auth.mock";
+import { authUtilsMocks, mockAuthUtils } from "@test/__mocks__/utils/auth.mock";
 import { describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------
@@ -10,6 +10,8 @@ import { describe, expect, it } from "vitest";
 
 mockUserService();
 mockAuthUtils();
+
+const signJwtMock = authUtilsMocks.signJwt;
 
 // ---------------------------------------------------------------------
 // Import 要測試的功能

@@ -2,12 +2,15 @@
 
 import { vi } from "vitest";
 
-const cleanObjectMock = vi.fn().mockImplementation((obj: any) => {
-    return obj; // 簡單模擬，直接回傳原物件
-});
+const objectUtilMocks = vi.hoisted(() => ({
+    cleanObject: vi.fn().mockImplementation((obj: any) => {
+        return obj; // 簡單模擬，直接回傳原物件
+    }),
+}));
 
 export const mockObjectUtils = () => {
     vi.mock("@server/utils/object", () => ({
-        cleanObject: cleanObjectMock,
+        cleanObject: objectUtilMocks.cleanObject,
     }));
 };
+export { objectUtilMocks };

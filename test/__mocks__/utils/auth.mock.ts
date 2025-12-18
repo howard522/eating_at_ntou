@@ -2,12 +2,14 @@
 
 import { vi } from "vitest";
 
-const signJwtMock = vi.fn();
+const authUtilsMocks = vi.hoisted(() => ({
+    signJwt: vi.fn(),
+}));
 
 export const mockAuthUtils = () => {
     vi.mock("@server/utils/auth", () => ({
-        signJwt: signJwtMock,
+        signJwt: authUtilsMocks.signJwt,
     }));
 };
 
-export { signJwtMock };
+export { authUtilsMocks };

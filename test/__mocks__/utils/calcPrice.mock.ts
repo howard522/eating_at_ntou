@@ -2,12 +2,14 @@
 
 import { vi } from "vitest";
 
-const calculateDeliveryFeeMock = vi.fn();
+const calcPriceUtilMocks = vi.hoisted(() => ({
+    calculateDeliveryFeeByDistance: vi.fn(),
+}));
 
 export const mockCalcPriceUtils = () => {
     vi.mock("@server/utils/calcPrice", () => ({
-        calculateDeliveryFeeByDistance: calculateDeliveryFeeMock,
+        calculateDeliveryFeeByDistance: calcPriceUtilMocks.calculateDeliveryFeeByDistance,
     }));
 };
 
-export { calculateDeliveryFeeMock };
+export { calcPriceUtilMocks };
