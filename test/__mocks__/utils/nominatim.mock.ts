@@ -8,7 +8,7 @@ const nominatimUtilMocks = vi.hoisted(() => ({
 }));
 
 export const mockNominatimUtils = () => {
-    vi.mock("@server/utils/nominatim", () => ({
+    vi.mock("$utils/nominatim", () => ({
         geocodeAddress: nominatimUtilMocks.geocodeAddress,
         getGeocodeFromAddress: nominatimUtilMocks.getGeocodeFromAddress,
     }));

@@ -1,6 +1,6 @@
 // server/models/restaurant.model.ts
 
-import type { IMenuItem, IRestaurant } from "@server/interfaces/restaurant.interface";
+import type { IMenuItem, IRestaurant } from "$interfaces/restaurant.interface";
 import type { HydratedDocument, Model, Types } from "mongoose";
 import mongoose from "mongoose";
 

@@ -12,7 +12,7 @@ const userServiceMocks = vi.hoisted(() => ({
 }));
 
 export const mockUserService = () => {
-    vi.mock("@server/services/user.service", () => ({
+    vi.mock("$services/user.service", () => ({
         getUserByEmail: userServiceMocks.getUserByEmail,
         createUser: userServiceMocks.createUser,
         verifyUserPasswordById: userServiceMocks.verifyUserPasswordById,

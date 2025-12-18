@@ -27,7 +27,7 @@ beforeEach(() => {
 // Import 要測試的功能
 // ---------------------------------------------------------------------
 
-import Restaurant from "@server/models/restaurant.model";
+import Restaurant from "$models/restaurant.model";
 import {
     createMenuItem,
     createRestaurant,
@@ -40,7 +40,7 @@ import {
     searchRestaurantsNearByAddress,
     updateMenuItemById,
     updateRestaurantById,
-} from "@server/services/restaurants.service";
+} from "$services/restaurants.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

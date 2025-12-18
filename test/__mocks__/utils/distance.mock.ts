@@ -7,7 +7,7 @@ const distanceUtilMocks = vi.hoisted(() => ({
 }));
 
 export const mockDistanceUtils = () => {
-    vi.mock("@server/utils/distance", () => ({
+    vi.mock("$utils/distance", () => ({
         haversineDistance: distanceUtilMocks.haversineDistance,
     }));
 };

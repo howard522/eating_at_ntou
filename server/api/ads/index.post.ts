@@ -1,8 +1,8 @@
 // server/api/ads/index.post.ts
 
-import type { IAdCreate } from "@server/interfaces/ad.interface";
-import { createAd } from "@server/services/ad.service";
-import { parseForm } from "@server/utils/parseForm";
+import type { IAdCreate } from "$interfaces/ad.interface";
+import { createAd } from "$services/ad.service";
+import { parseForm } from "$utils/parseForm";
 
 /**
  * @openapi

@@ -12,7 +12,7 @@ const userMocks = vi.hoisted(() => ({
 }));
 
 export const mockUserModel = () => {
-    vi.mock("@server/models/user.model", () => {
+    vi.mock("$models/user.model", () => {
         class UserMock {
             constructor(data: any) {
                 Object.assign(this, data);

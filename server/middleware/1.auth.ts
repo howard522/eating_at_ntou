@@ -1,7 +1,7 @@
 // server/middleware/1.auth.ts
 
-import { getUserById } from "@server/services/user.service";
-import { verifyJwt } from "@server/utils/auth";
+import { getUserById } from "$services/user.service";
+import { verifyJwt } from "$utils/auth";
 
 function isNeedAuth(path: string, method: string): boolean {
     // 評論建立需要驗證

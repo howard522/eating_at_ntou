@@ -1,7 +1,7 @@
 // server/api/orders/index.get.ts
 
-import { getOrdersByUserRole } from "@server/services/order.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import { getOrdersByUserRole } from "$services/order.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi

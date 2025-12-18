@@ -28,7 +28,7 @@ import {
     updateUser,
     updateUserPasswordById,
     verifyUserPasswordById,
-} from "@server/services/user.service";
+} from "$services/user.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

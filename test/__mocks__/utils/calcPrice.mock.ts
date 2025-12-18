@@ -7,7 +7,7 @@ const calcPriceUtilMocks = vi.hoisted(() => ({
 }));
 
 export const mockCalcPriceUtils = () => {
-    vi.mock("@server/utils/calcPrice", () => ({
+    vi.mock("$utils/calcPrice", () => ({
         calculateDeliveryFeeByDistance: calcPriceUtilMocks.calculateDeliveryFeeByDistance,
     }));
 };

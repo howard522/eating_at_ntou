@@ -1,9 +1,9 @@
+import ChatMessage from "$models/chatMessage.model";
+import Order from "$models/order.model";
+import { verifyJwt } from "$utils/auth";
+import connectDB from "$utils/db";
+import type { AdapterInternal, Peer } from "crossws";
 import { defineWebSocketHandler } from "h3";
-import ChatMessage from "@server/models/chatMessage.model";
-import Order from "@server/models/order.model";
-import connectDB from "@server/utils/db";
-import { verifyJwt } from "@server/utils/auth";
-import type { Peer, AdapterInternal } from "crossws";
 
 /**
  * 聊天訊息的資料結構

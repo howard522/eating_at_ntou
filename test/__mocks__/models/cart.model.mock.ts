@@ -10,7 +10,7 @@ const cartMocks = vi.hoisted(() => ({
 }));
 
 export const mockCartModel = () => {
-    vi.mock("@server/models/cart.model", () => {
+    vi.mock("$models/cart.model", () => {
         class CartMock {
             constructor(data: any) {
                 data = createDocumentMock(data);

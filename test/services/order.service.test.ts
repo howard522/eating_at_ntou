@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => {
     };
 });
 
-vi.mock("@server/models/order.model", () => {
+vi.mock("$models/order.model", () => {
     class OrderMock {
         save = mocks.orderSaveMock;
         populate = mocks.orderPopulateMock;
@@ -36,17 +36,17 @@ vi.mock("@server/models/order.model", () => {
     return { default: OrderMock };
 });
 
-vi.mock("@server/models/cart.model", () => ({
+vi.mock("$models/cart.model", () => ({
     default: {
         findOne: mocks.cartFindOneMock,
     },
 }));
 
-vi.mock("./cart.service", () => ({
+vi.mock("$services/cart.service", () => ({
     clearCartByUserId: mocks.clearCartByUserIdMock,
 }));
 
-vi.mock("./restaurants.service", () => ({
+vi.mock("$services/restaurants.service", () => ({
     getRestaurantsByQuery: mocks.getRestaurantsByQueryMock,
 }));
 
@@ -66,7 +66,7 @@ beforeEach(() => {
 // Import 要測試的功能
 // ---------------------------------------------------------------------
 
-import Order from "@server/models/order.model";
+import Order from "$models/order.model";
 import {
     createOrder,
     getAvailableOrdersForDeliveryPerson,
@@ -77,7 +77,7 @@ import {
     getOrdersForAdmin,
     updateOrderDeliveryPerson,
     updateOrderStatusById,
-} from "@server/services/order.service";
+} from "$services/order.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

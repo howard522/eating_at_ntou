@@ -1,7 +1,7 @@
 // server/services/auth.service.ts
 
-import type { ObjectIdLike } from "@server/interfaces/common.interface";
-import type { IUserCreate } from "@server/interfaces/user.interface";
+import type { ObjectIdLike } from "$interfaces/common.interface";
+import type { IUserCreate } from "$interfaces/user.interface";
 import {
     createUser,
     getUserByEmail,
@@ -9,8 +9,8 @@ import {
     updateUser,
     updateUserPasswordById,
     verifyUserPasswordById,
-} from "@server/services/user.service";
-import { signJwt } from "@server/utils/auth";
+} from "$services/user.service";
+import { signJwt } from "$utils/auth";
 
 /**
  * 註冊新使用者

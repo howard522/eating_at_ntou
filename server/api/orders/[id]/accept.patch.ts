@@ -1,7 +1,7 @@
 // server/api/orders/[id]/accept.patch.ts
 
-import { updateOrderDeliveryPerson } from "@server/services/order.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import { updateOrderDeliveryPerson } from "$services/order.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * 前端請注意：

@@ -9,7 +9,7 @@ const reviewMocks = vi.hoisted(() => ({
 }));
 
 export const mockReviewModel = () => {
-    vi.mock("@server/models/review.model", () => {
+    vi.mock("$models/review.model", () => {
         class ReviewMock {
             constructor(data: any) {
                 Object.assign(this, data);

@@ -10,7 +10,11 @@
             "@types/*": ["./app/types/*"],
             "@utils/*": ["./app/utils/*"],
             "@server/*": ["./server/*"],
-            "@test/*": ["./test/*"]
+            "$interfaces/*": ["./server/interfaces/*"],
+            "$models/*": ["./server/models/*"],
+            "$services/*": ["./server/services/*"],
+            "$utils/*": ["./server/utils/*"],
+            "@test/*": ["./test/*"],
         },
         "moduleResolution": "bundler",
         "allowJs": true,

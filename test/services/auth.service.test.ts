@@ -17,7 +17,7 @@ const signJwtMock = authUtilsMocks.signJwt;
 // Import 要測試的功能
 // ---------------------------------------------------------------------
 
-import { banUser, changeUserPassword, loginUser, registerUser, unbanUser } from "@server/services/auth.service";
+import { banUser, changeUserPassword, loginUser, registerUser, unbanUser } from "$services/auth.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

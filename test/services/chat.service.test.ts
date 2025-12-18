@@ -16,7 +16,7 @@ beforeEach(() => {
 // Import 要測試的功能
 // ---------------------------------------------------------------------
 
-import { createChatMessage, getChatMessagesByOrderId } from "@server/services/chat.service";
+import { createChatMessage, getChatMessagesByOrderId } from "$services/chat.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

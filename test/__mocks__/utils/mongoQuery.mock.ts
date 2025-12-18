@@ -7,7 +7,7 @@ const mongoQueryUtilMocks = vi.hoisted(() => ({
 }));
 
 export const mockMongoQueryUtils = () => {
-    vi.mock("@server/utils/mongoQuery", () => ({
+    vi.mock("$utils/mongoQuery", () => ({
         buildRestaurantSearchQuery: mongoQueryUtilMocks.buildRestaurantSearchQuery,
     }));
 };

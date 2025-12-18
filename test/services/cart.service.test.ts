@@ -27,14 +27,14 @@ beforeEach(() => {
 // Import 要測試的功能
 // ---------------------------------------------------------------------
 
-import Cart from "@server/models/cart.model";
+import Cart from "$models/cart.model";
 import {
     calculateDeliveryFee,
     clearCartByUserId,
     createCartForUser,
     getCartByUserId,
     updateCartByUserId,
-} from "@server/services/cart.service";
+} from "$services/cart.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

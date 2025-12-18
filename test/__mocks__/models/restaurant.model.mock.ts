@@ -14,7 +14,7 @@ const restaurantMocks = vi.hoisted(() => ({
 }));
 
 export const mockRestaurantModel = () => {
-    vi.mock("@server/models/restaurant.model", () => {
+    vi.mock("$models/restaurant.model", () => {
         class RestaurantMock {
             constructor(data: any) {
                 data = createDocumentMock(data);

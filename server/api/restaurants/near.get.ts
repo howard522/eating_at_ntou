@@ -1,7 +1,7 @@
 // server/api/restaurants/near.get.ts
 
-import { searchRestaurantsNearByAddress } from "@server/services/restaurants.service";
-import { parseInteger } from "@server/utils/parseNumber";
+import { searchRestaurantsNearByAddress } from "$services/restaurants.service";
+import { parseInteger } from "$utils/parseNumber";
 
 /**
  * @openapi

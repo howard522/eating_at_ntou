@@ -1,7 +1,6 @@
 // server/api/cart/delivery-fee.get.ts
 
-import { calculateDeliveryFee } from "@server/services/cart.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import { calculateDeliveryFee } from "$services/cart.service";
 
 /**
  * @openapi

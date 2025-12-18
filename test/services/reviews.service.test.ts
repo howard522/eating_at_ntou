@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 // Import 要測試的功能
 // ---------------------------------------------------------------------
 
-import { createReview, getReviewsByRestaurantId } from "@server/services/reviews.service";
+import { createReview, getReviewsByRestaurantId } from "$services/reviews.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

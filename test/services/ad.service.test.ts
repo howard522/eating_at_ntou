@@ -20,7 +20,7 @@ beforeEach(() => {
 // Import 要測試的功能
 // ---------------------------------------------------------------------
 
-import { createAd, deleteAd, getAdById, getAllAds, getRandomAd, updateAd } from "@server/services/ad.service";
+import { createAd, deleteAd, getAdById, getAllAds, getRandomAd, updateAd } from "$services/ad.service";
 
 // ---------------------------------------------------------------------
 // 測試開始

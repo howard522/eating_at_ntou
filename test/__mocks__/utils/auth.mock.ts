@@ -7,7 +7,7 @@ const authUtilsMocks = vi.hoisted(() => ({
 }));
 
 export const mockAuthUtils = () => {
-    vi.mock("@server/utils/auth", () => ({
+    vi.mock("$utils/auth", () => ({
         signJwt: authUtilsMocks.signJwt,
     }));
 };

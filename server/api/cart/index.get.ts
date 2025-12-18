@@ -1,7 +1,7 @@
 // server/api/cart/index.get.ts
 
-import { getCartByUserId } from "@server/services/cart.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import { getCartByUserId } from "$services/cart.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi

@@ -9,7 +9,7 @@ const objectUtilMocks = vi.hoisted(() => ({
 }));
 
 export const mockObjectUtils = () => {
-    vi.mock("@server/utils/object", () => ({
+    vi.mock("$utils/object", () => ({
         cleanObject: objectUtilMocks.cleanObject,
     }));
 };

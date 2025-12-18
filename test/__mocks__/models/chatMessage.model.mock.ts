@@ -10,7 +10,7 @@ const chatMessageMocks = vi.hoisted(() => ({
 }));
 
 export const mockChatMessageModel = () => {
-    vi.mock("@server/models/chatMessage.model", () => {
+    vi.mock("$models/chatMessage.model", () => {
         class ChatMessageMock {
             constructor(data: any) {
                 data = createDocumentMock(data);

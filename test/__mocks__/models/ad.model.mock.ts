@@ -14,7 +14,7 @@ const adMocks = vi.hoisted(() => ({
 }));
 
 export const mockAdModel = () => {
-    vi.mock("@server/models/ad.model", () => {
+    vi.mock("$models/ad.model", () => {
         class AdMock {
             constructor(data: any) {
                 data = createDocumentMock(data);

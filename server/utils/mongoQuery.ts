@@ -1,6 +1,6 @@
 // server/utils/mongoQuery.ts
 
-import type { IRestaurant } from "@server/interfaces/restaurant.interface";
+import type { IRestaurant } from "$interfaces/restaurant.interface";
 import type { FilterQuery } from "mongoose";
 
 const escapeRegex = (text: string) => {

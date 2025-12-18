@@ -1,6 +1,6 @@
 // server/middleware/1.auth.ts
 
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 export default defineEventHandler(async (event) => {
     const path = event.path;

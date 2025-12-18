@@ -1,8 +1,8 @@
 // server/utils/nominatim.ts
 
-import type { IGeoPoint } from "@server/interfaces/geo.interface";
-import geoCache from "@server/models/geoCache.model";
-import KeelongAddressMap from "@server/models/KeelongAddressMap";
+import type { IGeoPoint } from "$interfaces/geo.interface";
+import geoCache from "$models/geoCache.model";
+import KeelongAddressMap from "$models/KeelongAddressMap";
 
 /**
  * TODO:
