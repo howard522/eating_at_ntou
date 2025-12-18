@@ -1,6 +1,7 @@
 // test/vitest.setup.ts
 
 import { mockAdModel } from "@test/__mocks__/models/ad.model.mock";
+import { mockCartModel } from "@test/__mocks__/models/cart.model.mock";
 import { mockChatMessageModel } from "@test/__mocks__/models/chatMessage.model.mock";
 import { mockRestaurantModel } from "@test/__mocks__/models/restaurant.model.mock";
 import { mockReviewModel } from "@test/__mocks__/models/review.model.mock";
@@ -12,6 +13,7 @@ import { afterAll, beforeEach, vi } from "vitest";
 // ---------------------------------------------------------------------
 
 mockAdModel();
+mockCartModel();
 mockChatMessageModel();
 mockRestaurantModel();
 mockReviewModel();
