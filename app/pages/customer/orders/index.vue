@@ -15,7 +15,13 @@
               :key="order.id"
               cols="12"
           >
-            <OrderCard role="customer" :order="order" :path="`/customer/order-state/${order.id}`"/>
+            <div class="position-relative">
+                <OrderCard role="customer" :order="order" :path="`/customer/order-state/${order.id}`"/>
+                <span
+                    v-if="notificationStore.hasMessage(order.id) || notificationStore.hasStatusUpdate(order.id)"
+                    class="notification-dot"
+                ></span>
+            </div>
           </v-col>
           <v-col v-if="inProgressOrders.length === 0" cols="12">
             <p class="text-center text-medium-emphasis mt-10">
@@ -28,7 +34,13 @@
       <v-window-item value="completed">
         <v-row>
           <v-col v-for="order in completedOrders" :key="order.id" cols="12">
-            <OrderCard role="customer" :order="order" :path="`/customer/order-state/${order.id}`"/>
+            <div class="position-relative">
+                <OrderCard role="customer" :order="order" :path="`/customer/order-state/${order.id}`"/>
+                <span
+                    v-if="notificationStore.hasMessage(order.id) || notificationStore.hasStatusUpdate(order.id)"
+                    class="notification-dot"
+                ></span>
+            </div>
           </v-col>
           <v-col v-if="completedOrders.length === 0" cols="12">
             <p class="text-center text-medium-emphasis mt-10">
@@ -44,14 +56,21 @@
 <script setup lang="ts">
 import type { ApiOrder, ApiResponse, DisplayOrder } from '@types/order'
 import { useInfiniteFetch } from '@/composable/useInfiniteFetch'
+import { useNotificationStore } from '@stores/notification'
 
 const tab = ref('inProgress');
+const notificationStore = useNotificationStore();
 
-const { items: rawOrders } = useInfiniteFetch<ApiOrder>({
+const { items: rawOrders, fetchItems } = useInfiniteFetch<ApiOrder>({
   api: '/api/orders',
   limit: 7,
   buildQuery: (skip) => ({ role: 'customer', skip, limit: 7 }),
   immediate: true
+});
+
+// 監聽通知更新，重新抓取訂單列表
+watch(() => notificationStore.lastUpdate, () => {
+    fetchItems({ reset: true });
 });
 
 const allOrders = computed(() => rawOrders.value.map(order => {
@@ -93,5 +112,16 @@ useHead({
 </script>
 
 <style scoped>
-
+.notification-dot {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 16px;
+    height: 16px;
+    background-color: rgb(var(--v-theme-error));
+    border-radius: 50%;
+    z-index: 10;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
 </style>

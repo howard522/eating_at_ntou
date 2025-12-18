@@ -189,7 +189,14 @@
               class="mt-4"
               @click="navigateTo(`/chat/${orderId}`)"
           >
-            <span class="text-h6 font-weight-bold">聯絡外送員</span>
+            <v-badge
+                :model-value="notificationStore.hasMessage(orderId)"
+                color="error"
+                dot
+                inline
+            >
+                <span class="text-h6 font-weight-bold">聯絡外送員</span>
+            </v-badge>
           </v-btn>
 
           <v-btn
@@ -239,6 +246,7 @@
 <script setup lang="ts">
 import { useUserStore } from '@stores/user';
 import { useOrderTracking } from '@app/composable/useOrderTracking';
+import { useNotificationStore } from '@stores/notification';
 
 type LatLng = [number, number]
 const steps = ref([
@@ -258,6 +266,16 @@ const statusToStepMap: Record<string, number> = {
 const route = useRoute();
 const orderId = route.params.id as string;
 const userStore = useUserStore();
+const notificationStore = useNotificationStore();
+
+// 進入頁面時清除狀態更新通知
+onMounted(() => {
+    notificationStore.clearStatus(orderId);
+});
+
+onActivated(() => {
+    notificationStore.clearStatus(orderId);
+});
 
 const isUpdating = ref(false);
 

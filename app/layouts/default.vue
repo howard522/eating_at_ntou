@@ -32,6 +32,13 @@
             variant="text"
           >
             {{ link.title }}
+            <v-badge
+              v-if="(link.value === 'customer-orders' || link.value === 'delivery-orders') && notificationStore.hasNotification"
+              color="error"
+              dot
+              inline
+              class="ml-1"
+            ></v-badge>
           </v-btn>
         </v-btn-toggle>
       </div>
@@ -95,6 +102,7 @@
 import AdLayout from './AdLayout.vue'
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
+import { useNotificationStore } from '@stores/notification';
 import { useSnackbarStore } from '@utils/snackbar';
 import { useAdPopup } from '@composable/useAdPopup'
 
@@ -116,6 +124,7 @@ provide('cartIconEl', fridgeIconEl);
 
 const cartStore = useCartStore();
 const userStore = useUserStore();
+const notificationStore = useNotificationStore();
 const snackbarStore = useSnackbarStore();
 
 const role = computed(() => {
@@ -157,7 +166,7 @@ const links = computed<link[]>(() => {
 watch(links, (newLinks) => {
   if (newLinks.length > 0)
   {
-    activeNav.value = newLinks[0]?.value || '';
+    activeNav.value = newLinks[0?.value] || '';
   } else
   {
     activeNav.value = '';
