@@ -1,10 +1,10 @@
 // test/services/cart.service.test.ts
 
-import { cartMocks as mocks } from "@test/__mocks__/models/cart.model.mock";
-import { createChainedQueryMock } from "@test/__mocks__/query.mock";
-import { calcPriceUtilMocks, mockCalcPriceUtils } from "@test/__mocks__/utils/calcPrice.mock";
-import { distanceUtilMocks, mockDistanceUtils } from "@test/__mocks__/utils/distance.mock";
-import { mockNominatimUtils, nominatimUtilMocks } from "@test/__mocks__/utils/nominatim.mock";
+import { cartMocks as mocks } from "@mocks/models/cart.model.mock";
+import { createChainedQueryMock } from "@mocks/query.mock";
+import { calcPriceUtilMocks, mockCalcPriceUtils } from "@mocks/utils/calcPrice.mock";
+import { distanceUtilMocks, mockDistanceUtils } from "@mocks/utils/distance.mock";
+import { mockNominatimUtils, nominatimUtilMocks } from "@mocks/utils/nominatim.mock";
 import { beforeEach, describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------

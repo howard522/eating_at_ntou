@@ -1,7 +1,7 @@
 // test/services/chat.service.test.ts
 
-import { chatMessageMocks as mocks } from "@test/__mocks__/models/chatMessage.model.mock";
-import { createChainedQueryMock } from "@test/__mocks__/query.mock";
+import { chatMessageMocks as mocks } from "@mocks/models/chatMessage.model.mock";
+import { createChainedQueryMock } from "@mocks/query.mock";
 import { beforeEach, describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------

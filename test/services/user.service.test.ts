@@ -1,9 +1,9 @@
 // test/services/user.service.test.ts
 
-import { createDocumentMock } from "@test/__mocks__/document.mock";
-import { userMocks as mocks } from "@test/__mocks__/models/user.model.mock";
-import { createChainedQueryMock } from "@test/__mocks__/query.mock";
-import { mockObjectUtils } from "@test/__mocks__/utils/object.mock";
+import { createDocumentMock } from "@mocks/document.mock";
+import { userMocks as mocks } from "@mocks/models/user.model.mock";
+import { createChainedQueryMock } from "@mocks/query.mock";
+import { mockObjectUtils } from "@mocks/utils/object.mock";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------

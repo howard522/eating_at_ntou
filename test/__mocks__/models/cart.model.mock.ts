@@ -1,6 +1,6 @@
 // test/__mocks__/models/cart.model.mock.ts
 
-import { createDocumentMock } from "@test/__mocks__/document.mock";
+import { createDocumentMock } from "@mocks/document.mock";
 import { vi } from "vitest";
 
 const cartMocks = vi.hoisted(() => ({

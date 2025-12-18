@@ -1,6 +1,6 @@
 // test/services/order.service.test.ts
 
-import { distanceUtilMocks, mockDistanceUtils } from "@test/__mocks__/utils/distance.mock";
+import { distanceUtilMocks, mockDistanceUtils } from "@mocks/utils/distance.mock";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------

@@ -16,6 +16,7 @@ export default defineConfig({
             $services: path.resolve(__dirname, "./server/services"),
             $utils: path.resolve(__dirname, "./server/utils"),
             "@test": path.resolve(__dirname, "./test"),
+            "@mocks": path.resolve(__dirname, "./test/__mocks__"),
             "#imports": path.resolve(__dirname, "./.nuxt/imports.d.ts"),
         },
     },

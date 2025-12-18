@@ -1,7 +1,7 @@
 // test/services/ad.service.test.ts
 
-import { adMocks as mocks } from "@test/__mocks__/models/ad.model.mock";
-import { createChainedQueryMock } from "@test/__mocks__/query.mock";
+import { adMocks as mocks } from "@mocks/models/ad.model.mock";
+import { createChainedQueryMock } from "@mocks/query.mock";
 import { beforeEach, describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------

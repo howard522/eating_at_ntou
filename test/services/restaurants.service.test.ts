@@ -1,11 +1,11 @@
 // test/services/restaurants.service.test.ts
 
-import { createDocumentMock } from "@test/__mocks__/document.mock";
-import { restaurantMocks as mocks } from "@test/__mocks__/models/restaurant.model.mock";
-import { createChainedQueryMock } from "@test/__mocks__/query.mock";
-import { mongoQueryUtilMocks, mockMongoQueryUtils } from "@test/__mocks__/utils/mongoQuery.mock";
-import { nominatimUtilMocks, mockNominatimUtils } from "@test/__mocks__/utils/nominatim.mock";
-import { mockObjectUtils } from "@test/__mocks__/utils/object.mock";
+import { createDocumentMock } from "@mocks/document.mock";
+import { restaurantMocks as mocks } from "@mocks/models/restaurant.model.mock";
+import { createChainedQueryMock } from "@mocks/query.mock";
+import { mongoQueryUtilMocks, mockMongoQueryUtils } from "@mocks/utils/mongoQuery.mock";
+import { nominatimUtilMocks, mockNominatimUtils } from "@mocks/utils/nominatim.mock";
+import { mockObjectUtils } from "@mocks/utils/object.mock";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------

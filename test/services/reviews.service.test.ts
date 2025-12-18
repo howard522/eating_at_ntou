@@ -1,8 +1,8 @@
 // test/services/reviews.service.test.ts
 
-import { createDocumentMock } from "@test/__mocks__/document.mock";
-import { reviewMocks as mocks } from "@test/__mocks__/models/review.model.mock";
-import { createChainedQueryMock } from "@test/__mocks__/query.mock";
+import { createDocumentMock } from "@mocks/document.mock";
+import { reviewMocks as mocks } from "@mocks/models/review.model.mock";
+import { createChainedQueryMock } from "@mocks/query.mock";
 import { describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------

@@ -15,6 +15,7 @@
             "$services/*": ["./server/services/*"],
             "$utils/*": ["./server/utils/*"],
             "@test/*": ["./test/*"],
+            "@mocks/*": ["./test/__mocks__/*"]
         },
         "moduleResolution": "bundler",
         "allowJs": true,
