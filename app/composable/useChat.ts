@@ -15,7 +15,8 @@ export function useChat(orderId: string, messages: Ref<ChatPayload[]>) {
     const role = userStore.currentRole; // "customer" 或 "delivery"
 
     // 建立 WebSocket 連線
-    ws.value = new WebSocket(`ws://${location.host}/ws/${orderId}`);
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    ws.value = new WebSocket(`${protocol}://${location.host}/ws/${orderId}`);
 
     // 處理收到的訊息
     ws.value.onmessage = (event) => {
