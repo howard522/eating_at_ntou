@@ -1,7 +1,7 @@
 // server/api/orders/[id]/index.get.ts
 
 import { getOrderById, getOrderOwnership } from "@server/services/order.service";
-import { verifyJwtFromEvent } from "@server/utils/auth";
+import { getCurrentUser } from "@server/utils/getCurrentUser";
 
 /**
  * @openapi
@@ -67,56 +67,29 @@ import { verifyJwtFromEvent } from "@server/utils/auth";
  *                   note: "請放門口"
  */
 export default defineEventHandler(async (event) => {
-    const payload = await verifyJwtFromEvent(event);
-    const userId = payload.id;
+    const user = getCurrentUser(event);
+    const userId = user.id;
 
-//     const orderId = event.context.params.id
-//     const order: any = await Order.findById(orderId)
-//         .populate('user', 'name email')
-//         // 將外送員回傳必要欄位：name, img, phone
-//         .populate('deliveryPerson', 'name img phone')
-//         // items.restaurant.phone 已存為 snapshot，無需額外 populate
-//         .populate('items.restaurant.id', 'locationGeo')
-//         .lean()
     const orderId = getRouterParam(event, "id");
 
-    if (!orderId) throw createError({ statusCode: 400, message: "Missing order id" });
+    if (!orderId)
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: order id.",
+        });
 
     // 權限檢查：顧客、外送員（只能查自己的訂單）
     // 或 Admin 都可查詢
-    const ownership = await getOrderOwnership(orderId, userId);
-    const isAdmin = payload.role === "admin" || payload.role === "multi"; // QUESTION: multi 角色是否有此權限？
+    const ownership = await getOrderOwnership(orderId, user.id);
+    const isAdmin = user.role === "admin" || user.role === "multi"; // QUESTION: multi 角色是否有此權限？
 
-//     // 補上餐廳經緯度
-//     if (order.items) {
-//         order.items.forEach((item: any) => {
-//             if (item.restaurant && item.restaurant.id && item.restaurant.id.locationGeo && item.restaurant.id.locationGeo.coordinates) {
-//                 const [lng, lat] = item.restaurant.id.locationGeo.coordinates;
-//                 item.restaurant.location = { lat, lng };
-//                 item.restaurant.id = item.restaurant.id._id;
-//             }
-//         });
-//     }
-
-//     // 正規化 deliveryPerson：考慮可能為 null（尚未被外送員接單）或未被 populate
-//     try {
-//         if (order.deliveryPerson) {
-//             // 若為 populated object，取必要欄位；若僅為 id（未 populate），只回傳 id
-//             const dp: any = order.deliveryPerson
-//             order.deliveryPerson = {
-//                 _id: dp._id || dp,
-//                 name: dp.name || null,
-//                 img: dp.img || '',
-//                 phone: dp.phone || '',
-//             }
-//         } else {
-//             order.deliveryPerson = null
-//         }
-//     } catch (e) {
-//         // 若任何情況發生錯誤，保險起見設為 null
-//         order.deliveryPerson = null
     if (!ownership.isOwner && !ownership.isDeliveryPerson && !isAdmin) {
-        throw createError({ statusCode: 403, message: "Not allowed to view this order" });
+        throw createError({
+            statusCode: 403,
+            statusMessage: "Forbidden",
+            message: "Not allowed to view this order.",
+        });
     }
 
     const order = await getOrderById(orderId);
