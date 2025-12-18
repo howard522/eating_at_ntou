@@ -67,15 +67,22 @@
 
     <v-card-actions v-if="!(role === 'delivery' && order.status === 'completed')" class="pa-4 pt-0">
       <div class="d-flex w-100" style="gap: 12px">
-        <v-btn
-            :to="path"
-            color="primary"
-            class="flex-grow-1"
-            size="large"
-            variant="flat"
+        <v-badge
+            :model-value="hasNotification"
+            color="error"
+            dot
+            class="notification-badge flex-grow-1"
         >
-          <span class="font-weight-bold">查看詳情</span>
-        </v-btn>
+          <v-btn
+              :to="path"
+              color="primary"
+              class="w-100"
+              size="large"
+              variant="flat"
+          >
+            <span class="font-weight-bold">查看詳情</span>
+          </v-btn>
+        </v-badge>
         <v-btn
             v-if="role === 'customer'"
             color="secondary"
@@ -103,6 +110,7 @@ const props = defineProps<{
   order: DisplayOrder;
   path: string;
   role: 'customer' | 'delivery';
+  hasNotification?: boolean;
 }>();
 
 const cartStore = useCartStore();
@@ -214,3 +222,24 @@ const statusInfo = computed(() => {
   return { text: '未知', color: 'grey' };
 });
 </script>
+
+<style scoped>
+.notification-badge :deep(.v-badge__badge) {
+  animation: pulse 1.5s infinite;
+  border: 2px solid white;
+  width: 12px;
+  height: 12px;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 82, 82, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+  }
+}
+</style>

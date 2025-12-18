@@ -33,11 +33,11 @@
           >
             {{ link.title }}
             <v-badge
-              v-if="(link.value === 'customer-orders' || link.value === 'delivery-orders') && notificationStore.hasNotification"
+              v-if="(link.value === 'customer-orders' || link.value === 'delivery-orders') && notificationStore.notificationCount > 0"
               color="error"
-              dot
+              :content="notificationStore.notificationCount"
               inline
-              class="ml-1"
+              class="ml-1 notification-badge"
             ></v-badge>
           </v-btn>
         </v-btn-toggle>
@@ -197,6 +197,22 @@ onMounted(async () => {
 
 .v-btn--active {
   background-color: #e0e0e0 !important;
+}
+
+.notification-badge :deep(.v-badge__badge) {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(255, 82, 82, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+  }
 }
 
 .cart-shake {

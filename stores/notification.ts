@@ -15,6 +15,9 @@ export const useNotificationStore = defineStore('notification', {
         hasNotification: (state) => {
             return Object.values(state.notifications).some(n => n.hasMessage || n.hasStatusUpdate)
         },
+        notificationCount: (state) => {
+            return Object.values(state.notifications).filter(n => n.hasMessage || n.hasStatusUpdate).length
+        },
         getNotification: (state) => (orderId: string) => {
             return state.notifications[orderId] || { hasMessage: false, hasStatusUpdate: false }
         },
