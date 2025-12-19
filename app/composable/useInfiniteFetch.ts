@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, onActivated, onDeactivated, watch, nextTick } from 'vue'
 import debounce from 'lodash-es/debounce'
 import { useUserStore } from '@stores/user'
 
@@ -96,6 +96,12 @@ export function useInfiniteFetch<T>(options: UseInfiniteFetchOptions<T>) {
         if (immediate) fetchItems({ reset: true })
     })
     onUnmounted(() => {
+        window.removeEventListener('scroll', handleScroll)
+    })
+    onActivated(() => {
+        window.addEventListener('scroll', handleScroll)
+    })
+    onDeactivated(() => {
         window.removeEventListener('scroll', handleScroll)
     })
 
