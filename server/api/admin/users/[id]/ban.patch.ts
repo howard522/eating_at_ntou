@@ -1,6 +1,6 @@
 // server/api/admin/users/[id]/ban.patch.ts
 
-import { banUser } from "@server/services/auth.service";
+import { banUser } from "$services/auth.service";
 
 /**
  * @openapi

@@ -1,11 +1,14 @@
 // server/services/chat.service.ts
 
-import type { IChatMessage, IChatMessageCreate, IChatMessageResponse } from "@server/interfaces/chatMessage.interface";
-import type { ObjectIdLike, QueryPaginationOptions } from "@server/interfaces/common.interface";
-import ChatMessage from "@server/models/chatMessage.model";
+import type { IChatMessage, IChatMessageCreate, IChatMessageResponse } from "$interfaces/chatMessage.interface";
+import type { ObjectIdLike, QueryPaginationOptions } from "$interfaces/common.interface";
+import ChatMessage from "$models/chatMessage.model";
 import type { FilterQuery } from "mongoose";
 
 export async function createChatMessage(data: IChatMessageCreate) {
+    data.senderRole ||= "customer"; // 預設為 customer
+    data.content = data.content.trim();
+
     const chatMessage = new ChatMessage(data);
 
     await chatMessage.save();

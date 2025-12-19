@@ -1,8 +1,8 @@
 // server/api/admin/restaurants/[id]/index.patch.ts
 
-import type { IUpdateRestaurant } from "@server/interfaces/restaurant.interface";
-import { updateRestaurantById } from "@server/services/restaurants.service";
-import { parseForm } from "@server/utils/parseForm";
+import type { IUpdateRestaurant } from "$interfaces/restaurant.interface";
+import { updateRestaurantById } from "$services/restaurants.service";
+import { parseForm } from "$utils/parseForm";
 
 /**
  * @openapi

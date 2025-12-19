@@ -70,11 +70,10 @@
 </template>
 
 <script setup lang="ts">
+import { useInfiniteFetch } from '@composable/useInfiniteFetch';
 import { useUserStore } from '@stores/user';
-import type { ApiOrderAvailable as ApiOrder, ApiResponse, AvailableDisplayOrder as DisplayOrder } from '@types/order'
-import { useInfiniteFetch } from '@/composable/useInfiniteFetch'
+import type { ApiOrderAvailable as ApiOrder, ApiResponse, AvailableDisplayOrder as DisplayOrder } from '@types/order';
 
-const userStore = useUserStore();
 const keyword = ref('');
 const sortOption = ref('newest');
 const latitude = ref<number | null>(null);
@@ -132,7 +131,7 @@ const allOrders = computed(() => rawOrders.value.map(order => {
   };
 }));
 
-onMounted(() => {
+const fetchWithLocation = () => {
   navigator.geolocation.getCurrentPosition(
     (position) => {
       latitude.value = position.coords.latitude;
@@ -147,27 +146,16 @@ onMounted(() => {
       longitude.value = null;
       fetchItems({ reset: true });
     },
-    { enableHighAccuracy: true }
+    { enableHighAccuracy: true, timeout: 10000 }
   );
+};
+
+onMounted(() => {
+  fetchWithLocation();
 });
 
 onActivated(() => {
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      latitude.value = position.coords.latitude;
-      longitude.value = position.coords.longitude;
-      geolocationError.value = null;
-      fetchItems({ reset: true });
-    },
-    (error) => {
-      console.error("Geolocation error:", error.message);
-      geolocationError.value = error.message;
-      latitude.value = null;
-      longitude.value = null;
-      fetchItems({ reset: true });
-    },
-    { enableHighAccuracy: true }
-  );
+  fetchWithLocation();
 });
 
 watch(sortOption, () => {

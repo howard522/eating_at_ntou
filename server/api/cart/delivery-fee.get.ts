@@ -1,7 +1,6 @@
 // server/api/cart/delivery-fee.get.ts
 
-import { calculateDeliveryFee } from "@server/services/cart.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import { calculateDeliveryFee } from "$services/cart.service";
 
 /**
  * @openapi
@@ -9,15 +8,27 @@ import { getCurrentUser } from "@server/utils/getCurrentUser";
  *   get:
  *     summary: 計算外送費用
  *     description: |
- *       根據使用者的購物車內容與外送地址，計算並回傳外送費用。
+ *       依據顧客位置與提供的一個或多個餐廳座標計算平均距離，並回傳對應的外送費用。
  *     tags:
  *       - Cart
  *     security:
  *       - BearerAuth: []
  *     parameters:
- *       - name: address
+ *       - name: customerLatitude
  *         in: query
- *         description: 使用者的外送地址，用於計算外送費用
+ *         description: 顧客位置的緯度
+ *         required: true
+ *         schema:
+ *           type: number
+ *       - name: customerLongitude
+ *         in: query
+ *         description: 顧客位置的經度
+ *         required: true
+ *         schema:
+ *           type: number
+ *       - name: restaurants
+ *         in: query
+ *         description: 餐廳經緯度陣列的 JSON 字串，例如 `[{"lat":25.1,"lng":121.5}]`
  *         required: true
  *         schema:
  *           type: string
@@ -51,11 +62,69 @@ import { getCurrentUser } from "@server/utils/getCurrentUser";
  *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-    const userId = getCurrentUser(event).id;
+    const query = getQuery(event);
+    const customerLatitude = Number(query.customerLatitude);
+    const customerLongitude = Number(query.customerLongitude);
 
-    const address = getQuery(event).address as string;
+    if (!Number.isFinite(customerLatitude) || !Number.isFinite(customerLongitude)) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing or invalid customer coordinates.",
+        });
+    }
 
-    if (!address) {
+    const restaurantsParam = query.restaurants;
+
+    if (!restaurantsParam || typeof restaurantsParam !== "string") {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: restaurants.",
+        });
+    }
+
+    let restaurantsInput: unknown;
+    try {
+        restaurantsInput = JSON.parse(restaurantsParam);
+    } catch (error) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Invalid restaurants parameter. Expect JSON array.",
+        });
+    }
+
+    const restaurantCoordinates = Array.isArray(restaurantsInput)
+        ? restaurantsInput
+              .map((coord) => {
+                  if (Array.isArray(coord) && coord.length >= 2) {
+                      const [lat, lng] = coord;
+                      const latNum = Number(lat);
+                      const lngNum = Number(lng);
+
+                      if (Number.isFinite(latNum) && Number.isFinite(lngNum)) {
+                          return [lngNum, latNum] as [number, number];
+                      }
+
+                      return null;
+                  }
+
+                  if (typeof coord === "object" && coord !== null) {
+                      const { lat, lng, latitude, longitude } = coord as Record<string, unknown>;
+                      const latNum = Number(lat ?? latitude);
+                      const lngNum = Number(lng ?? longitude);
+
+                      if (Number.isFinite(latNum) && Number.isFinite(lngNum)) {
+                          return [lngNum, latNum] as [number, number];
+                      }
+                  }
+                  return null;
+              })
+              .filter((coord): coord is [number, number] => Array.isArray(coord))
+        : [];
+
+    if (!restaurantCoordinates.length) {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
@@ -63,10 +132,10 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const deliveryFee = await calculateDeliveryFee(userId, address);
+    const { distance, fee } = calculateDeliveryFee([customerLongitude, customerLatitude], restaurantCoordinates);
 
     return {
         success: true,
-        data: { deliveryFee },
+        data: { distance, deliveryFee: fee },
     };
 });

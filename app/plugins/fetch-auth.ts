@@ -1,5 +1,5 @@
-import { useUserStore } from '@stores/user'
 import { addRouteMiddleware, navigateTo } from '#app'
+import { useUserStore } from '@stores/user'
 
 export default defineNuxtPlugin((nuxtApp: any) => {
     const userStore = useUserStore()

@@ -1,6 +1,6 @@
 // server/api/orders/available.get.ts
 
-import { getAvailableOrdersForDeliveryPerson } from "@server/services/order.service";
+import { getAvailableOrdersForDeliveryPerson } from "$services/order.service";
 
 /**
  * @openapi

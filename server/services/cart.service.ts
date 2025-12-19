@@ -1,11 +1,10 @@
 // server/services/cart.service.ts
 
-import type { ICart, ICartResponse, ICartUpdate } from "@server/interfaces/cart.interface";
-import type { ObjectIdLike } from "@server/interfaces/common.interface";
-import Cart from "@server/models/cart.model";
-import { calculateDeliveryFeeByDistance } from "@server/utils/calcPrice";
-import { haversineDistance } from "@server/utils/distance";
-import { getGeocodeFromAddress } from "@server/utils/nominatim";
+import type { ICart, ICartResponse, ICartUpdate } from "$interfaces/cart.interface";
+import type { ObjectIdLike } from "$interfaces/common.interface";
+import Cart from "$models/cart.model";
+import { calculateDeliveryFeeByDistance } from "$utils/calcPrice";
+import { haversineDistance } from "$utils/distance";
 import { omit } from "lodash-es";
 
 /**
@@ -160,43 +159,29 @@ export async function clearCartByUserId(userId: ObjectIdLike) {
 }
 
 /**
- * 根據使用者 ID 計算外送費用
+ * 根據顧客位置與餐廳位置陣列計算外送費用
  *
- * @param userId 使用者的 ID
- * @param address 使用者的外送地址
- * @returns 外送費用
+ * @param customer 顧客的經緯度 [longitude, latitude]
+ * @param restaurants 餐廳的經緯度陣列 [longitude, latitude][]
+ * @returns 外送費用與平均距離 (公里)
  */
-export async function calculateDeliveryFee(userId: ObjectIdLike, address: string) {
-    // TODO: 優化
-    const cart = await findOrCreateCartDocByUserId(userId);
-
-    if (!cart.items.length) {
-        // 沒點東西想白給外送費嗎？
-        return 0;
-    }
-
-    const location = await getGeocodeFromAddress(address);
-    if (!location) {
+export function calculateDeliveryFee(customer: [number, number], restaurants: [number, number][]) {
+    if (!restaurants.length) {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
-            message: "Failed to get geocode from address.",
+            message: "At least one restaurant coordinate is required to calculate delivery fee",
         });
     }
 
     // 計算每個餐廳到使用者地址的距離，然後取平均值
     // 可能未來改成取最遠距離或其他規則
-    let totalDistance = 0;
-    cart.items.map((it) => {
-        if (!it.restaurant) return;
-        const restaurant = it.restaurant;
-        const dis = haversineDistance(restaurant.locationGeo.coordinates, location.coordinates);
-        totalDistance += dis;
+    const totalDistance = restaurants.reduce((distanceSum, restaurantCoords) => {
+        const distance = haversineDistance(restaurantCoords, customer);
+        return distanceSum + distance;
+    }, 0);
 
-        console.log(`Distance from restaurant ${restaurant.name} to address: ${dis.toFixed(2)} meters`);
-    });
-
-    const avgDistance = totalDistance / cart.items.length / 1000; // 轉換為公里
+    const avgDistance = totalDistance / restaurants.length / 1000; // 轉換為公里
 
     console.log(`Calculated average delivery distance: ${avgDistance.toFixed(2)} km`);
 

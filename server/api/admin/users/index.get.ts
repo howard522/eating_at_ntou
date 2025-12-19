@@ -1,7 +1,7 @@
 // server/api/admin/users/index.get.ts
 
-import type { UserRole } from "@server/interfaces/user.interface";
-import { searchUsers } from "@server/services/user.service";
+import type { UserRole } from "$interfaces/user.interface";
+import { searchUsers } from "$services/user.service";
 
 /**
  * @openapi

@@ -1,13 +1,14 @@
 // server/services/order.service.ts
 
-import type { ObjectIdLike } from "@server/interfaces/common.interface";
-import type { IOrder, OrderInfo, UpdateOrderStatusBody } from "@server/interfaces/order.interface";
-import Cart from "@server/models/cart.model";
-import Order from "@server/models/order.model";
-import { haversineDistance } from "@server/utils/distance";
+import type { ObjectIdLike } from "$interfaces/common.interface";
+import type { IOrder, OrderInfo, UpdateOrderStatusBody } from "$interfaces/order.interface";
+import Cart from "$models/cart.model";
+import Order from "$models/order.model";
+import { clearCartByUserId } from "$services/cart.service";
+import { getRestaurantsByQuery } from "$services/restaurants.service";
+import { haversineDistance } from "$utils/distance";
+import { broadcastToOrder } from "$utils/wsContext";
 import type { FilterQuery } from "mongoose";
-import { clearCartByUserId } from "./cart.service";
-import { getRestaurantsByQuery } from "./restaurants.service";
 
 /**
  * 判斷使用者是否為訂單的擁有者或外送員
@@ -475,12 +476,20 @@ export async function updateOrderDeliveryPerson(orderId: ObjectIdLike, deliveryP
 
     await order.save();
 
-    // populate deliveryPerson so API 回傳格式與其他 endpoint 一致（含 name/img/phone）
     try {
         await order.populate("deliveryPerson", "name img phone");
     } catch (e) {
         // ignore populate errors
     }
+
+    // 廣播狀態更新
+    broadcastToOrder(String(order._id), {
+        type: "status",
+        data: {
+            deliveryPerson: order.deliveryPerson,
+            deliveryStatus: order.deliveryStatus,
+        },
+    });
 
     return order;
 }
@@ -511,12 +520,20 @@ export async function updateOrderStatusById(orderId: ObjectIdLike, status: Updat
 
     await order.save();
 
-    // 若有外送員，populate deliveryPerson 以回傳 name/img/phone（與其他 endpoint 保持一致）
     try {
         if (order.deliveryPerson) await order.populate("deliveryPerson", "name img phone");
     } catch (e) {
         // ignore
     }
+
+    // 廣播狀態更新
+    broadcastToOrder(String(order._id), {
+        type: "status",
+        data: {
+            customerStatus: order.customerStatus,
+            deliveryStatus: order.deliveryStatus,
+        },
+    });
 
     return order;
 }

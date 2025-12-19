@@ -1,6 +1,6 @@
 // server/utils/parseForm.ts
 
-import { uploadImageToImageBB } from "@server/utils/uploadImage";
+import { uploadImageToImageBB } from "$utils/uploadImage";
 
 /**
  * 解析表單欄位，將 JSON 字串轉換為物件、陣列或字串

@@ -1,8 +1,9 @@
 // server/services/user.service.ts
 
-import type { ObjectIdLike, QueryPaginationOptions } from "@server/interfaces/common.interface";
-import type { IUserCreate, IUserResponse, IUserUpdate, UserRole } from "@server/interfaces/user.interface";
-import User from "@server/models/user.model";
+import type { ObjectIdLike, QueryPaginationOptions } from "$interfaces/common.interface";
+import type { IUserCreate, IUserResponse, IUserUpdate, UserRole } from "$interfaces/user.interface";
+import User from "$models/user.model";
+import { cleanObject } from "$utils/object";
 import type { FilterQuery } from "mongoose";
 
 /**

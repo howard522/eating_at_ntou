@@ -1,6 +1,6 @@
 // server/api/admin/users/[id]/index.get.ts
 
-import { getUserById } from "@server/services/user.service";
+import { getUserById } from "$services/user.service";
 
 /**
  * @openapi

@@ -117,8 +117,8 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '@stores/user';
 import { useInfiniteFetch } from '@composable/useInfiniteFetch';
+import { useUserStore } from '@stores/user';
 import type { Review } from "@types/review";
 
 const route = useRoute();

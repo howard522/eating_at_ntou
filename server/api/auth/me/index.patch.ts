@@ -1,9 +1,9 @@
 // server/api/auth/me.patch.ts
 
-import type { IUserUpdate } from "@server/interfaces/user.interface";
-import { updateUser } from "@server/services/user.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
-import { parseForm } from "@server/utils/parseForm";
+import type { IUserUpdate } from "$interfaces/user.interface";
+import { updateUser } from "$services/user.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
+import { parseForm } from "$utils/parseForm";
 
 /**
  * @openapi

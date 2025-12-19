@@ -1,4 +1,4 @@
-import { getOrdersForAdmin } from "@server/services/order.service";
+import { getOrdersForAdmin } from "$services/order.service";
 
 /**
  * @openapi
