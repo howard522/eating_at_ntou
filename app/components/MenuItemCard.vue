@@ -46,8 +46,8 @@
 </template>
 
 <script setup lang="ts">
+import { useImageHoverColor } from '@composable/useImageHoverColor';
 import { useCartStore } from '@stores/cart';
-import { useImageHoverColor } from '../composable/useImageHoverColor';
 
 interface MenuItem {
   _id: string
