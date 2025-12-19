@@ -2,8 +2,15 @@ import ChatMessage from "$models/chatMessage.model";
 import Order from "$models/order.model";
 import { verifyJwt } from "$utils/auth";
 import connectDB from "$utils/db";
+import {
+    chatRooms,
+    driverLocations,
+    broadcastToOrder,
+    broadcastLocation,
+    type Payload,
+    type LocationPayload,
+} from "$utils/wsContext";
 import type { AdapterInternal, Peer } from "crossws";
-import { defineWebSocketHandler } from "h3";
 
 /**
  * 聊天訊息的資料結構
@@ -15,28 +22,7 @@ interface Message {
     content: string; // 訊息內容
     timestamp?: Date; // 時間戳記
 }
-interface LocationPayload {
-    sender?: string;
-    lat: number;
-    lng: number;
-    timestamp?: Date;
-}
 
-interface Payload {
-    type: string; // 資料類型
-    message?: string; // 錯誤或系統訊息
-    data?: any; // 訊息或位置資料
-}
-
-interface PeerContext {
-    peer: Peer<AdapterInternal>;
-    peerId: string;
-    userId: string;
-    role: "customer" | "delivery";
-}
-
-const chatRooms: Map<string, Map<string, PeerContext>> = new Map(); // orderId -> peers
-const driverLocations: Map<string, LocationPayload> = new Map(); // orderId -> latest location
 /**
  * 從 ws 的 URL 中取得 orderId
  *
@@ -50,31 +36,11 @@ function getOrderIdFromURL(url?: string): string | null {
     return match[1].toLowerCase();
 }
 
-/**
- * 廣播訊息給指定訂單的所有連線 peer
- * @param orderId 訂單 ID
- * @param payload 發送資料
- * @param type 資料類型
- */
-function broadcastToOrder(orderId: string, payload: Payload) {
-    const message = JSON.stringify(payload);
-    const room = chatRooms.get(orderId);
-    if (!room) return;
-
-    room.forEach(({ peer }) => {
-        peer.send(message);
-    });
-}
-function broadcastLocation(orderId: string, data: LocationPayload) {
-    broadcastToOrder(orderId, { type: "location", data });
-}
-/**
- * 簡化訊息物件的建立
- */
 function shortMessage(_type: string, _message: string): string {
     const msg: Payload = { type: _type, message: _message };
     return JSON.stringify(msg);
 }
+
 function isValidCoordinate(value: unknown): value is number {
     return typeof value === "number" && Number.isFinite(value);
 }
@@ -103,9 +69,7 @@ function dispatchLocationUpdate(peer: Peer<AdapterInternal>, data: { lat: number
     driverLocations.set(orderId, payload);
     broadcastLocation(orderId, payload);
 }
-/**
- * 從聊天室移除 peer
- */
+
 function disconnectClient(peer: Peer<AdapterInternal>) {
     const orderId = getOrderIdFromURL(peer.request.url);
 
@@ -115,9 +79,6 @@ function disconnectClient(peer: Peer<AdapterInternal>) {
 
         room.delete(peer.id);
 
-        // console.log(`WebSocket connection closed for order ${orderId}: ${peer} (total peers: ${room.size})`);
-
-        // 如果聊天室沒人了，就刪除聊天室
         if (room.size === 0) {
             chatRooms.delete(orderId);
             driverLocations.delete(orderId);
@@ -137,9 +98,6 @@ function disconnectClient(peer: Peer<AdapterInternal>) {
     }
 }
 
-/**
- * 驗證並認證連線的 peer
- */
 async function authorizeClient(peer: Peer<AdapterInternal>, data: Message) {
     // 驗證 JWT
     const payload = verifyJwt(data.content);
@@ -154,14 +112,12 @@ async function authorizeClient(peer: Peer<AdapterInternal>, data: Message) {
     const orderId = getOrderIdFromURL(peer.request.url)!;
     const order = await Order.findById(orderId);
 
-    // 檢查訂單是否存在
     if (!order) {
         peer.send(shortMessage("error", "Order not found."));
         peer.close();
         return;
     }
 
-    // 檢查使用者是否有權限進入此訂單的聊天室
     if (
         (data.senderRole === "customer" && order.user.toString() !== data.sender) ||
         (data.senderRole === "delivery" && order.deliveryPerson?.toString() !== data.sender)
@@ -171,14 +127,12 @@ async function authorizeClient(peer: Peer<AdapterInternal>, data: Message) {
         return;
     }
 
-    // 檢查訂單是否已完成
     if (order.customerStatus === "completed" && order.deliveryStatus === "completed") {
         peer.send(shortMessage("error", "Chat is closed for completed orders."));
         peer.close();
         return;
     }
 
-    // 認證成功，將 peer 加入對應的聊天室
     if (!chatRooms.has(orderId)) {
         chatRooms.set(orderId, new Map());
     }
@@ -188,12 +142,6 @@ async function authorizeClient(peer: Peer<AdapterInternal>, data: Message) {
         userId: data.sender,
         role: data.senderRole,
     });
-
-    // console.log(
-    //     `WebSocket connection authenticated for order ${orderId}: ${peer} (total peers: ${
-    //         chatRooms.get(orderId)!.size
-    //     })`
-    // );
 
     const sendPayload: Payload = {
         type: "join",
@@ -205,7 +153,6 @@ async function authorizeClient(peer: Peer<AdapterInternal>, data: Message) {
         },
     };
 
-    // 廣播加入訊息給該訂單的所有連線的 peer
     broadcastToOrder(orderId, sendPayload);
     const latestLocation = driverLocations.get(orderId);
     if (latestLocation) {
@@ -221,7 +168,6 @@ async function dispatchChatMessage(peer: Peer<AdapterInternal>, data: Message) {
         return;
     }
 
-    // 儲存到 DB
     await connectDB();
     const newMessage = await ChatMessage.create({
         order: orderId,
@@ -230,7 +176,6 @@ async function dispatchChatMessage(peer: Peer<AdapterInternal>, data: Message) {
         content: data.content,
     });
 
-    // 廣播給該訂單的所有連線的 peer
     const payload: Payload = {
         type: "message",
         data: newMessage,
@@ -240,13 +185,10 @@ async function dispatchChatMessage(peer: Peer<AdapterInternal>, data: Message) {
 
 export default defineWebSocketHandler({
     open(peer) {
-        // 暫時開啟連線，等待認證
-        const orderId = getOrderIdFromURL(peer.request.url);
-        // console.log(`WebSocket connection temperarily opened for order ${orderId}: ${peer}`);
+        getOrderIdFromURL(peer.request.url);
     },
 
     close(peer) {
-        // 關閉連線時，從聊天室移除 peer
         disconnectClient(peer);
     },
 
@@ -256,10 +198,8 @@ export default defineWebSocketHandler({
         if (!data) return;
 
         if (payload.type === "auth") {
-            // 處理認證
             authorizeClient(peer, data);
         } else if (payload.type === "send") {
-            // 處理傳送給其他 peer
             dispatchChatMessage(peer, data);
         } else if (payload.type === "location") {
             if (payload.data) {

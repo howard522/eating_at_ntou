@@ -156,15 +156,21 @@
             </v-card-text>
           </v-card>
 
-          <v-btn
-            color="primary"
-            block
-            size="large"
-            class="mt-4"
-            @click="navigateTo(`/chat/${orderId}`)"
+          <v-badge
+            :model-value="notificationStore.hasMessage(orderId)"
+            color="error"
+            dot
+            class="w-100 mt-4 notification-badge"
           >
-            <span class="text-h6 font-weight-bold">聯絡顧客</span>
-          </v-btn>
+            <v-btn
+              color="primary"
+              block
+              size="large"
+              @click="navigateTo(`/chat/${orderId}`)"
+            >
+              <span class="text-h6 font-weight-bold">聯絡顧客</span>
+            </v-btn>
+          </v-badge>
 
           <v-btn
             :color="actionButtonColor"
@@ -213,6 +219,7 @@
 <script setup lang="ts">
 import DeliveryMap from "@components/DeliveryMap.vue";
 import { useOrderTracking } from "@composable/useOrderTracking";
+import { useNotificationStore } from "@stores/notification";
 import { useUserStore } from "@stores/user";
 
 type LatLng = [number, number];
@@ -234,6 +241,17 @@ const deliveryStatusToStepMap: Record<string, number> = {
 const route = useRoute();
 const orderId = route.params.id as string;
 const userStore = useUserStore();
+const notificationStore = useNotificationStore();
+
+// 進入頁面時清除狀態更新通知
+onMounted(() => {
+    notificationStore.clearStatus(orderId);
+});
+
+onActivated(() => {
+    notificationStore.clearStatus(orderId);
+});
+
 const isUpdating = ref(false);
 const isConfirmDialogVisible = ref(false);
 
@@ -472,3 +490,24 @@ useHead({
   title: "外送任務狀態",
 });
 </script>
+
+<style scoped>
+.notification-badge :deep(.v-badge__badge) {
+  animation: pulse 1.5s infinite;
+  border: 2px solid white;
+  width: 12px;
+  height: 12px;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 82, 82, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+  }
+}
+</style>

@@ -1,6 +1,6 @@
 import { useUserStore } from '@stores/user'
 import debounce from 'lodash-es/debounce'
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from 'vue'
 
 // 使用範例請見 app/pages/customer/stores/index.vue
 interface UseInfiniteFetchOptions<T> {
@@ -96,6 +96,12 @@ export function useInfiniteFetch<T>(options: UseInfiniteFetchOptions<T>) {
         if (immediate) fetchItems({ reset: true })
     })
     onUnmounted(() => {
+        window.removeEventListener('scroll', handleScroll)
+    })
+    onActivated(() => {
+        window.addEventListener('scroll', handleScroll)
+    })
+    onDeactivated(() => {
         window.removeEventListener('scroll', handleScroll)
     })
 

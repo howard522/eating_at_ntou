@@ -1,6 +1,10 @@
 <template>
 
-  <v-card class="rounded-lg store-card" :to="`/customer/stores/${id}`">
+  <v-card 
+    class="rounded-lg store-card" 
+    :to="`/customer/stores/${id}`"
+    :style="{ '--hover-bg': hoverBgColor }"
+  >
 
     <div class="image-container">
       <v-img
@@ -33,7 +37,9 @@
 </template>
 
 <script setup lang="ts">
-defineProps({
+import { useImageHoverColor } from '../composable/useImageHoverColor';
+
+const props = defineProps({
   id: {
     type: String,
     required: true,
@@ -51,6 +57,8 @@ defineProps({
     default: '',
   },
 });
+
+const { hoverBgColor } = useImageHoverColor(toRef(props, 'image'));
 </script>
 
 <style scoped>
@@ -63,7 +71,7 @@ defineProps({
 }
 
 .store-card:hover {
-  background-color: #FFFFFF !important;
+  background-color: var(--hover-bg, #FFFFFF) !important;
 }
 
 .image-container {
