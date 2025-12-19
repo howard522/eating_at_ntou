@@ -1,6 +1,6 @@
 // server/api/admin/restaurants/index.get.ts
 
-import { searchRestaurants } from "@server/services/restaurants.service";
+import { searchRestaurants } from "$services/restaurants.service";
 
 /**
  * @openapi

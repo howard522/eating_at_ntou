@@ -1,6 +1,6 @@
 // server/api/auth/me.get.ts
 
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi

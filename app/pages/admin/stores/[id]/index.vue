@@ -150,9 +150,9 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
-import { useUserStore } from '@stores/user'
-import { useSnackbarStore } from '@utils/snackbar'
+import { useUserStore } from '@stores/user';
+import { useSnackbarStore } from '@utils/snackbar';
+import { useRoute } from 'vue-router';
 
 interface MenuItem {
   _key?: string; // 本地新增、尚未儲存的項目

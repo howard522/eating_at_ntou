@@ -1,6 +1,6 @@
 // server/api/ads/random.get.ts
 
-import { getRandomAd } from "@server/services/ad.service";
+import { getRandomAd } from "$services/ad.service";
 
 /**
  * @openapi

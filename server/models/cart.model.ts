@@ -1,7 +1,7 @@
 // server/models/cart.model.ts
 
-import type { ICart, ICartItem } from "@server/interfaces/cart.interface";
-import { calculateTotalPrice } from "@server/utils/calcPrice";
+import type { ICart, ICartItem } from "$interfaces/cart.interface";
+import { calculateTotalPrice } from "$utils/calcPrice";
 import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
 

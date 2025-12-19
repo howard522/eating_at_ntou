@@ -1,7 +1,7 @@
 // server/api/[...slugs].ts
 
-import { HttpStatus } from "@server/interfaces/httpStatus";
-import { createHttpError } from "@server/utils/httpUtils";
+import { HttpStatus } from "$interfaces/httpStatus";
+import { createHttpError } from "$utils/httpUtils";
 
 /**
  * 這個檔案用來處理所有未定義的 API 路由請求，並回傳 404 錯誤。

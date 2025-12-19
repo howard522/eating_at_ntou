@@ -1,6 +1,6 @@
 // server/api/restaurants/[id].get.ts
 
-import { getRestaurantById } from "@server/services/restaurants.service";
+import { getRestaurantById } from "$services/restaurants.service";
 
 /**
  * @openapi

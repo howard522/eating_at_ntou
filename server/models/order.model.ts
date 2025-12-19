@@ -1,7 +1,7 @@
 // server/models/order.model.ts
 
-import type { IOrder, IOrderItem } from "@server/interfaces/order.interface";
-import { calculateTotalPrice } from "@server/utils/calcPrice";
+import type { IOrder, IOrderItem } from "$interfaces/order.interface";
+import { calculateTotalPrice } from "$utils/calcPrice";
 import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
 

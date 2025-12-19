@@ -1,7 +1,7 @@
 // server/middleware/1.auth.ts
 
-import { getUserById } from "@server/services/user.service";
-import { verifyJwt } from "@server/utils/auth";
+import { getUserById } from "$services/user.service";
+import { verifyJwt } from "$utils/auth";
 
 function isNeedAuth(path: string, method: string): boolean {
     // 評論建立需要驗證
@@ -21,7 +21,7 @@ function isNeedAuth(path: string, method: string): boolean {
 
 export default defineEventHandler(async (event) => {
     const mothed = event.node.req.method?.toUpperCase() || "";
-    const url = getRequestURL(event).pathname;
+    const url = event.path;
 
     // 只處理需要驗證的路徑
     if (!isNeedAuth(url, mothed)) {

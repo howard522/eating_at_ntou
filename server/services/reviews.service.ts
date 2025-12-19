@@ -1,8 +1,8 @@
 // server/services/reviews.service.ts
 
-import type { ObjectIdLike, QueryPaginationOptions } from "@server/interfaces/common.interface";
-import type { IReviewCreate, IReviewResponse } from "@server/interfaces/review.interface";
-import Review from "@server/models/review.model";
+import type { ObjectIdLike, QueryPaginationOptions } from "$interfaces/common.interface";
+import type { IReviewCreate, IReviewResponse } from "$interfaces/review.interface";
+import Review from "$models/review.model";
 
 /**
  * 取得特定餐廳的評論列表

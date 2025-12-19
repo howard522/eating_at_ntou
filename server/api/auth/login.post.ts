@@ -1,7 +1,7 @@
 // server/api/auth/login.post.ts
 
-import type { IUserLogin } from "@server/interfaces/user.interface";
-import { loginUser } from "@server/services/auth.service";
+import type { IUserLogin } from "$interfaces/user.interface";
+import { loginUser } from "$services/auth.service";
 
 /**
  * @openapi

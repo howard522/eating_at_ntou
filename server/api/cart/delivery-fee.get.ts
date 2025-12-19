@@ -1,7 +1,6 @@
 // server/api/cart/delivery-fee.get.ts
 
-import { calculateDeliveryFee } from "@server/services/cart.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import { calculateDeliveryFee } from "$services/cart.service";
 
 /**
  * @openapi
@@ -63,89 +62,80 @@ import { getCurrentUser } from "@server/utils/getCurrentUser";
  *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-  const query = getQuery(event);
-  const customerLatitude = Number(query.customerLatitude);
-  const customerLongitude = Number(query.customerLongitude);
+    const query = getQuery(event);
+    const customerLatitude = Number(query.customerLatitude);
+    const customerLongitude = Number(query.customerLongitude);
 
-  if (
-    !Number.isFinite(customerLatitude) ||
-    !Number.isFinite(customerLongitude)
-  ) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Bad Request",
-      message: "Missing or invalid customer coordinates.",
-    });
-  }
+    if (!Number.isFinite(customerLatitude) || !Number.isFinite(customerLongitude)) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing or invalid customer coordinates.",
+        });
+    }
 
-  const restaurantsParam = query.restaurants;
+    const restaurantsParam = query.restaurants;
 
-  if (!restaurantsParam || typeof restaurantsParam !== "string") {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Bad Request",
-      message: "Missing required parameter: restaurants.",
-    });
-  }
+    if (!restaurantsParam || typeof restaurantsParam !== "string") {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: restaurants.",
+        });
+    }
 
-  let restaurantsInput: unknown;
-  try {
-    restaurantsInput = JSON.parse(restaurantsParam);
-  } catch (error) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Bad Request",
-      message: "Invalid restaurants parameter. Expect JSON array.",
-    });
-  }
+    let restaurantsInput: unknown;
+    try {
+        restaurantsInput = JSON.parse(restaurantsParam);
+    } catch (error) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Invalid restaurants parameter. Expect JSON array.",
+        });
+    }
 
-  const restaurantCoordinates = Array.isArray(restaurantsInput)
-    ? restaurantsInput
-        .map((coord) => {
-          if (Array.isArray(coord) && coord.length >= 2) {
-            const [lat, lng] = coord;
-            const latNum = Number(lat);
-            const lngNum = Number(lng);
+    const restaurantCoordinates = Array.isArray(restaurantsInput)
+        ? restaurantsInput
+              .map((coord) => {
+                  if (Array.isArray(coord) && coord.length >= 2) {
+                      const [lat, lng] = coord;
+                      const latNum = Number(lat);
+                      const lngNum = Number(lng);
 
-            if (Number.isFinite(latNum) && Number.isFinite(lngNum)) {
-              return [lngNum, latNum] as [number, number];
-            }
+                      if (Number.isFinite(latNum) && Number.isFinite(lngNum)) {
+                          return [lngNum, latNum] as [number, number];
+                      }
 
-            return null;
-          }
+                      return null;
+                  }
 
-          if (typeof coord === "object" && coord !== null) {
-            const { lat, lng, latitude, longitude } = coord as Record<
-              string,
-              unknown
-            >;
-            const latNum = Number(lat ?? latitude);
-            const lngNum = Number(lng ?? longitude);
+                  if (typeof coord === "object" && coord !== null) {
+                      const { lat, lng, latitude, longitude } = coord as Record<string, unknown>;
+                      const latNum = Number(lat ?? latitude);
+                      const lngNum = Number(lng ?? longitude);
 
-            if (Number.isFinite(latNum) && Number.isFinite(lngNum)) {
-              return [lngNum, latNum] as [number, number];
-            }
-          }
-          return null;
-        })
-        .filter((coord): coord is [number, number] => Array.isArray(coord))
-    : [];
+                      if (Number.isFinite(latNum) && Number.isFinite(lngNum)) {
+                          return [lngNum, latNum] as [number, number];
+                      }
+                  }
+                  return null;
+              })
+              .filter((coord): coord is [number, number] => Array.isArray(coord))
+        : [];
 
-  if (!restaurantCoordinates.length) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Bad Request",
-      message: "Missing required parameter: address.",
-    });
-  }
+    if (!restaurantCoordinates.length) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: address.",
+        });
+    }
 
-  const { distance, fee } = calculateDeliveryFee(
-    [customerLongitude, customerLatitude],
-    restaurantCoordinates
-  );
+    const { distance, fee } = calculateDeliveryFee([customerLongitude, customerLatitude], restaurantCoordinates);
 
-  return {
-    success: true,
-    data: { distance, deliveryFee: fee },
-  };
+    return {
+        success: true,
+        data: { distance, deliveryFee: fee },
+    };
 });

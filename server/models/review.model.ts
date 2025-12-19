@@ -1,6 +1,6 @@
 // server/models/review.model.ts
 
-import type { IReview } from "@server/interfaces/review.interface";
+import type { IReview } from "$interfaces/review.interface";
 import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
 
