@@ -55,8 +55,12 @@
 </template>
 
 <script setup lang="ts">
+const props = defineProps<{
+    imageFile?: File | null // 可選的初始圖片檔案
+}>()
+
 const emit = defineEmits<{ (e: 'cropped', blob: Blob): void }>()
-const imageFile = ref<File | null>(null)
+const imageFile = ref<File | null>(props.imageFile ?? null)
 const imageObj = ref<HTMLImageElement | null>(null)
 const cropType = ref<'center' | 'custom'>('center')
 const canvasSize = 400
@@ -290,6 +294,7 @@ watch([imageFile, cropType], () => {
 onMounted(() => {
   // 防止預設觸控行為
   canvasRef.value?.setAttribute('touch-action', 'none')
+  if (imageFile.value) previewImage() // 初始有圖片的話傳入預覽
 })
 
 onUnmounted(() => {
