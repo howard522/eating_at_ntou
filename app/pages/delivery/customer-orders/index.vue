@@ -70,8 +70,9 @@
 </template>
 
 <script setup lang="ts">
-import type { ApiOrderAvailable as ApiOrder, ApiResponse, AvailableDisplayOrder as DisplayOrder } from '@types/order'
-import { useInfiniteFetch } from '@/composable/useInfiniteFetch'
+import { useInfiniteFetch } from '@composable/useInfiniteFetch';
+import { useUserStore } from '@stores/user';
+import type { ApiOrderAvailable as ApiOrder, ApiResponse, AvailableDisplayOrder as DisplayOrder } from '@types/order';
 
 const keyword = ref('');
 const sortOption = ref('newest');

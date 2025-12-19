@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { useImageHoverColor } from '../composable/useImageHoverColor';
+import { useImageHoverColor } from '@composable/useImageHoverColor';
 
 const props = defineProps({
   id: {

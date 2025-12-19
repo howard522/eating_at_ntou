@@ -1,6 +1,6 @@
 // server/models/chatMessage.model.ts
 
-import type { IChatMessage } from "@server/interfaces/chatMessage.interface";
+import type { IChatMessage } from "$interfaces/chatMessage.interface";
 import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
 

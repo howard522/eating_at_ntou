@@ -1,8 +1,8 @@
 // server/api/cart/items.post.ts
 
-import type { ICartUpdate } from "@server/interfaces/cart.interface";
-import { updateCartByUserId } from "@server/services/cart.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import type { ICartUpdate } from "$interfaces/cart.interface";
+import { updateCartByUserId } from "$services/cart.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi

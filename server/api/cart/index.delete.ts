@@ -1,7 +1,7 @@
 // server/api/cart/index.delete.ts
 
-import { clearCartByUserId } from "@server/services/cart.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import { clearCartByUserId } from "$services/cart.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi

@@ -1,6 +1,6 @@
 // server/utils/httpUtils.ts
 
-import { HttpStatus, HttpStatusMessage } from "@server/interfaces/httpStatus";
+import { HttpStatus, HttpStatusMessage } from "$interfaces/httpStatus";
 
 /**
  * 建立 HTTP 錯誤物件的輔助函式

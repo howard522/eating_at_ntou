@@ -1,14 +1,14 @@
 // server/services/order.service.ts
 
-import type { ObjectIdLike } from "@server/interfaces/common.interface";
-import type { IOrder, OrderInfo, UpdateOrderStatusBody } from "@server/interfaces/order.interface";
-import Cart from "@server/models/cart.model";
-import Order from "@server/models/order.model";
-import { haversineDistance } from "@server/utils/distance";
+import type { ObjectIdLike } from "$interfaces/common.interface";
+import type { IOrder, OrderInfo, UpdateOrderStatusBody } from "$interfaces/order.interface";
+import Cart from "$models/cart.model";
+import Order from "$models/order.model";
+import { clearCartByUserId } from "$services/cart.service";
+import { getRestaurantsByQuery } from "$services/restaurants.service";
+import { haversineDistance } from "$utils/distance";
+import { broadcastToOrder } from "$utils/wsContext";
 import type { FilterQuery } from "mongoose";
-import { clearCartByUserId } from "./cart.service";
-import { getRestaurantsByQuery } from "./restaurants.service";
-import { broadcastToOrder } from "@server/utils/wsContext";
 
 /**
  * 判斷使用者是否為訂單的擁有者或外送員

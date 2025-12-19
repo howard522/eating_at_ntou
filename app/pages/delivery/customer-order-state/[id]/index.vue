@@ -217,10 +217,10 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from "@stores/user";
-import DeliveryMap from "@/components/DeliveryMap.vue";
-import { useOrderTracking } from "@app/composable/useOrderTracking";
+import DeliveryMap from "@components/DeliveryMap.vue";
+import { useOrderTracking } from "@composable/useOrderTracking";
 import { useNotificationStore } from "@stores/notification";
+import { useUserStore } from "@stores/user";
 
 type LatLng = [number, number];
 

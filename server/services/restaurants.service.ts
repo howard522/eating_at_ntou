@@ -1,6 +1,6 @@
 // server/services/restaurants.service.ts
 
-import type { ObjectIdLike, QueryPaginationOptions } from "@server/interfaces/common.interface";
+import type { ObjectIdLike, QueryPaginationOptions } from "$interfaces/common.interface";
 import type {
     ICreateMenuItem,
     ICreateRestaurant,
@@ -9,11 +9,11 @@ import type {
     IRestaurantResponse,
     IUpdateMenuItem,
     IUpdateRestaurant,
-} from "@server/interfaces/restaurant.interface";
-import Restaurant from "@server/models/restaurant.model";
-import { buildRestaurantSearchQuery } from "@server/utils/mongoQuery";
-import { getGeocodeFromAddress } from "@server/utils/nominatim";
-import { cleanObject } from "@server/utils/object";
+} from "$interfaces/restaurant.interface";
+import Restaurant from "$models/restaurant.model";
+import { buildRestaurantSearchQuery } from "$utils/mongoQuery";
+import { getGeocodeFromAddress } from "$utils/nominatim";
+import { cleanObject } from "$utils/object";
 import type { FilterQuery, PipelineStage } from "mongoose";
 
 async function findRestaurantDocById(restaurantId: ObjectIdLike) {

@@ -100,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import type { DisplayOrder } from '@types/order'
+import type { DisplayOrder } from '@types/order';
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
 import { useSnackbarStore } from '@utils/snackbar';

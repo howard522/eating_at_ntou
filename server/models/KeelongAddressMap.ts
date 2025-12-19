@@ -1,6 +1,6 @@
 // server/models/KeelongAddressMap.ts
 
-import type { IKeelongAddressMap } from "@server/interfaces/address.interfece";
+import type { IKeelongAddressMap } from "$interfaces/address.interfece";
 import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
 

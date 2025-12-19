@@ -1,6 +1,6 @@
 // server/utils/uploadImage.ts
 
-import type { ImageFile } from "@server/interfaces/common.interface";
+import type { ImageFile } from "$interfaces/common.interface";
 
 const IMAGEBB_API_KEY = process.env.IMAGEBB_API_KEY || "";
 

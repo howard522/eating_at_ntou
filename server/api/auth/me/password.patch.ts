@@ -1,8 +1,8 @@
 // server/api/auth/me/password.patch.ts
 
-import type { UpdatePasswordBody } from "@server/interfaces/user.interface";
-import { changeUserPassword } from "@server/services/auth.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import type { UpdatePasswordBody } from "$interfaces/user.interface";
+import { changeUserPassword } from "$services/auth.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi

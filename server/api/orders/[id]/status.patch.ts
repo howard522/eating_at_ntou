@@ -1,8 +1,8 @@
 // server/api/orders/[id]/status.patch.ts
 
-import type { UpdateOrderStatusBody } from "@server/interfaces/order.interface";
-import { getOrderOwnership, updateOrderStatusById } from "@server/services/order.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import type { UpdateOrderStatusBody } from "$interfaces/order.interface";
+import { getOrderOwnership, updateOrderStatusById } from "$services/order.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi

@@ -1,6 +1,6 @@
 // server/api/admin/restaurants/[id]/index.delete.ts
 
-import { deleteRestaurantById } from "@server/services/restaurants.service";
+import { deleteRestaurantById } from "$services/restaurants.service";
 
 /**
  * @openapi

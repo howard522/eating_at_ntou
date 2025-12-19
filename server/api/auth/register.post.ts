@@ -1,7 +1,7 @@
 // server/api/auth/register.post.ts
 
-import type { IUserCreate } from "@server/interfaces/user.interface";
-import { registerUser } from "@server/services/auth.service";
+import type { IUserCreate } from "$interfaces/user.interface";
+import { registerUser } from "$services/auth.service";
 
 /**
  * @openapi

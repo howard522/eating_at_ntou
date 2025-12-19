@@ -60,8 +60,8 @@
 </template>
 
 <script setup lang="ts">
+import { useImageHoverColor } from '@composable/useImageHoverColor';
 import type { User } from '@types/user';
-import { useImageHoverColor } from '../composable/useImageHoverColor';
 
 const props = defineProps<{
   user: User

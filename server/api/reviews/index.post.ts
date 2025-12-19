@@ -1,8 +1,8 @@
 // server/api/reviews/index.post.ts
 
-import { getRestaurantById } from "@server/services/restaurants.service";
-import { createReview } from "@server/services/reviews.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import { getRestaurantById } from "$services/restaurants.service";
+import { createReview } from "$services/reviews.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi

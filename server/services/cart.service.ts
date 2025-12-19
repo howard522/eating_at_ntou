@@ -1,11 +1,10 @@
 // server/services/cart.service.ts
 
-import type { ICart, ICartResponse, ICartUpdate } from "@server/interfaces/cart.interface";
-import type { ObjectIdLike } from "@server/interfaces/common.interface";
-import Cart from "@server/models/cart.model";
-import { calculateDeliveryFeeByDistance } from "@server/utils/calcPrice";
-import { haversineDistance } from "@server/utils/distance";
-import { getGeocodeFromAddress } from "@server/utils/nominatim";
+import type { ICart, ICartResponse, ICartUpdate } from "$interfaces/cart.interface";
+import type { ObjectIdLike } from "$interfaces/common.interface";
+import Cart from "$models/cart.model";
+import { calculateDeliveryFeeByDistance } from "$utils/calcPrice";
+import { haversineDistance } from "$utils/distance";
 import { omit } from "lodash-es";
 
 /**
