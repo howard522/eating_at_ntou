@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container class="py-8">
     <div v-if="pending" class="text-center py-16">
       <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
       <p class="mt-4 text-h6">正在載入餐廳資料...</p>
@@ -9,144 +9,256 @@
       載入資料時發生錯誤：{{ error?.message || '未知錯誤' }}
     </v-alert>
 
-    <v-form v-else-if="editableStore" ref="form">
-      <v-card flat border>
-        <v-card-title class="text-h5 font-weight-bold border-b pa-4 d-flex align-center justify-space-between">
-          <div class="d-flex align-center">
-            <span>編輯餐廳：{{ editableStore.name }}</span>
-          </div>
-
-          <div>
-            <v-btn
-                color="primary"
+    <v-row v-else-if="editableStore" justify="center">
+      <v-col cols="12" lg="10">
+        <v-form ref="form">
+          <v-card elevation="2" rounded="lg" class="overflow-visible">
+            <!-- 新頂部工具列 -->
+            <v-toolbar flat density="comfortable" color="primary" class="rounded-t toolbar-header">
+              <v-toolbar-title class="text-h5 font-weight-bold text-white">編輯餐廳：{{ editableStore.name }}</v-toolbar-title>
+              <v-spacer></v-spacer>
+              <v-btn
                 variant="text"
+                class="text-white"
                 :to="`/admin/stores/${storeId}/reviews`"
-                density="comfortable"
                 prepend-icon="mdi-comment-multiple-outline"
-                class="ma-0"
-            >
-              查看評論
-            </v-btn>
-          </div>
-        </v-card-title>
+              >
+                查看評論
+              </v-btn>
+            </v-toolbar>
 
-        <v-card-text class="pa-6">
-          <h3 class="text-h6 mb-4">餐廳資訊</h3>
-          <v-row>
-            <v-col cols="12" md="8">
-              <p class="text-subtitle-2 mb-1">餐廳名稱</p>
-              <v-text-field v-model="editableStore.name" :rules="[(v: string) => !!v || '餐廳名稱為必填。']" variant="outlined" density="comfortable"></v-text-field>
+            <v-card-text class="pa-8">
+              <!-- 餐廳資訊區 -->
+              <h3 class="section-title mb-6">餐廳資訊</h3>
+              <v-row>
+                <v-col cols="12" md="8">
+                  <p class="text-subtitle-2 mb-1 label-required">餐廳名稱＊</p>
+                  <v-text-field
+                    v-model="editableStore.name"
+                    :rules="[(v: string) => !!v || '餐廳名稱為必填。']"
+                    variant="outlined"
+                    density="comfortable"
+                    placeholder="例：海風食堂"
+                  ></v-text-field>
 
-              <p class="text-subtitle-2 mb-1 mt-2">介紹</p>
-              <v-textarea v-model="editableStore.info" :rules="[(v: string) => !!v || '介紹為必填。']" variant="outlined" rows="3"></v-textarea>
+                  <p class="text-subtitle-2 mb-1 mt-4 label-required">介紹</p>
+                  <v-textarea
+                    v-model="editableStore.info"
+                    :rules="[(v: string) => !!v || '介紹為必填。']"
+                    variant="outlined"
+                    rows="3"
+                    placeholder="簡述餐廳特色與招牌餐點..."
+                  ></v-textarea>
 
-              <p class="text-subtitle-2 mb-1 mt-2">地址</p>
-              <v-text-field v-model="editableStore.address" :rules="addressRules" variant="outlined" density="comfortable"></v-text-field>
+                  <p class="text-subtitle-2 mb-1 mt-4 label-required">地址＊</p>
+                  <v-text-field
+                    v-model="editableStore.address"
+                    :rules="addressRules"
+                    variant="outlined"
+                    density="comfortable"
+                    placeholder="例：基隆市中正區 ×× 路 ×× 號"
+                    hint="請輸入包含縣市、鄉鎮市區與詳細門牌"
+                    persistent-hint
+                  ></v-text-field>
 
-              <p class="text-subtitle-2 mb-1 mt-2">電話</p>
-              <v-text-field v-model="editableStore.phone" :rules="phoneRules" variant="outlined" density="comfortable"></v-text-field>
-            </v-col>
-            <v-col cols="12" md="4">
-              <p class="text-subtitle-2 mb-1">封面圖片</p>
-              <v-img :src="imagePreviewUrl || editableStore.image" :aspect-ratio="16/9" class="rounded-lg border" cover>
-                <template #error>
-                  <v-sheet class="d-flex align-center justify-center fill-height" color="grey-lighten-4">
-                    <v-icon color="grey-lighten-1" size="50">mdi-image-off-outline</v-icon>
-                  </v-sheet>
-                </template>
-              </v-img>
-              <v-file-input
-                  v-model="imageFile"
-                  label="上傳新圖片"
-                  variant="outlined" density="comfortable" class="mt-4"
-                  accept="image/*" prepend-icon="mdi-camera"
-                  @update:modelValue="previewMainImage"
-              ></v-file-input>
-              <p class="text-caption text-medium-emphasis mt-1">
-                注意：上傳新圖片將會覆蓋現有圖片。
-              </p>
-            </v-col>
-          </v-row>
+                  <p class="text-subtitle-2 mb-1 mt-4 label-required">電話＊</p>
+                  <v-text-field
+                    v-model="editableStore.phone"
+                    :rules="phoneRules"
+                    variant="outlined"
+                    density="comfortable"
+                    placeholder="0xxxxxxxxx"
+                    hint="格式：0 開頭共 10 碼"
+                    persistent-hint
+                  ></v-text-field>
+                </v-col>
 
-          <v-divider class="my-8"></v-divider>
-
-          <h3 class="text-h6 mb-4">菜單管理</h3>
-
-          <div v-for="(item, index) in editableStore.menu" :key="item._id || item._key" class="mb-4">
-            <v-card flat border>
-              <v-card-text>
-                <v-row>
-                  <v-col cols="12" md="3" class="text-center">
-                    <p class="text-subtitle-2 mb-2">餐點照片</p>
+                <v-col cols="12" md="4">
+                  <p class="text-subtitle-2 mb-2">封面圖片</p>
+                  <div class="image-wrapper">
                     <v-img
-                        :src="item.imagePreviewUrl || item.image"
-                        :aspect-ratio="1"
-                        class="rounded-lg border mx-auto"
-                        width="150"
-                        cover
+                      :src="imagePreviewUrl || editableStore.image"
+                      :aspect-ratio="16/9"
+                      class="rounded-lg border cover-image clickable-cover"
+                      cover
+                      @click="triggerCoverSelect"
                     >
-                      <template #error>
+                      <template #placeholder>
                         <v-sheet class="d-flex align-center justify-center fill-height" color="grey-lighten-4">
-                          <v-icon color="grey-lighten-1" size="40">mdi-image-off-outline</v-icon>
+                          <v-icon color="grey-lighten-1" size="50">mdi-image-plus-outline</v-icon>
                         </v-sheet>
                       </template>
+                      <template #error>
+                        <v-sheet class="d-flex align-center justify-center fill-height" color="grey-lighten-4">
+                          <v-icon color="grey-lighten-1" size="50">mdi-image-off-outline</v-icon>
+                        </v-sheet>
+                      </template>
+                      <div class="image-overlay d-flex flex-column align-center justify-center">
+                        <v-icon size="40" color="white">mdi-camera</v-icon>
+                        <span class="text-caption text-white mt-1">點擊更換圖片</span>
+                      </div>
                     </v-img>
-                    <v-file-input
-                        label="上傳圖片"
-                        variant="underlined"
-                        density="compact"
-                        class="mt-2"
-                        accept="image/*"
-                        prepend-icon="mdi-camera"
-                        hide-details
-                        @update:modelValue="previewMenuImage(item, $event)"
-                    ></v-file-input>
-                  </v-col>
+                    <input
+                      ref="coverFileInput"
+                      type="file"
+                      accept="image/*"
+                      class="d-none"
+                      @change="onCoverFileChange"
+                    />
+                  </div>
+                  <p class="text-caption text-medium-emphasis mt-2 text-center">
+                    注意：上傳新圖片將會覆蓋現有圖片。
+                  </p>
+                </v-col>
+              </v-row>
 
-                  <v-col cols="12" md="9">
-                    <v-row>
-                      <v-col cols="12" md="6">
-                        <p class="text-subtitle-2 mb-1">名稱</p>
-                        <v-text-field v-model="item.name" :rules="[(v: string) => !!v || '名稱為必填。']" variant="outlined" density="comfortable"></v-text-field>
-                      </v-col>
-                      <v-col cols="12" md="6">
-                        <p class="text-subtitle-2 mb-1">價格</p>
-                        <v-text-field v-model.number="item.price" type="number" :rules="[(v: number) => v > 0 || '價格必須大於 0。']" variant="outlined" density="comfortable" prefix="$"></v-text-field>
-                      </v-col>
-                    </v-row>
-                    <p class="text-subtitle-2 mb-1 mt-2">介紹</p>
-                    <v-textarea v-model="item.info" :rules="[(v: string) => !!v || '介紹為必填。']" variant="outlined" rows="3" density="comfortable"></v-textarea>
-                  </v-col>
-                </v-row>
-                <div class="d-flex justify-end">
-                  <v-btn color="grey" variant="text" icon="mdi-delete-outline" @click="removeMenuItem(index)"></v-btn>
+              <v-divider class="my-10"></v-divider>
+
+              <!-- 菜單管理區 -->
+              <div class="d-flex align-center justify-space-between mb-4">
+                <h3 class="section-title mb-0">菜單管理</h3>
+                <v-btn
+                  size="small"
+                  variant="outlined"
+                  color="primary"
+                  :disabled="isSaving"
+                  @click="addMenuItem"
+                >
+                  <v-icon start>mdi-plus</v-icon>新增項目
+                </v-btn>
+              </div>
+
+              <v-alert
+                v-if="editableStore.menu.length === 0"
+                type="info"
+                variant="tonal"
+                density="comfortable"
+                class="mb-6"
+              >
+                尚未新增餐點，點擊「新增項目」開始建立菜單。
+              </v-alert>
+
+              <v-slide-y-transition group tag="div">
+                <div
+                  v-for="(item, index) in editableStore.menu"
+                  :key="item._id || item._key"
+                  class="mb-6"
+                >
+                  <v-card
+                    flat
+                    border
+                    rounded="lg"
+                    class="menu-item-card"
+                  >
+                    <v-card-text>
+                      <v-row>
+                        <v-col cols="12" md="3">
+                          <p class="text-subtitle-2 mb-2 ml-1">餐點照片</p>
+                          <div class="menu-image-wrapper mx-auto">
+                            <v-img
+                              :src="item.imagePreviewUrl || item.image"
+                              :aspect-ratio="1"
+                              class="rounded-lg border clickable-cover"
+                              width="150"
+                              cover
+                              @click="triggerMenuImageSelect(index)"
+                            >
+                              <template #placeholder>
+                                <v-sheet class="d-flex align-center justify-center fill-height" color="grey-lighten-4">
+                                  <v-icon color="grey-lighten-1" size="40">mdi-image-plus-outline</v-icon>
+                                </v-sheet>
+                              </template>
+                              <template #error>
+                                <v-sheet class="d-flex align-center justify-center fill-height" color="grey-lighten-4">
+                                  <v-icon color="grey-lighten-1" size="40">mdi-image-off-outline</v-icon>
+                                </v-sheet>
+                              </template>
+                              <div class="menu-image-overlay d-flex flex-column align-center justify-center">
+                                <v-icon size="32" color="white">mdi-camera</v-icon>
+                                <span class="text-caption text-white mt-1">點擊更換</span>
+                              </div>
+                            </v-img>
+                            <input
+                              :ref="el => menuFileInputs[index] = el"
+                              type="file"
+                              accept="image/*"
+                              class="d-none"
+                              @change="e => onMenuFileChange(item, e)"
+                            />
+                          </div>
+                        </v-col>
+
+                        <v-col cols="12" md="9">
+                          <v-row>
+                            <v-col cols="12" md="6">
+                              <p class="text-subtitle-2 mb-1 label-required">名稱</p>
+                              <v-text-field
+                                v-model="item.name"
+                                :rules="[(v: string) => !!v || '名稱為必填。']"
+                                variant="outlined"
+                                density="comfortable"
+                                placeholder="餐點名稱"
+                              ></v-text-field>
+                            </v-col>
+                            <v-col cols="12" md="6">
+                              <p class="text-subtitle-2 mb-1 label-required">價格</p>
+                              <v-text-field
+                                v-model.number="item.price"
+                                type="number"
+                                :rules="[(v: number) => v > 0 || '價格必須大於 0。']"
+                                variant="outlined"
+                                density="comfortable"
+                                suffix="元"
+                                placeholder="0"
+                              ></v-text-field>
+                            </v-col>
+                          </v-row>
+                          <p class="text-subtitle-2 mb-1 mt-2 label-required">介紹</p>
+                          <v-textarea
+                            v-model="item.info"
+                            :rules="[(v: string) => !!v || '介紹為必填。']"
+                            variant="outlined"
+                            rows="3"
+                            density="comfortable"
+                            placeholder="此餐點的特色與口味說明"
+                          ></v-textarea>
+                        </v-col>
+                      </v-row>
+                      <div class="d-flex justify-end mt-2">
+                        <v-btn
+                          color="error"
+                          variant="text"
+                          size="small"
+                          prepend-icon="mdi-delete-outline"
+                          @click="removeMenuItem(index)"
+                        >
+                          移除
+                        </v-btn>
+                      </div>
+                    </v-card-text>
+                  </v-card>
                 </div>
-              </v-card-text>
-            </v-card>
-          </div>
+              </v-slide-y-transition>
 
-          <v-btn block size="large" variant="tonal" class="dashed-border mt-4" @click="addMenuItem">
-            <v-icon start>mdi-plus</v-icon>
-            新增菜單項目
-          </v-btn>
-
-          <v-divider class="my-8"></v-divider>
-
-          <v-btn
-              color="primary"
-              size="large"
-              block
-              class="mt-4"
-              :loading="isSaving"
-              @click="saveStore"
-          >
-            儲存所有變更
-          </v-btn>
-        </v-card-text>
-      </v-card>
-    </v-form>
+              <!-- 動作列 -->
+              <div class="form-actions sticky-actions">
+                <v-btn
+                  color="primary"
+                  size="large"
+                  block
+                  :loading="isSaving"
+                  :disabled="isSaving"
+                  @click="saveStore"
+                >
+                  儲存所有變更
+                </v-btn>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-form>
+      </v-col>
+    </v-row>
   </v-container>
-
 </template>
 
 <script setup lang="ts">
@@ -190,7 +302,6 @@ const isSaving = ref(false);
 const snackbarStore = useSnackbarStore()
 
 const pendingDeletionMenuIds = ref<string[]>([]);
-
 
 const addressRules = [
   (value: string) => !!value || '餐廳地址為必填欄位。',
@@ -308,7 +419,7 @@ const saveStore = async () => {
 
 const addMenuItem = () => {
   if (editableStore.value) {
-    editableStore.value.menu.push({
+    editableStore.value.menu.unshift({
       _key: `new_${Date.now()}_${Math.random()}`,
       name: '',
       price: 0,
@@ -330,22 +441,26 @@ const removeMenuItem = (index: number) => {
   }
 };
 
-const previewMainImage = () => {
-  if (imageFile.value) {
-    imagePreviewUrl.value = URL.createObjectURL(imageFile.value);
-  } else {
-    imageFile.value = null;
-    imagePreviewUrl.value = undefined;
+// 圖片處理邏輯 (移植自 new.vue)
+const coverFileInput = ref<HTMLInputElement | null>(null);
+const triggerCoverSelect = () => coverFileInput.value?.click();
+const onCoverFileChange = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (file) {
+    imageFile.value = file;
+    imagePreviewUrl.value = URL.createObjectURL(file);
   }
 };
 
-const previewMenuImage = (item: MenuItem, files: File) => {
-  if (files) {
-    item.imageFile = files;
-    item.imagePreviewUrl = URL.createObjectURL(files);
-  } else {
-    item.imageFile = null;
-    item.imagePreviewUrl = undefined;
+const menuFileInputs = ref<HTMLInputElement[]>([]);
+const triggerMenuImageSelect = (idx: number) => {
+  menuFileInputs.value[idx]?.click();
+};
+const onMenuFileChange = (item: MenuItem, e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (file) {
+    item.imageFile = file;
+    item.imagePreviewUrl = URL.createObjectURL(file);
   }
 };
 
@@ -355,5 +470,106 @@ useHead({
 </script>
 
 <style scoped>
+/* 版面與結構強化 */
+.toolbar-header {
+  background: linear-gradient(135deg, var(--v-theme-primary) 0%, var(--v-theme-primary-darken-1) 100%);
+}
 
+.section-title {
+  font-weight: 600;
+  position: relative;
+  padding-left: 14px;
+}
+.section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--v-theme-primary);
+}
+
+.label-required::after {
+  color: var(--v-theme-error);
+  margin-left: 4px;
+  font-weight: 600;
+}
+
+.form-actions {
+  margin-top: 24px;
+}
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  box-shadow: 0 -4px 12px -6px rgba(0,0,0,.12);
+  backdrop-filter: saturate(180%) blur(6px);
+  border-top: 1px solid rgba(0,0,0,0.06);
+  z-index: 10;
+}
+
+/* 圖片區與懸浮效果 */
+.image-wrapper,
+.menu-image-wrapper {
+  position: relative;
+}
+.cover-image,
+.menu-image-wrapper .v-img {
+  transition: box-shadow .25s, transform .25s;
+}
+.cover-image:hover,
+.menu-image-wrapper .v-img:hover {
+  box-shadow: 0 6px 18px -6px rgba(0,0,0,.25);
+  transform: translateY(-2px);
+}
+.image-overlay,
+.menu-image-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(145deg, rgba(0,0,0,.55), rgba(0,0,0,.25));
+  transition: opacity .25s;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.image-wrapper:hover .image-overlay,
+.menu-image-wrapper:hover .menu-image-overlay {
+  opacity: 1;
+}
+
+/* 菜單項目卡片 */
+.menu-item-card {
+  transition: box-shadow .25s, transform .25s, border-color .25s;
+  background: linear-gradient(145deg, #ffffff 0%, #fafafa 100%);
+}
+.menu-item-card:hover {
+  box-shadow: 0 6px 24px -8px rgba(0,0,0,.25);
+  transform: translateY(-3px);
+  border-color: var(--v-theme-primary);
+}
+
+/* 自適應細節 */
+@media (max-width: 600px) {
+  .sticky-actions {
+    box-shadow: 0 -3px 10px -6px rgba(0,0,0,.18);
+  }
+  .section-title {
+    font-size: 1.05rem;
+  }
+}
+
+.clickable-cover {
+  cursor: pointer;
+}
+.clickable-cover:hover {
+  outline: 2px solid var(--v-theme-primary);
+  outline-offset: 2px;
+}
+.d-none {
+  display: none;
+}
 </style>
