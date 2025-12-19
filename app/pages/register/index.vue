@@ -191,7 +191,6 @@ onMounted(async () => {
   const file = await generateRandomAvatar()
   imageFile.value = file
   imagePreviewUrl.value = URL.createObjectURL(file)
-  console.log('Generated default avatar file:', file)
 })
 </script>
 
