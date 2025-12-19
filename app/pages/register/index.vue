@@ -1,5 +1,5 @@
 <template>
-  <v-container class="fill-height">
+  <v-container class="register-container fill-height">
     <v-row justify="center" align="center">
       <v-col cols="12" sm="8" md="6" lg="4">
         <v-card rounded="lg" border>
@@ -9,10 +9,7 @@
             <!-- 點擊頭像觸發裁切對話框 -->
             <div class="text-center mt-2 mb-4">
               <v-avatar color="primary" size="80" class="cursor-pointer" @click="showCropper = true">
-                <v-img
-                    :src="imagePreviewUrl"
-                    cover
-                ></v-img>
+                <v-img :src="imagePreviewUrl" cover></v-img>
               </v-avatar>
               <p class="text-body-1 text-medium-emphasis">
                 {{ userStore.info?.email }}
@@ -24,7 +21,7 @@
               <v-card>
                 <v-card-title class="font-weight-bold">裁切頭像</v-card-title>
                 <v-card-text>
-                  <AvatarCropper @cropped="onAvatarCropped"/>
+                  <AvatarCropper :imageFile="imageFile" @cropped="onAvatarCropped" />
                 </v-card-text>
                 <v-card-actions>
                   <v-spacer />
@@ -68,12 +65,7 @@
                 clearable
                 class="mb-2"
               ></v-text-field>
-              <v-text-field
-                v-model="formData.phone"
-                label="聯絡電話（選填）"
-                clearable
-                class="mb-2"
-              ></v-text-field>
+              <v-text-field v-model="formData.phone" label="聯絡電話（選填）" clearable class="mb-2"></v-text-field>
 
               <v-btn
                 type="submit"
@@ -88,7 +80,7 @@
               </v-btn>
             </v-form>
 
-                        <div class="text-center mt-3">
+            <div class="text-center mt-3">
               <NuxtLink to="/login" class="text-primary text-body-2">已有帳號？前往登入</NuxtLink>
             </div>
           </v-card-text>
@@ -97,12 +89,7 @@
     </v-row>
   </v-container>
 
-  <v-snackbar
-    v-model="snackbarStore.show"
-    :color="snackbarStore.color"
-    :timeout="snackbarStore.timeout"
-    location="top"
-  >
+  <v-snackbar v-model="snackbarStore.show" :color="snackbarStore.color" :timeout="snackbarStore.timeout" location="top">
     {{ snackbarStore.text }}
     <template v-slot:actions>
       <v-btn variant="text" @click="snackbarStore.show = false">關閉</v-btn>
@@ -113,6 +100,7 @@
 <script setup lang="ts">
 import { useUserStore } from '@stores/user'
 import { useSnackbarStore } from '@utils/snackbar'
+import { generateRandomAvatar } from '@utils/defaultAvatar'
 
 const router = useRouter()
 const formRef = ref()
@@ -131,17 +119,9 @@ const formData = ref({
   phone: '',
 })
 
-const nameRules = [
-  (v: string) => !!v || '請輸入暱稱',
-]
-const emailRules = [
-  (v: string) => !!v || '請輸入 Email',
-  (v: string) => /.+@.+\..+/.test(v) || 'Email 格式不正確',
-]
-const passwordRules = [
-  (v: string) => !!v || '請輸入密碼',
-  (v: string) => v.length >= 6 || '密碼長度至少 6 個字元',
-]
+const nameRules = [(v: string) => !!v || '請輸入暱稱']
+const emailRules = [(v: string) => !!v || '請輸入 Email', (v: string) => /.+@.+\..+/.test(v) || 'Email 格式不正確']
+const passwordRules = [(v: string) => !!v || '請輸入密碼', (v: string) => v.length >= 6 || '密碼長度至少 6 個字元']
 
 const imageFile = ref<File | null>(null)
 const imagePreviewUrl = ref<string | undefined>(undefined)
@@ -166,19 +146,24 @@ async function onSubmit() {
       formData.value.password,
       formData.value.address,
       formData.value.phone,
-      imageFile.value,
+      imageFile.value ?? undefined
     )
 
     snackbarStore.showSnackbar('註冊成功，請登入', 'success')
     setTimeout(() => router.push('/login'), 600)
   } catch (err: any) {
     let msg = '註冊失敗，請稍後再試'
-    
+
     const status = err.response?.status || err.statusCode || err.status || err.data?.statusCode
     const data = err.response?._data || err.data
     const serverMsg = data?.message || err.message
 
-    if (status === 409 || serverMsg === '電子信箱已經註冊' || (typeof serverMsg === 'string' && (serverMsg.includes('已註冊') || serverMsg.includes('Email has already been registered')))) {
+    if (
+      status === 409 ||
+      serverMsg === '電子信箱已經註冊' ||
+      (typeof serverMsg === 'string' &&
+        (serverMsg.includes('已註冊') || serverMsg.includes('Email has already been registered')))
+    ) {
       msg = '註冊失敗，該電子郵件已被註冊'
     } else if (serverMsg && status && status !== 500) {
       msg = serverMsg
@@ -197,12 +182,25 @@ async function onSubmit() {
   }
 }
 
-definePageMeta({layout: false,})
+definePageMeta({ layout: false })
 
 useHead({ title: '註冊' })
+
+onMounted(async () => {
+  // 產生預設頭像
+  const file = await generateRandomAvatar()
+  imageFile.value = file
+  imagePreviewUrl.value = URL.createObjectURL(file)
+})
 </script>
 
 <style scoped>
+.register-container {
+  min-height: 100vh;
+  min-width: 100vw;
+  background: linear-gradient(180deg, #f5f9ff 0%, #ffffff 100%);
+}
+
 .v-text-field {
   margin-bottom: 12px !important;
 }
