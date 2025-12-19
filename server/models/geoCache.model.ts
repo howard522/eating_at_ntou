@@ -1,6 +1,6 @@
 // server/models/geoCache.model.ts
 
-import type { IGeoCache } from "@server/interfaces/address.interfece";
+import type { IGeoCache } from "$interfaces/address.interfece";
 import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
 

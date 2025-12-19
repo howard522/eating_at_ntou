@@ -1,6 +1,6 @@
 // server/utils/auth.ts
 
-import type { JwtPayload } from "@server/interfaces/user.interface";
+import type { JwtPayload } from "$interfaces/user.interface";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 

@@ -1,6 +1,6 @@
 // server/models/ad.model.ts
 
-import type { IAd } from "@server/interfaces/ad.interface";
+import type { IAd } from "$interfaces/ad.interface";
 import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
 

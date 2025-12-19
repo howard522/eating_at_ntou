@@ -1,9 +1,16 @@
 // server/utils/nominatim.ts
 
-import type { IGeoPoint } from "@server/interfaces/geo.interface";
+import type { IGeoPoint } from "$interfaces/geo.interface";
+import geoCache from "$models/geoCache.model";
+import KeelongAddressMap from "$models/KeelongAddressMap";
 
-import geoCache from "@server/models/geoCache.model";
-import KeelongAddressMap from "@server/models/KeelongAddressMap";
+/**
+ * TODO:
+ * 這裡除了地址正規化、轉換成經緯度之外，還涉及了一些資料庫的查詢與快取機制，
+ * 包含 KeelongAddressMap 與 geoCache 的使用。
+ * 這些邏輯其實不太適合放在 utils 裡面，應該要有一個專門的 service 來處理這些事情。
+ * （不過目前先這樣寫，等有空再重構吧）
+ */
 
 export function normalizeAddress(addr: string): string {
     if (!addr) return addr;

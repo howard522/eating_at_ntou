@@ -13,9 +13,9 @@
   </v-dialog>
 </template>
 <script setup lang="ts">
-import { useAdPopup } from '../composable/useAdPopup'
-import type { ApiAd } from '@app/types/ad'
-import type { ApiResponse } from '@app/types/order'
+import { useAdPopup } from '@composable/useAdPopup'
+import type { ApiAd } from '@types/ad'
+import type { ApiResponse } from '@types/order'
 
 const adText = ref('')
 

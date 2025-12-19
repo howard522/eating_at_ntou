@@ -1,8 +1,8 @@
 // server/api/orders/[id]/chats.get.ts
 
-import { getChatMessagesByOrderId } from "@server/services/chat.service";
-import { getOrderOwnership } from "@server/services/order.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+import { getChatMessagesByOrderId } from "$services/chat.service";
+import { getOrderOwnership } from "$services/order.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi

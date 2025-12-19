@@ -1,8 +1,8 @@
 // server/api/admin/restaurants/[id]/menu/index.post.ts
 
-import type { ICreateMenuItem } from "@server/interfaces/restaurant.interface";
-import { createMenuItem } from "@server/services/restaurants.service";
-import { parseForm } from "@server/utils/parseForm";
+import type { ICreateMenuItem } from "$interfaces/restaurant.interface";
+import { createMenuItem } from "$services/restaurants.service";
+import { parseForm } from "$utils/parseForm";
 
 /**
  * @openapi

@@ -1,7 +1,7 @@
 // server/api/restaurants/index.get.ts
 
-import { searchRestaurants } from "@server/services/restaurants.service";
-import { parseInteger } from "@server/utils/parseNumber";
+import { searchRestaurants } from "$services/restaurants.service";
+import { parseInteger } from "$utils/parseNumber";
 
 /**
  * @openapi

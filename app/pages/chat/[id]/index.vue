@@ -155,9 +155,9 @@
 </style>
 
 <script setup lang="ts">
-import { useUserStore } from "@stores/user";
+import { useChat } from "@composable/useChat";
 import { useNotificationStore } from "@stores/notification";
-import { useChat } from "@app/composable/useChat";
+import { useUserStore } from "@stores/user";
 
 const router = useRouter();
 const route = useRoute();

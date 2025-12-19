@@ -243,8 +243,8 @@
 </template>
 
 <script setup lang="ts">
+import { useOrderTracking } from '@composable/useOrderTracking';
 import { useUserStore } from '@stores/user';
-import { useOrderTracking } from '@app/composable/useOrderTracking';
 import { useNotificationStore } from '@stores/notification';
 
 type LatLng = [number, number]

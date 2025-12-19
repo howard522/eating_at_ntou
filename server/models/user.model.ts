@@ -1,7 +1,7 @@
 // server/models/user.model.ts
 
-import type { IUserMethods, IUserWithPassword } from "@server/interfaces/user.interface";
-import { comparePassword, generatePasswordHash } from "@server/utils/auth";
+import type { IUserMethods, IUserWithPassword } from "$interfaces/user.interface";
+import { comparePassword, generatePasswordHash } from "$utils/auth";
 import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
 

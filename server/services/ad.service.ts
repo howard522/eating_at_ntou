@@ -1,7 +1,7 @@
 // server/services/ad.service.ts
 
-import type { IAd, IAdResponse, IAdUpdate } from "@server/interfaces/ad.interface";
-import Ad from "@server/models/ad.model";
+import type { IAd, IAdResponse, IAdUpdate } from "$interfaces/ad.interface";
+import Ad from "$models/ad.model";
 
 /**
  * 建立新的廣告

@@ -1,9 +1,9 @@
 // server/utils/seed.ts
 // usage: npx tsx server/utils/seed.ts
-import mongoose from "mongoose";
-import Restaurant from "@server/models/restaurant.model";
+import Restaurant from "$models/restaurant.model";
+import { geocodeAddress, sleep } from "$utils/nominatim";
 import dotenv from "dotenv";
-import { geocodeAddress, sleep } from "@server/utils/nominatim";
+import mongoose from "mongoose";
 
 dotenv.config();
 

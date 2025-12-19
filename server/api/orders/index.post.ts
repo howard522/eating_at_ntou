@@ -1,6 +1,8 @@
-import type { OrderInfo } from "@server/interfaces/order.interface";
-import { createOrder } from "@server/services/order.service";
-import { getCurrentUser } from "@server/utils/getCurrentUser";
+// server/api/orders/index.post.ts
+
+import type { OrderInfo } from "$interfaces/order.interface";
+import { createOrder } from "$services/order.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi
