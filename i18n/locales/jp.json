@@ -1,0 +1,26 @@
+{
+    "common": {
+        "email": "メールアドレス",
+        "password": "パスワード",
+        "customer": "顧客",
+        "delivery": "配達員",
+        "close": "閉じる",
+        "submit": "送信"
+    },
+    "login": {
+        "headTitle": "ログイン",
+        "title": "Login to Your Account",
+        "subtitle": "Enter your account & password to login",
+        "switchRoleInfo": "「マイアカウント」で役割を切り替えることができます",
+        "forgotPassword": "パスワードをお忘れですか？",
+        "loginButton": "ログイン",
+        "registerPrompt": "アカウントをお持ちでないですか？",
+        "registerLink": "アカウントを作成",
+        "successMessage": "ログインに成功しました！",
+        "errorMessage": "ログインに失敗しました。アカウントまたはパスワードを確認してください。",
+        "missingFields": "メールアドレスとパスワードは空にできません",
+        "temporarilyLocked": "複数回の失敗により、アカウントが一時的にロックされています。後でもう一度お試しください。",
+        "temporarilyLockedUntil": "アカウントが一時的にロックされています。{time}後にもう一度お試しください。",
+        "banned": "アカウントが禁止されています。詳細についてはカスタマーサービスにお問い合わせください。"
+    }
+}

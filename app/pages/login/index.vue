@@ -17,8 +17,8 @@
         </div>
       </div>
       <v-card class="pa-6 login-card" elevation="4">
-        <v-card-title class="text-h5 font-weight-bold text-center">Login to Your Account</v-card-title>
-        <v-card-subtitle class="mb-4 text-center">Enter your account & password to login</v-card-subtitle>
+        <v-card-title class="text-h5 font-weight-bold text-center">{{ $t('login.title') }}</v-card-title>
+        <v-card-subtitle class="mb-4 text-center">{{ $t('login.subtitle') }}</v-card-subtitle>
 
         <v-card-text class="pt-4">
           <v-alert
@@ -32,7 +32,7 @@
 
           <v-form ref="formRef" v-model="formValid" @submit.prevent="onSubmit">
             <!-- 電子郵件欄位 -->
-            <label for="login-email" class="form-label mb-1">電子郵件</label>
+            <label for="login-email" class="form-label mb-1">{{ $t('common.email') }}</label>
             <v-text-field
               id="login-email"
               v-model="email"
@@ -46,7 +46,7 @@
             />
 
             <!-- 密碼欄位 -->
-            <label for="login-password" class="form-label mb-1">密碼</label>
+            <label for="login-password" class="form-label mb-1">{{ $t('common.password') }}</label>
             <v-text-field
               id="login-password"
               v-model="password"
@@ -67,14 +67,13 @@
               class="mb-1 login-role-group"
             >
               <div class="d-flex gap-4 justify-space-between">
-                <v-radio label="顧客" value="customer"></v-radio>
-                <v-radio label="外送員" value="delivery"></v-radio>
+                <v-radio :label="$t('common.customer')" value="customer"></v-radio>
+                <v-radio :label="$t('common.delivery')" value="delivery"></v-radio>
               </div>
             </v-radio-group>
-            <div>可在"我的帳戶"切換身份</div>
-
+            <div>{{ $t('login.switchRoleInfo') }}</div>
             <div class="d-flex justify-end mb-4">
-              <NuxtLink to="/forgot-password" class="text-caption">忘記密碼？</NuxtLink>
+              <NuxtLink to="/forgot-password" class="text-caption">{{ $t('login.forgotPassword') }}</NuxtLink>
             </div>
 
             <v-btn
@@ -84,14 +83,14 @@
               :disabled="!formValid || loading"
               block
             >
-              登入
+              {{ $t('login.loginButton') }}
             </v-btn>
           </v-form>
         </v-card-text>
 
         <v-card-actions class="justify-center">
-          <span class="text-caption">還沒有帳號？</span>
-          <NuxtLink to="/register" class="text-caption ml-1">建立帳號</NuxtLink>
+          <span class="text-caption">{{ $t('login.registerPrompt') }}</span>
+          <NuxtLink to="/register" class="text-caption ml-1">{{ $t('login.registerLink') }}</NuxtLink>
         </v-card-actions>
       </v-card>
     </v-col>
@@ -105,14 +104,27 @@
   >
     {{ snackbarStore.text }}
     <template v-slot:actions>
-      <v-btn variant="text" @click="snackbarStore.show = false">關閉</v-btn>
+      <v-btn variant="text" @click="snackbarStore.show = false">{{ $t('common.close') }}</v-btn>
     </template>
   </v-snackbar>
+
+  <!-- 🌐 語言切換按鈕 -->
+  <div
+    class="language-switch"
+    :class="{ 'language-switch--chinese': isChinese }"
+    @click="toggleLanguage"
+  >
+    <span class="label left">A</span>
+    <span class="label right">文</span>
+    <div class="switch-handle"></div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { useUserStore } from '@stores/user'
 import { useSnackbarStore } from '@utils/snackbar'
+
+// const { locale } = useI18n()
 
 const router = useRouter()
 const formRef = ref()
@@ -128,6 +140,30 @@ const snackbarStore = useSnackbarStore()
 
 const userStore = useUserStore()
 
+const formatTime = (date: Date) => {
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${hours}:${minutes}`
+}
+
+const getErrorMessage = (message: string) => {
+  if (message === 'Missing required fields: email, password.') {
+    return $t('login.missingFields')
+  } else if (message.startsWith('Account is temporarily locked. Please try again later.')) {
+    const lockUntil = message.split('\n')[1]
+    if (lockUntil) {
+      const lockTime =formatTime(new Date(lockUntil))
+      return $t('login.temporarilyLockedUntil', { time: lockTime })
+    } else {
+      return $t('login.temporarilyLocked')
+    }
+  } else if (message === 'Account has been banned.') {
+    return $t('login.banned')
+  } else {
+    return $t('login.errorMessage')
+  }
+}
+
 const onSubmit = async () => {
   errorMessage.value = ''
   const result = await formRef.value?.validate()
@@ -138,7 +174,7 @@ const onSubmit = async () => {
     await userStore.loginPost(email.value, password.value)
     userStore.setRole(loginRole.value)
 
-    snackbarStore.showSnackbar('登入成功', 'success')
+    snackbarStore.showSnackbar($t('login.successMessage'), 'success')
 
     if (userStore.token) {
       if (userStore?.info?.role === 'admin')
@@ -148,12 +184,11 @@ const onSubmit = async () => {
       else
         router.push('/customer/stores')
     } else {
-      errorMessage.value = '登入失敗，請檢查帳號或密碼'
+      errorMessage.value = $t('login.errorMessage')
       snackbarStore.showSnackbar(errorMessage.value, 'error')
     }
   } catch (e: any) {
-    errorMessage.value =
-      e?.message || e?.data?.message || '登入失敗，請檢查帳號或密碼'
+    errorMessage.value = getErrorMessage(e?.message || e?.data?.message || undefined)
     snackbarStore.showSnackbar(errorMessage.value, 'error')
   } finally {
     loading.value = false
@@ -163,6 +198,22 @@ const onSubmit = async () => {
 definePageMeta({layout: false,})
 
 useHead({title: '登入', });
+
+// 語言切換邏輯
+
+const { locale, setLocale } = useI18n()
+
+const isChinese = ref(true)
+
+const toggleLanguage = () => {
+  isChinese.value = !isChinese.value
+  setLocale(isChinese.value ? 'zh' : 'en')
+}
+
+// 如果 locale 被外部改動，更新 Switch 狀態
+watch(locale, (newVal) => {
+  isChinese.value = newVal === 'zh'
+})
 
 </script>
 
@@ -217,6 +268,72 @@ useHead({title: '登入', });
 
 .login-role-group {
   width: 100%;
+}
+
+.language-switch {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 1000;
+  width: 80px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: #ccc;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.language-switch--chinese {
+  background-color: #4caf50; /* 中文狀態背景色 */
+}
+
+.label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: bold;
+  user-select: none;
+  pointer-events: none;
+  z-index: 2;          /* 文字在圓球上層 */
+}
+
+.label.left {
+  left: 15px;
+}
+
+.label.right {
+  right: 12px;
+}
+
+.switch-handle {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: white;
+  transition: left 0.3s;
+}
+
+.language-switch--chinese .switch-handle {
+  left: 42px; /* 滑到右邊 */
+}
+
+:not(.language-switch--chinese) .label.left {
+  color: #888;
+}
+
+.language-switch--chinese .label.left {
+  color: #fff;
+}
+
+.language-switch--chinese .label.right {
+  color: #888;
+}
+
+.language-switch:hover {
+  background-color: #bbb;
 }
 
 :deep(.login-role-group .v-radio) {

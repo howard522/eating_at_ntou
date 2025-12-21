@@ -39,7 +39,10 @@ export const useUserStore = defineStore('user', {
                 this.saveToStorage()
                 return res
             } catch (err: any) {
-                const msg = err?.data?.message || err?.message || '登入失敗，請稍後再試'
+                let msg = err?.data?.message || err?.message || '登入失敗，請稍後再試'
+                if (err?.data?.data?.lockUntil) {
+                    msg += '\n' + err?.data?.data?.lockUntil
+                }
                 console.error('Error logging in:', msg);
                 throw new Error(msg)
             }

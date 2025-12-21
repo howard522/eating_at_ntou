@@ -70,11 +70,11 @@ export async function loginUser(email: string, password: string) {
     const canLogin = await verifyUserCanLogin(user._id);
 
     if (!canLogin.result) {
-        const timeMessage = canLogin.lockUntil ? `after ${canLogin.lockUntil.toLocaleString()}` : "later";
         throw createError({
             statusCode: 403,
             statusMessage: "Forbidden",
-            message: `Account is temporarily locked due to multiple failed login attempts. Please try again ${timeMessage}.`,
+            message: "Account is temporarily locked. Please try again later.",
+            data: { lockUntil: canLogin.lockUntil },
         });
     }
 
