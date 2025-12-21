@@ -29,6 +29,7 @@ const restaurantSchema = new Schema<RestaurantDocument>({
     info: String,
     tags: { type: [String], default: [] },
     menu: { type: [menuItemSchema], default: [] },
+    rating: { type: Number, default: 0, index: true },
 
     // status: 營業狀態
     isActive: {

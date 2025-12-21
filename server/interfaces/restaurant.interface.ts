@@ -31,6 +31,7 @@ export interface IRestaurant {
     info: string;
     tags: string[];
     menu: IMenuItem[];
+    rating: number;
     isActive: boolean;
     locationGeo: IGeoPoint;
 }
