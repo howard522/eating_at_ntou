@@ -1,0 +1,30 @@
+name: Deploy to Development Environment
+
+on:
+  push:
+    branches: [ dev ]
+
+jobs:
+    deploy:
+        runs-on: self-hosted
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+              with:
+                ref: dev
+
+            - name: Sync files to server
+              run: |
+                rsync -avz --delete --exclude='.env' ./ ~/app/bing2go-dev
+
+            - name: Restart development service
+              run: |
+                set -euo pipefail # Enable strict error handling
+                cd ~/app/bing2go-dev
+
+                echo "Rebuilding & restarting development service..."
+                docker compose down
+                docker compose build --no-cache
+                docker compose up -d
+
+                echo "Development service restarted successfully."

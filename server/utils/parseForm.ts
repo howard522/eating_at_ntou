@@ -37,7 +37,8 @@ export async function parseForm<T extends Record<string, any>>(
 
     for (const field of form ?? []) {
         // 圖片欄位要上傳到 ImgBB
-        if (field.name === "image" && field.type?.startsWith("image/")) {
+        if ((field.name === "image" || field.name === "img") && field.type?.startsWith("image/")) {
+            console.log("Uploading image to ImgBB...", field.filename);
             const imageURL = await uploadImageToImageBB({
                 type: field.type,
                 data: field.data,
@@ -45,7 +46,7 @@ export async function parseForm<T extends Record<string, any>>(
             });
 
             if (imageURL) {
-                data["image" as keyof T] = imageURL as any;
+                data[field.name as keyof T] = imageURL as any;
             }
 
             continue;
