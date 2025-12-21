@@ -77,3 +77,24 @@ export async function createReview(data: IReviewCreate) {
 
     return review.toObject<IReviewResponse>();
 }
+
+/**
+ * 刪除評論
+ *
+ * @param reviewId 評論 ID
+ */
+export async function deleteReview(reviewId: ObjectIdLike) {
+    const review = await Review.findByIdAndDelete(reviewId);
+
+    if (!review) {
+        throw createError({
+            statusCode: 404,
+            statusMessage: "Not Found",
+            message: "Review not found.",
+        });
+    }
+
+    await updateRestaurantRating(review.restaurant);
+
+    return review;
+}
