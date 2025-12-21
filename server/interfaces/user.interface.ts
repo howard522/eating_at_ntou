@@ -32,6 +32,19 @@ export interface IUser extends WithTimestamps {
 export type IUserWithPassword = IUser & { password: string };
 
 /**
+ * 使用者介面（包含登入相關欄位）
+ */
+export type IUserWithLoginData = IUser & {
+    loginFailureCount: number;
+    loginLockExpiration: Date | null;
+};
+
+/**
+ * 使用者介面（包含所有欄位）
+ */
+export type IUserAllFields = IUserWithPassword & IUserWithLoginData;
+
+/**
  * 使用者文件方法介面
  */
 export interface IUserMethods {
@@ -46,9 +59,9 @@ export type IUserSummary = Pick<IUser, "id" | "_id" | "name" | "img">;
 
 export type IUserLogin = Pick<IUserWithPassword, "email" | "password">;
 
-export type IUserCreate = CreateBody<IUserWithPassword, "email" | "password">;
+export type IUserCreate = CreateBody<IUserAllFields, "email" | "password">;
 
-export type IUserUpdate = UpdateBody<IUser>;
+export type IUserUpdate = UpdateBody<IUserAllFields>;
 
 export type IUserResponse = IUser;
 
