@@ -59,20 +59,22 @@
     <!-- Actions -->
     <div class="d-flex align-center gap-1 gap-sm-2 ml-2 ml-sm-4">
       <v-btn
-        variant="text"
-        color="medium-emphasis"
+        variant="tonal"
+        color="secondary"
         prepend-icon="mdi-comment-text-outline"
         class="d-none d-sm-flex"
+        rounded="pill"
         @click.stop="navigateToReviews"
       >
-        評論
+        查看評論
       </v-btn>
       <v-btn
         icon="mdi-comment-text-outline"
-        variant="text"
-        color="medium-emphasis"
+        variant="tonal"
+        color="secondary"
         class="d-flex d-sm-none"
         size="small"
+        rounded="circle"
         @click.stop="navigateToReviews"
       ></v-btn>
 
