@@ -21,12 +21,7 @@
         <v-card-subtitle class="mb-4 text-center">{{ $t('login.subtitle') }}</v-card-subtitle>
 
         <v-card-text class="pt-4">
-          <v-alert
-            v-if="errorMessage"
-            type="error"
-            variant="tonal"
-            class="mb-4"
-          >
+          <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-4">
             {{ errorMessage }}
           </v-alert>
 
@@ -62,10 +57,7 @@
             />
 
             <!-- 身份選擇 -->
-            <v-radio-group
-              v-model="loginRole"
-              class="mb-1 login-role-group"
-            >
+            <v-radio-group v-model="loginRole" class="mb-1 login-role-group">
               <div class="d-flex gap-4 justify-space-between">
                 <v-radio :label="$t('common.customer')" value="customer"></v-radio>
                 <v-radio :label="$t('common.delivery')" value="delivery"></v-radio>
@@ -76,13 +68,7 @@
               <NuxtLink to="/forgot-password" class="text-caption">{{ $t('login.forgotPassword') }}</NuxtLink>
             </div>
 
-            <v-btn
-              type="submit"
-              color="primary"
-              :loading="loading"
-              :disabled="!formValid || loading"
-              block
-            >
+            <v-btn type="submit" color="primary" :loading="loading" :disabled="!formValid || loading" block>
               {{ $t('login.loginButton') }}
             </v-btn>
           </v-form>
@@ -109,22 +95,12 @@
   </v-snackbar>
 
   <!-- 🌐 語言切換按鈕 -->
-  <div
-    class="language-switch"
-    :class="{ 'language-switch--chinese': isChinese }"
-    @click="toggleLanguage"
-  >
-    <span class="label left">A</span>
-    <span class="label right">文</span>
-    <div class="switch-handle"></div>
-  </div>
+  <LanguageSwitch class="language-switch" />
 </template>
 
 <script setup lang="ts">
 import { useUserStore } from '@stores/user'
 import { useSnackbarStore } from '@utils/snackbar'
-
-// const { locale } = useI18n()
 
 const router = useRouter()
 const formRef = ref()
@@ -146,24 +122,6 @@ const formatTime = (date: Date) => {
   return `${hours}:${minutes}`
 }
 
-const getErrorMessage = (message: string) => {
-  if (message === 'Missing required fields: email, password.') {
-    return $t('login.missingFields')
-  } else if (message.startsWith('Account is temporarily locked. Please try again later.')) {
-    const lockUntil = message.split('\n')[1]
-    if (lockUntil) {
-      const lockTime =formatTime(new Date(lockUntil))
-      return $t('login.temporarilyLockedUntil', { time: lockTime })
-    } else {
-      return $t('login.temporarilyLocked')
-    }
-  } else if (message === 'Account has been banned.') {
-    return $t('login.banned')
-  } else {
-    return $t('login.errorMessage')
-  }
-}
-
 const onSubmit = async () => {
   errorMessage.value = ''
   const result = await formRef.value?.validate()
@@ -177,44 +135,47 @@ const onSubmit = async () => {
     snackbarStore.showSnackbar($t('login.successMessage'), 'success')
 
     if (userStore.token) {
-      if (userStore?.info?.role === 'admin')
-        router.push('/admin/stores')
-      else if (loginRole.value === 'delivery')
-        router.push('/delivery/customer-orders')
-      else
-        router.push('/customer/stores')
+      if (userStore?.info?.role === 'admin') router.push('/admin/stores')
+      else if (loginRole.value === 'delivery') router.push('/delivery/customer-orders')
+      else router.push('/customer/stores')
     } else {
       errorMessage.value = $t('login.errorMessage')
       snackbarStore.showSnackbar(errorMessage.value, 'error')
     }
   } catch (e: any) {
-    errorMessage.value = getErrorMessage(e?.message || e?.data?.message || undefined)
+    const message = e?.message || e?.data?.message || undefined
+
+    if (message === 'Missing required fields: email, password.') {
+      // 空 email 或密碼
+      errorMessage.value = $t('login.missingFields')
+    } else if (message === 'Account has been banned.') {
+      // 帳號被封鎖
+      errorMessage.value = $t('login.banned')
+    } else if (message.startsWith('Account is temporarily locked. Please try again later.')) {
+      // 帳號暫時鎖定 (嘗試登入次數過多)
+      const lockUntil = message.split('\n')[1]
+      if (lockUntil) {
+        // 有提供解鎖時間
+        const lockTime = formatTime(new Date(lockUntil))
+        errorMessage.value = $t('login.temporarilyLockedUntil', { time: lockTime })
+      } else {
+        // 沒有提供解鎖時間
+        errorMessage.value = $t('login.temporarilyLocked')
+      }
+    } else {
+      // 其他錯誤 (包含帳號或密碼錯誤)
+      errorMessage.value = $t('login.errorMessage')
+    }
+
     snackbarStore.showSnackbar(errorMessage.value, 'error')
   } finally {
     loading.value = false
   }
 }
 
-definePageMeta({layout: false,})
+definePageMeta({ layout: false })
 
-useHead({title: '登入', });
-
-// 語言切換邏輯
-
-const { locale, setLocale } = useI18n()
-
-const isChinese = ref(true)
-
-const toggleLanguage = () => {
-  isChinese.value = !isChinese.value
-  setLocale(isChinese.value ? 'zh' : 'en')
-}
-
-// 如果 locale 被外部改動，更新 Switch 狀態
-watch(locale, (newVal) => {
-  isChinese.value = newVal === 'zh'
-})
-
+useHead({ title: '登入' })
 </script>
 
 <style scoped>
@@ -250,7 +211,6 @@ watch(locale, (newVal) => {
   color: #6b7280;
 }
 
-
 .ntou-logo-img {
   border-radius: 12px;
   background: none !important;
@@ -275,65 +235,6 @@ watch(locale, (newVal) => {
   bottom: 16px;
   right: 16px;
   z-index: 1000;
-  width: 80px;
-  height: 40px;
-  border-radius: 20px;
-  background-color: #ccc;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.language-switch--chinese {
-  background-color: #4caf50; /* 中文狀態背景色 */
-}
-
-.label {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  font-weight: bold;
-  user-select: none;
-  pointer-events: none;
-  z-index: 2;          /* 文字在圓球上層 */
-}
-
-.label.left {
-  left: 15px;
-}
-
-.label.right {
-  right: 12px;
-}
-
-.switch-handle {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: white;
-  transition: left 0.3s;
-}
-
-.language-switch--chinese .switch-handle {
-  left: 42px; /* 滑到右邊 */
-}
-
-:not(.language-switch--chinese) .label.left {
-  color: #888;
-}
-
-.language-switch--chinese .label.left {
-  color: #fff;
-}
-
-.language-switch--chinese .label.right {
-  color: #888;
-}
-
-.language-switch:hover {
-  background-color: #bbb;
 }
 
 :deep(.login-role-group .v-radio) {
