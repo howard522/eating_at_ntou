@@ -1,12 +1,19 @@
 // server/models/ad.model.ts
 
+import type { IAd } from "$interfaces/ad.interface";
+import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
-import type { Model } from "mongoose";
-import type { IAd } from "@server/interfaces/ad.interface";
 
 const { Schema, model } = mongoose;
 
-const adSchema = new Schema<IAd>(
+// 文件類型定義
+type AdDocument = HydratedDocument<IAd>;
+
+// --------------------
+// 廣告
+// --------------------
+
+const adSchema = new Schema<AdDocument>(
     {
         title: { type: String, required: true },
         imageUrl: { type: String, required: false },
@@ -17,4 +24,9 @@ const adSchema = new Schema<IAd>(
     { timestamps: true }
 );
 
-export default (mongoose.models.Ad as Model<IAd>) || model<IAd>("Ad", adSchema);
+// --------------------
+// Model export
+// --------------------
+
+export const Ad = (mongoose.models.Ad as Model<AdDocument>) || model<AdDocument>("Ad", adSchema);
+export default Ad;

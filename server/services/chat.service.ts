@@ -1,37 +1,32 @@
 // server/services/chat.service.ts
 
-import type { IChatMessage } from "@server/interfaces/chatMessage.interface";
-import ChatMessage from "@server/models/chatMessage.model";
+import type { IChatMessage, IChatMessageCreate, IChatMessageResponse } from "$interfaces/chatMessage.interface";
+import type { ObjectIdLike, QueryPaginationOptions } from "$interfaces/common.interface";
+import ChatMessage from "$models/chatMessage.model";
 import type { FilterQuery } from "mongoose";
 
-export async function createChatMessage(
-    orderId: string,
-    userId: string,
-    role: "customer" | "delivery",
-    content: string
-) {
-    const chatMessage = new ChatMessage({
-        order: orderId,
-        sender: userId,
-        senderRole: role || "customer",
-        content: content.trim(),
-    });
+export async function createChatMessage(data: IChatMessageCreate) {
+    data.senderRole ||= "customer"; // 預設為 customer
+    data.content = data.content.trim();
+
+    const chatMessage = new ChatMessage(data);
 
     await chatMessage.save();
 
-    return chatMessage;
+    return chatMessage.toObject<IChatMessage>();
 }
 
-export async function getChatMessages(
-    orderId: string,
-    options: {
-        limit: number;
-        skip: number;
+export async function getChatMessagesByOrderId(
+    orderId: ObjectIdLike,
+    options: QueryPaginationOptions & {
         after?: Date;
         before?: Date;
     }
 ) {
-    const { limit, skip, after, before } = options;
+    const limit = options.limit ?? 20;
+    const skip = options.skip ?? 0;
+    const after = options.after;
+    const before = options.before;
     const filter: FilterQuery<IChatMessage> = { order: orderId };
 
     if (after || before) {
@@ -48,9 +43,10 @@ export async function getChatMessages(
 
     const chatMessages = await ChatMessage.find(filter)
         .sort({ timestamp: -1 }) // 排序：新到舊
-        .limit(limit)
         .skip(skip)
-        .populate("sender", "name img");
+        .limit(limit)
+        .populate("sender", "name img")
+        .lean<IChatMessageResponse[]>();
 
     return chatMessages;
 }

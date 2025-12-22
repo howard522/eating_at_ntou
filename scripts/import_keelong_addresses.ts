@@ -4,14 +4,14 @@
  *   npx ts-node scripts/import_keelong_addresses.ts ./data/keelong.csv
  */
 
-import fs from 'fs';
-import path from 'path';
+import KeelongAddressMap from '$models/KeelongAddressMap.js';
+import connectDB from '$utils/db.js';
+import { normalizeAddress } from '$utils/nominatim.js';
 import csv from 'csv-parser';
-import mongoose from 'mongoose';
-import connectDB from '@server/utils/db.js';
-import KeelongAddressMap from '@server/models/KeelongAddressMap.js';
-import { normalizeAddress } from '@server/utils/nominatim.js';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import mongoose from 'mongoose';
+import path from 'path';
 dotenv.config();
 
 if (!process.argv[2]) {

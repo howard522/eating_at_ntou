@@ -1,8 +1,8 @@
 // server/api/orders/[id]/chats.get.ts
 
-import { getChatMessages } from "@server/services/chat.service";
-import { getOrderOwnership } from "@server/services/order.service";
-import { getUser } from "@server/utils/getUser";
+import { getChatMessagesByOrderId } from "$services/chat.service";
+import { getOrderOwnership } from "$services/order.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi
@@ -66,18 +66,26 @@ import { getUser } from "@server/utils/getUser";
  *         description: 訂單不存在
  */
 export default defineEventHandler(async (event) => {
-    const userId = getUser(event)._id as string;
+    const user = getCurrentUser(event);
     const orderId = getRouterParam(event, "id") as string;
 
     if (!orderId) {
-        throw createError({ statusCode: 400, statusMessage: "Missing order id" });
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: order id.",
+        });
     }
 
-    const ownership = await getOrderOwnership(orderId, userId);
+    const ownership = await getOrderOwnership(orderId, user._id);
 
-    // 權限檢查：顧客、外送員（只能查自己的訂單）
-    if (!ownership.isOwner && !ownership.isDeliveryPerson) {
-        throw createError({ statusCode: 403, statusMessage: "Not allowed to view this order" });
+    // 權限檢查：顧客、外送員（只能查自己的訂單）或管理員
+    if (!ownership.isOwner && !ownership.isDeliveryPerson && user.role !== "admin") {
+        throw createError({
+            statusCode: 403,
+            statusMessage: "Forbidden",
+            message: "Not allowed to view this order.",
+        });
     }
 
     const query = getQuery(event);
@@ -92,7 +100,7 @@ export default defineEventHandler(async (event) => {
     let after = query.after ? new Date(query.after as string) : null;
     let before = query.before ? new Date(query.before as string) : null;
 
-    const chatMessages = await getChatMessages(orderId, {
+    const chatMessages = await getChatMessagesByOrderId(orderId, {
         limit: Math.min(Math.max(limit, MIN_LIMIT), MAX_LIMIT),
         skip: Math.max(skip, MIN_SKIP),
         after: after || undefined,

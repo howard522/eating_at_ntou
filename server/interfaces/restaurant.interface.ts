@@ -1,39 +1,71 @@
 // server/interfaces/restaurant.interface.ts
 
-import type { Document, Types } from "mongoose";
-import type { IGeoPoint } from "@server/interfaces/geoPoint.interface";
+import type { CreateBody, ImageURL, ObjectIdLike, UpdateBody } from "./common.interface";
+import type { IGeoPoint } from "./geo.interface";
 
+// --------------------
 // 菜單項目介面
-export interface IMenuItem extends Document {
+// --------------------
+
+export interface IMenuItem {
+    _id: ObjectIdLike;
     name: string;
     price: number;
     image: string;
     info: string;
 }
 
+// --------------------
 // 餐廳介面
-export interface IRestaurant extends Document {
+// --------------------
+
+/**
+ * 餐廳介面
+ */
+export interface IRestaurant {
+    _id: ObjectIdLike;
     name: string;
     address: string;
     phone: string;
     image: string;
     info: string;
     tags: string[];
-    menu: Types.DocumentArray<IMenuItem>;
+    menu: IMenuItem[];
+    rating: number;
     isActive: boolean;
-    locationGeo?: IGeoPoint;
+    locationGeo: IGeoPoint;
 }
 
-// 新增菜單項目資料
-export type CreateMenuItemBody = Pick<IMenuItem, "name" | "price"> &
-    Partial<Omit<IMenuItem, "name" | "price">> & { imageURL?: string };
+// --------------------
+// 餐廳相關 DTO
+// --------------------
 
-// 更新菜單項目資料
-export type UpdateMenuItemBody = Partial<IMenuItem> & { imageURL?: string };
+/**
+ * 回應菜單項目資料
+ */
+export type IMenuItemResponse = IMenuItem;
 
-// 新增餐廳資料
-export type CreateRestaurantBody = Pick<IRestaurant, "name" | "address" | "phone"> &
-    Partial<Omit<IRestaurant, "name" | "address" | "phone">> & { imageURL?: string };
+/**
+ * 新增菜單項目
+ */
+export type ICreateMenuItem = CreateBody<IMenuItem, "name" | "price"> & ImageURL;
 
-// 更新餐廳資料
-export type UpdateRestaurantBody = Partial<IRestaurant> & { imageURL?: string };
+/**
+ * 更新菜單項目
+ */
+export type IUpdateMenuItem = UpdateBody<IMenuItem> & ImageURL;
+
+/**
+ * 回應餐廳資料
+ */
+export type IRestaurantResponse = IRestaurant;
+
+/**
+ * 新增餐廳
+ */
+export type ICreateRestaurant = CreateBody<IRestaurant, "name" | "address" | "phone"> & ImageURL;
+
+/**
+ * 更新餐廳
+ */
+export type IUpdateRestaurant = UpdateBody<IRestaurant> & ImageURL;

@@ -1,7 +1,7 @@
 // server/utils/mongoQuery.ts
 
+import type { IRestaurant } from "$interfaces/restaurant.interface";
 import type { FilterQuery } from "mongoose";
-import type { IRestaurant } from "@server/interfaces/restaurant.interface";
 
 const escapeRegex = (text: string) => {
     return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

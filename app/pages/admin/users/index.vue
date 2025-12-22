@@ -113,9 +113,9 @@
 </template>
 
 <script setup lang="ts">
-import debounce from 'lodash-es/debounce';
 import { useInfiniteFetch } from '@composable/useInfiniteFetch';
 import type { User } from '@types/user';
+import debounce from 'lodash-es/debounce';
 
 const searchTerm = ref('');
 const debouncedSearchTerm = ref('');

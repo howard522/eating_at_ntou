@@ -1,9 +1,16 @@
 // server/utils/nominatim.ts
 
-import type { IGeoPoint } from "@server/interfaces/geoPoint.interface";
+import type { IGeoPoint } from "$interfaces/geo.interface";
+import geoCache from "$models/geoCache.model";
+import KeelongAddressMap from "$models/KeelongAddressMap";
 
-import geoCache from "@server/models/geoCache.model";
-import KeelongAddressMap from "@server/models/KeelongAddressMap";
+/**
+ * TODO:
+ * 這裡除了地址正規化、轉換成經緯度之外，還涉及了一些資料庫的查詢與快取機制，
+ * 包含 KeelongAddressMap 與 geoCache 的使用。
+ * 這些邏輯其實不太適合放在 utils 裡面，應該要有一個專門的 service 來處理這些事情。
+ * （不過目前先這樣寫，等有空再重構吧）
+ */
 
 export function normalizeAddress(addr: string): string {
     if (!addr) return addr;
@@ -59,21 +66,26 @@ export async function geocodeAddress(address: string) {
     // 查 KeelongAddressMap，先去掉"基隆市"
     // 正規化地址
     const qWithoutKeelong = q.replace(/^基隆市\s*/, "");
-    const keelongEntry = await (KeelongAddressMap as any).findOne({ normalizedAddress: qWithoutKeelong });
+    const keelongEntry = await KeelongAddressMap.findOne({ normalizedAddress: qWithoutKeelong });
     if (keelongEntry) {
+        let lat = parseFloat(keelongEntry.lat);
+        let lon = parseFloat(keelongEntry.lon);
         console.log("Geocode KeelongAddressMap hit for address:", qWithoutKeelong);
-        console.log("Found coordinates:", { lat: parseFloat(keelongEntry.lat), lon: parseFloat(keelongEntry.lon) });
-        return { lat: parseFloat(keelongEntry.lat), lon: parseFloat(keelongEntry.lon) };
+        console.log("Found coordinates:", { lat, lon });
+        return { lat, lon };
     }
 
     // 先查 cache
-    const cached = await (geoCache as any).findOne({ address: q });
+    const cached = await geoCache.findOne({ address: q });
     if (cached) {
         console.log("Geocode cache hit for address:", q);
         return { lat: cached.lat, lon: cached.lon };
     }
 
     // 查 Nominatim
+    // TODO: 節流機制應該要在這裡處理才對（尚未實作）
+    // INFO: 節流：Nominatim 建議每秒不要超過 1 次，這裡設 1.1 秒
+
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
     const res = await fetch(url, {
         headers: {
@@ -87,7 +99,7 @@ export async function geocodeAddress(address: string) {
     if (!Array.isArray(data) || data.length === 0) return null;
     const { lat, lon } = data[0];
     // 存 cache
-    const geo = new (geoCache as any)({
+    const geo = new geoCache({
         address: q,
         lat: parseFloat(lat),
         lon: parseFloat(lon),

@@ -1,15 +1,17 @@
-// FILE: server/api/auth/register.post.ts
+// server/api/auth/register.post.ts
 
-import type { RegisterBody } from "@server/interfaces/user.interface";
-import { registerUser } from "@server/services/auth.service";
+import type { IUserCreate } from "$interfaces/user.interface";
+import { registerUser } from "$services/auth.service";
 
 /**
  * @openapi
  * /api/auth/register:
  *   post:
  *     summary: 使用者註冊
- *     description: 建立新帳號（email 唯一），成功回傳 JWT 與使用者資料（不回傳密碼）。
- *     tags: [Auth]
+ *     description: |
+ *       建立新帳號（email 唯一），成功回傳 JWT 與使用者資料（不回傳密碼）。
+ *     tags:
+ *       - Auth
  *     requestBody:
  *       required: true
  *       content:
@@ -45,27 +47,34 @@ import { registerUser } from "@server/services/auth.service";
  *                     address: ""
  *                     phone: ""
  *       400:
- *         description: 請求不正確或 email 已存在
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 statusCode: { type: integer, example: 400 }
- *                 statusMessage: { type: string, example: email already in use }
+ *         $ref: '#/components/responses/BadRequest'
+ *       409:
+ *         $ref: '#/components/responses/Conflict'
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-    const body = await readBody<RegisterBody>(event);
-    const name = body.name || "這個人很懶，不想取暱稱";
-    const email = body.email;
-    const password = body.password;
-    const role = body.role || "multi";
+    const body = await readBody<IUserCreate>(event);
+    body.name ??= "這個人很懶，不想取暱稱";
+    body.role ??= "multi";
 
-    if (!email || !password) {
-        throw createError({ statusCode: 400, statusMessage: "缺少電子信箱或密碼" });
+    if (!body.email || !body.password) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required fields: email, password.",
+        });
     }
 
-    const { user, token } = await registerUser(name, email, password, role);
+    const { user, token } = await registerUser(body);
 
-    return { success: true, token, user };
+    setResponseStatus(event, 201); // 201 Created
+
+    return {
+        success: true,
+        token,
+        user,
+    };
 });

@@ -1,6 +1,6 @@
 // server/utils/parseForm.ts
 
-import { uploadImageToImageBB } from "@server/utils/uploadImage";
+import { uploadImageToImageBB } from "$utils/uploadImage";
 
 /**
  * 解析表單欄位，將 JSON 字串轉換為物件、陣列或字串
@@ -12,6 +12,7 @@ export function parseFormField(field: string): any {
     let val = field.trim();
     if (val.startsWith("{") || val.startsWith("[")) {
         try {
+            // QUESTION: 可能會遇到 { $xxx: ... } 的注入攻擊嗎？
             val = JSON.parse(val);
         } catch {
             return field; // 回傳原始字串
@@ -36,7 +37,8 @@ export async function parseForm<T extends Record<string, any>>(
 
     for (const field of form ?? []) {
         // 圖片欄位要上傳到 ImgBB
-        if (field.name === "image" && field.type?.startsWith("image/")) {
+        if ((field.name === "image" || field.name === "img") && field.type?.startsWith("image/")) {
+            console.log("Uploading image to ImgBB...", field.filename);
             const imageURL = await uploadImageToImageBB({
                 type: field.type,
                 data: field.data,
@@ -44,7 +46,7 @@ export async function parseForm<T extends Record<string, any>>(
             });
 
             if (imageURL) {
-                data["image" as keyof T] = imageURL as any;
+                data[field.name as keyof T] = imageURL as any;
             }
 
             continue;
