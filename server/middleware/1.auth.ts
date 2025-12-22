@@ -11,6 +11,9 @@ function isNeedAuth(path: string, method: string): boolean {
     if (path.startsWith("/api/cart/delivery-time") && method === "GET") {
         return false;
     }
+    if (path.startsWith("/api/cart/delivery-fee") && method === "GET") {
+        return false;
+    }
     const needAuthPaths = ["/api/admin", "/api/auth/me", "/api/cart", "/api/orders"];
     for (const p of needAuthPaths) {
         if (path.startsWith(p)) {
