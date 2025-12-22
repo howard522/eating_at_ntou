@@ -3,32 +3,50 @@
     <v-row justify="center">
       <v-col cols="12" lg="10" xl="8">
 
-        <div class="d-flex align-center mb-8 px-2">
-          <v-btn
-              icon="mdi-arrow-left"
-              variant="text"
-              color="grey-darken-2"
-              size="large"
-              class="mr-4"
-              @click="$router.back()"
-          ></v-btn>
-          <div>
-            <h1 class="text-h3 font-weight-bold text-grey-darken-3">訂單詳情</h1>
-            <p class="text-h6 text-grey-darken-1 mt-1">
-              訂單編號 #{{ orderId.slice(-6).toUpperCase() }}
-            </p>
-          </div>
+        <v-row class="align-center mb-8 px-2" no-gutters>
+          <v-col cols="auto" class="d-flex align-center">
+            <v-btn
+                icon="mdi-arrow-left"
+                variant="text"
+                color="grey-darken-2"
+                size="large"
+                class="mr-4"
+                @click="$router.back()"
+            ></v-btn>
+
+            <div class="d-flex align-center">
+              <div>
+                <h1 class="text-h3 font-weight-bold text-grey-darken-3">訂單詳情</h1>
+                <p class="text-h6 text-grey-darken-1 mt-1">
+                  訂單編號 #{{ orderId.slice(-6).toUpperCase() }}
+                </p>
+              </div>
+
+              <v-btn
+                  variant="outlined"
+                  color="primary"
+                  class="ml-4"
+                  :to="`/admin/orders/${orderId}/chat`"
+              >
+                歷史對話紀錄
+              </v-btn>
+            </div>
+          </v-col>
+
           <v-spacer></v-spacer>
-          <v-chip
-              v-if="orderData"
-              :color="getStatusColor(currentStep)"
-              class="font-weight-bold px-6"
-              size="x-large"
-              label
-          >
-            {{ steps[currentStep - 1]?.title }}
-          </v-chip>
-        </div>
+
+          <v-col cols="auto" class="d-flex align-center">
+            <v-chip
+                v-if="orderData"
+                :color="getStatusColor(currentStep)"
+                class="font-weight-bold px-6"
+                size="x-large"
+                label
+            >
+              {{ steps[currentStep - 1]?.title }}
+            </v-chip>
+          </v-col>
+        </v-row>
 
         <div v-if="pending" class="text-center pa-10">
           <v-progress-circular indeterminate color="primary" size="80"></v-progress-circular>
@@ -231,16 +249,16 @@
 
             <v-card-text class="pa-8 bg-grey-lighten-5">
               <v-row dense justify="end">
-                <v-col cols="6" sm="4" md="3" class="text-right text-h6 text-grey-darken-1">小計:</v-col>
+                <v-col cols="6" sm="4" md="3" class="text-right text-h6 text-grey-darken-1">小計：</v-col>
                 <v-col cols="6" sm="4" md="3" class="text-right text-h6 font-weight-bold">${{ orderData.total - orderData.deliveryFee }}</v-col>
               </v-row>
               <v-row dense justify="end" class="mt-2">
-                <v-col cols="6" sm="4" md="3" class="text-right text-h6 text-grey-darken-1">運費:</v-col>
+                <v-col cols="6" sm="4" md="3" class="text-right text-h6 text-grey-darken-1">外送費：</v-col>
                 <v-col cols="6" sm="4" md="3" class="text-right text-h6 font-weight-bold">${{ orderData.deliveryFee }}</v-col>
               </v-row>
               <v-divider class="my-4 border-opacity-25" color="black"></v-divider>
               <v-row dense justify="end" align="center">
-                <v-col cols="6" sm="4" md="3" class="text-right text-h5 font-weight-bold text-grey-darken-3">總計:</v-col>
+                <v-col cols="6" sm="4" md="3" class="text-right text-h5 font-weight-bold text-grey-darken-3">總計：</v-col>
                 <v-col cols="6" sm="4" md="3" class="text-right text-h4 font-weight-black text-green-darken-3">NT$ {{ orderData.total }}</v-col>
               </v-row>
             </v-card-text>
