@@ -100,6 +100,13 @@
                 $t('register.loginPrompt')
               }}</NuxtLink>
             </div>
+
+            <div class="text-center mt-3">
+              若您同意註冊本平台，即表示您已閱讀並同意我們的
+              <NuxtLink to="/terms-of-service" class="text-primary">{{ $t('register.termsOfService') }}</NuxtLink>
+              和
+              <NuxtLink to="/privacy-policy" class="text-primary">{{ $t('register.privacyPolicy') }}</NuxtLink>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
