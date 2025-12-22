@@ -1,6 +1,6 @@
 // server/models/user.model.ts
 
-import type { IUserMethods, IUserWithPassword } from "$interfaces/user.interface";
+import type { IUserMethods, IUserAllFields } from "$interfaces/user.interface";
 import { comparePassword, generatePasswordHash } from "$utils/auth";
 import type { HydratedDocument, Model } from "mongoose";
 import mongoose from "mongoose";
@@ -8,7 +8,7 @@ import mongoose from "mongoose";
 const { Schema, model } = mongoose;
 
 // 文件類型定義
-type UserDocument = HydratedDocument<IUserWithPassword, IUserMethods>;
+type UserDocument = HydratedDocument<IUserAllFields, IUserMethods>;
 
 // --------------------
 // 使用者
@@ -24,7 +24,7 @@ const userSchema = new Schema<UserDocument>(
             lowercase: true,
             trim: true,
         },
-        password: { type: String, required: true },
+        password: { type: String, required: true, select: false },
         role: {
             type: String,
             enum: ["admin", "multi", "banned"],
@@ -33,6 +33,8 @@ const userSchema = new Schema<UserDocument>(
         img: { type: String, default: "" },
         address: { type: String, default: "" },
         phone: { type: String, default: "" },
+        loginFailureCount: { type: Number, default: 0, select: false }, // 登入失敗次數
+        loginLockExpiration: { type: Date, default: null, select: false }, // 登入鎖定到期時間
         // activeRole: { type: String, enum: ["customer", "delivery", null], default: null },
     },
     {

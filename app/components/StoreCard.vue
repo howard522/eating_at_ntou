@@ -1,11 +1,9 @@
 <template>
-
-  <v-card 
-    class="rounded-lg store-card" 
-    :to="`/customer/stores/${id}`"
-    :style="{ '--hover-bg': hoverBgColor }"
+  <v-card
+      class="rounded-lg store-card"
+      :to="`/customer/stores/${id}`"
+      :style="{ '--hover-bg': hoverBgColor }"
   >
-
     <div class="image-container">
       <v-img
           :src="image"
@@ -26,13 +24,34 @@
       </v-img>
     </div>
 
-    <v-card-title class="font-weight-bold">
+    <v-card-title class="font-weight-bold pb-0">
       {{ name }}
     </v-card-title>
 
-    <v-card-subtitle class="mt-1 mb-1 store-info-subtitle">
-      {{ info }}
+    <v-card-subtitle class="mt-1 mb-3 d-flex align-center">
+      <template v-if="rating > 0">
+        <span class="text-body-2 font-weight-bold text-high-emphasis mr-1">
+          {{ rating.toFixed(1) }}
+        </span>
+        <v-rating
+            :model-value="rating"
+            color="amber"
+            active-color="amber"
+            half-increments
+            readonly
+            size="x-small"
+            density="compact"
+            style="transform: translateY(-2px)"
+        ></v-rating>
+        <span class="text-caption text-grey ml-1">
+          </span>
+      </template>
+
+      <template v-else>
+        <span class="text-body-2 text-grey">尚無評價</span>
+      </template>
     </v-card-subtitle>
+
   </v-card>
 </template>
 
@@ -52,9 +71,9 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  info: {
-    type: String,
-    default: '',
+  rating: {
+    type: Number,
+    default: 0,
   },
 });
 
@@ -84,15 +103,5 @@ const { hoverBgColor } = useImageHoverColor(toRef(props, 'image'));
 
 .store-card:hover .store-image {
   transform: scale(1.05);
-}
-
-.store-info-subtitle {
-  min-height: 24px;
-  display: block;
-  align-items: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
 }
 </style>

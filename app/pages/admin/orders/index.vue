@@ -168,9 +168,7 @@
 
 <script setup lang="ts">
 import { useInfiniteFetch } from '@composable/useInfiniteFetch';
-import { useUserStore } from '@stores/user';
 
-const userStore = useUserStore();
 const tab = ref('inProgress');
 const rawDateFrom = ref<Date | null>(null);
 const rawDateTo = ref<Date | null>(null);
@@ -263,6 +261,7 @@ const orders = computed(() => rawOrders.value.map(order => {
     total: order.total,
     deliveryFee: order.deliveryFee,
     customerStatus: order.customerStatus,
+    deliveryStatus: order.deliveryStatus,
     createdAtFormatted: dateStr,
   };
 }));

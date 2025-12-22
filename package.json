@@ -14,6 +14,7 @@
     },
     "dependencies": {
         "@mdi/font": "^7.4.47",
+        "@nuxtjs/i18n": "^10.2.1",
         "@pinia/nuxt": "^0.11.2",
         "bcryptjs": "^3.0.2",
         "jdenticon": "^3.3.0",
@@ -40,6 +41,7 @@
         "@types/swagger-ui-dist": "^3.30.6",
         "@types/swagger-ui-express": "^4.1.8",
         "@vue/test-utils": "^2.4.6",
+        "dotenv": "^17.2.3",
         "happy-dom": "^20.0.11",
         "tsx": "^4.20.6",
         "vitest": "^4.0.15"
