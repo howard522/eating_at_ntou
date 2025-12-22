@@ -204,22 +204,21 @@ const deliveryTitle = computed(() => {
 
 const statusInfo = computed(() => {
   const s = props.order.status;
-  if (s === 'on_the_way') {
-    return { text: '外送中', color: 'primary' };
-  }
-  if (s === 'delivered') {
-    return { text: '已送達', color: 'info' };
-  }
-  if (s === 'preparing') {
-    return { text: '準備中', color: 'warning' };
-  }
-  if (s === 'received') {
-    return { text: '已接收', color: 'info' };
-  }
-  if (s === 'completed') {
-    return { text: '已完成', color: 'success' };
-  }
-  return { text: '未知', color: 'grey' };
+  const isCustomer = props.role === 'customer';
+  const map: Record<string, { text: string; color: string }> = {
+    on_the_way: {
+      text: isCustomer ? '準備中' : '配送中',
+      color: 'primary'
+    },
+    preparing: {
+      text: isCustomer ? '沒人接QAQ' : '準備中',
+      color: 'warning'
+    },
+    delivered: { text: '已送達', color: 'info' },
+    received:  { text: '已接收', color: 'info' },
+    completed: { text: '已完成', color: 'success' }
+  };
+  return map[s] || { text: '未知', color: 'grey' };
 });
 </script>
 
