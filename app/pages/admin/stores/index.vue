@@ -40,7 +40,12 @@
             cols="12"
             class="py-2"
         >
-          <AdminStoreCard :id="store._id" :name="store.name" :image="store.image" :phone="store.phone" :count="store.menu.length"  />
+          <AdminStoreCard :id="store._id"
+                          :name="store.name"
+                          :image="store.image"
+                          :phone="store.phone"
+                          :count="store.menu.length"
+                          :rating="store.rating"/>
         </v-col>
       </v-row>
 
@@ -64,7 +69,7 @@ import { useInfiniteFetch } from '@composable/useInfiniteFetch';
 import debounce from 'lodash-es/debounce';
 
 interface menuItem { _id: string; name: string; price: number; image: string; info: string; }
-interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; menu: menuItem[]; }
+interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; menu: menuItem[]; rating: number; }
 
 const searchTerm = ref('');
 const debouncedSearchTerm = ref<string>(searchTerm.value);
