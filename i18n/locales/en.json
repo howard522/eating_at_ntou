@@ -1,0 +1,56 @@
+{
+    "common": {
+        "nickname": "Nickname",
+        "email": "Email",
+        "password": "Password",
+        "customer": "Customer",
+        "delivery": "Delivery",
+        "close": "Close",
+        "cancel": "Cancel",
+        "submit": "Submit"
+    },
+    "avatarCropper": {
+        "dialogTitle": "Crop Avatar",
+        "title": "Avatar Cropper Tool",
+        "selectImage": "Select Avatar Image",
+        "centerCrop": "Center Circle Crop",
+        "customCrop": "Custom Position Crop",
+        "cropRadius": "Crop Circle Radius",
+        "hint": "Hint: Drag the circle in the preview to move the crop position",
+        "saveButton": "Save Crop Result"
+    },
+    "login": {
+        "headTitle": "Login",
+        "title": "Login to Your Account",
+        "subtitle": "Enter your account & password to login",
+        "switchRoleInfo": "You can switch roles in 'My Account'",
+        "forgotPassword": "Forgot password?",
+        "loginButton": "Login",
+        "registerPrompt": "Don't have an account?",
+        "registerLink": "Create account",
+        "successMessage": "Successfully logged in!",
+        "errorMessage": "Login failed, please check your account or password.",
+        "missingFields": "Email and password cannot be empty",
+        "temporarilyLocked": "Your account has been temporarily locked due to multiple failed attempts. Please try again later.",
+        "temporarilyLockedUntil": "Your account has been temporarily locked. Please try again after {time}.",
+        "banned": "Your account has been banned. Please contact customer service for details."
+    },
+    "register": {
+        "headTitle": "Register",
+        "title": "Create a New Account",
+        "defaultDeliveryAddress": "Default Delivery Address (Optional)",
+        "contactPhone": "Contact Phone (Optional)",
+        "loginPrompt": "Already have an account? Go to login",
+        "registerButton": "Register Now",
+        "pleaseEnter": "Please enter {field}",
+        "invalidEmailFormat": "Invalid email format",
+        "passwordTooShort": "Password must be at least 6 characters long",
+        "passwordMismatch": "Password and confirmation password do not match",
+        "successMessage": "Registration successful! Please log in",
+        "errorMessage": "Registration failed, please try again later",
+        "emailExists": "Registration failed, the email has already been registered",
+        "missingFields": "Invalid input data, please check and try again",
+        "networkError": "Network connection failed, please check your network and try again",
+        "serverError": "Server error, please try again later"
+    }
+}

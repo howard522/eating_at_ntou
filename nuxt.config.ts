@@ -6,8 +6,21 @@ export default defineNuxtConfig({
     pages: true,
     ssr: false,
     devtools: { enabled: true },
-    modules: ["@pinia/nuxt"],
+    modules: ["@pinia/nuxt", "@nuxtjs/i18n"],
     css: ["vuetify/styles", "@mdi/font/css/materialdesignicons.min.css", "leaflet/dist/leaflet.css"],
+    i18n: {
+        fallbackLocale: "zh",
+        strategy: "no_prefix",
+        lazy: true,
+        langDir: "locales/",
+        locales: [
+            { code: "zh", file: "zh.json", name: "繁體中文" },
+            { code: "en", file: "en.json", name: "English" },
+            { code: "jp", file: "jp.json", name: "日本語" },
+        ],
+        defaultLocale: "zh",
+        detectBrowserLanguage: false,
+    },
     plugins: ["~/plugins/vuetify.ts", "~/plugins/fetch-auth.ts"],
     devServer: {
         host: "0.0.0.0",

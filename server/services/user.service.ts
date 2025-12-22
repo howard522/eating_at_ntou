@@ -56,6 +56,51 @@ export async function updateUserPasswordById(userId: ObjectIdLike, newPassword: 
 }
 
 /**
+ * 驗證使用者是否可以登入
+ *
+ * @param userId 使用者 ID
+ * @returns 回傳物件，包含是否可以登入及鎖定到期時間（若有的話）
+ */
+export async function verifyUserCanLogin(userId: ObjectIdLike) {
+    const user = await User.findById(userId).select("+loginLockExpiration");
+
+    if (!user) {
+        return { result: false };
+    }
+
+    // 若有設定登入鎖定到期時間，且尚未到期，則無法登入
+    if (user.loginLockExpiration && user.loginLockExpiration > new Date()) {
+        return { result: false, lockUntil: user.loginLockExpiration };
+    }
+
+    return { result: true };
+}
+
+/**
+ * 增加使用者的登入失敗次數
+ * 若達到一定次數，則鎖定帳號一段時間
+ *
+ * @param userId 使用者 ID
+ */
+export async function incrementUserLoginFailureCount(userId: ObjectIdLike) {
+    const user = await User.findById(userId).select("+loginFailureCount +loginLockExpiration");
+
+    if (!user) {
+        return;
+    }
+
+    user.loginFailureCount++;
+
+    // 若登入失敗次數達到 5 次，則鎖定帳號 5 分鐘
+    if (user.loginFailureCount >= 5) {
+        const lockDuration = 5 * 60 * 1000; // 5 分鐘
+        user.loginLockExpiration = new Date(Date.now() + lockDuration);
+    }
+
+    await user.save();
+}
+
+/**
  * 建立新使用者帳號
  *
  * @param data 使用者註冊資料

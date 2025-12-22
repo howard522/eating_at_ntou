@@ -6,8 +6,10 @@ import {
     createUser,
     getUserByEmail,
     getUserById,
+    incrementUserLoginFailureCount,
     updateUser,
     updateUserPasswordById,
+    verifyUserCanLogin,
     verifyUserPasswordById,
 } from "$services/user.service";
 import { signJwt } from "$utils/auth";
@@ -54,21 +56,25 @@ export async function registerUser(data: IUserCreate) {
  * @returns 登入的使用者資料及 JWT token
  */
 export async function loginUser(email: string, password: string) {
+    // 1. 透過 email 獲取使用者資料
     const user = await getUserByEmail(email);
     if (!user) {
         throw createError({
             statusCode: 401,
             statusMessage: "Unauthorized",
-            message: "Account does not exist.",
+            message: "Incorrect email or password.",
         });
     }
 
-    const isMatch = await verifyUserPasswordById(user._id, password);
-    if (!isMatch) {
+    // 2. 驗證使用者是否可以登入（是否被鎖定）
+    const canLogin = await verifyUserCanLogin(user._id);
+
+    if (!canLogin.result) {
         throw createError({
-            statusCode: 401,
-            statusMessage: "Unauthorized",
-            message: "Incorrect password.",
+            statusCode: 403,
+            statusMessage: "Forbidden",
+            message: "Account is temporarily locked. Please try again later.",
+            data: { lockUntil: canLogin.lockUntil },
         });
     }
 
@@ -80,6 +86,20 @@ export async function loginUser(email: string, password: string) {
         });
     }
 
+    // 3. 驗證密碼是否正確
+    const isMatch = await verifyUserPasswordById(user._id, password);
+    if (!isMatch) {
+        incrementUserLoginFailureCount(user._id); // 增加登入失敗次數，但不等待結果
+        throw createError({
+            statusCode: 401,
+            statusMessage: "Unauthorized",
+            message: "Incorrect email or password.",
+        });
+    }
+
+    // 4. 登入成功，重設登入失敗次數及鎖定時間，並且核發 JWT token
+
+    updateUser(user._id, { loginFailureCount: 0, loginLockExpiration: null }); // 不等待結果
     const token = signJwt(String(user._id), user.role);
 
     return { user, token };
