@@ -2,7 +2,9 @@
 
 import type { ObjectIdLike, QueryPaginationOptions } from "$interfaces/common.interface";
 import type { IReviewCreate, IReviewResponse } from "$interfaces/review.interface";
+import Restaurant from "$models/restaurant.model";
 import Review from "$models/review.model";
+import mongoose from "mongoose";
 
 /**
  * 取得特定餐廳的評論列表
@@ -46,6 +48,17 @@ export async function getReviewsByRestaurantId(
     return { total, reviews };
 }
 
+async function updateRestaurantRating(restaurantId: ObjectIdLike) {
+    const stats = await Review.aggregate([
+        { $match: { restaurant: new mongoose.Types.ObjectId(restaurantId.toString()) } },
+        { $group: { _id: "$restaurant", averageRating: { $avg: "$rating" } } },
+    ]);
+
+    const averageRating = stats.length > 0 ? stats[0].averageRating : 0;
+
+    await Restaurant.findByIdAndUpdate(restaurantId, { rating: averageRating });
+}
+
 /**
  * 建立新的評論
  *
@@ -58,7 +71,30 @@ export async function getReviewsByRestaurantId(
 export async function createReview(data: IReviewCreate) {
     const reviewDoc = await Review.create(data);
 
+    await updateRestaurantRating(data.restaurant);
+
     const review = await reviewDoc.populate("user", "id name img");
 
     return review.toObject<IReviewResponse>();
+}
+
+/**
+ * 刪除評論
+ *
+ * @param reviewId 評論 ID
+ */
+export async function deleteReview(reviewId: ObjectIdLike) {
+    const review = await Review.findByIdAndDelete(reviewId);
+
+    if (!review) {
+        throw createError({
+            statusCode: 404,
+            statusMessage: "Not Found",
+            message: "Review not found.",
+        });
+    }
+
+    await updateRestaurantRating(review.restaurant);
+
+    return review;
 }

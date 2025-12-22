@@ -21,8 +21,8 @@ export const components = {
                     image: { type: 'string' },
                     info: { type: 'string' },
                     tags: { type: 'array', items: { type: 'string' } },
-                    menu: { type: 'array', items: { $ref: '#/components/schemas/MenuItem' } }
-                    ,
+                    menu: { type: 'array', items: { $ref: '#/components/schemas/MenuItem' } },
+                    rating: { type: 'number', default: 0 },
                     isActive: { type: 'boolean', description: '是否上架/營業（預設 true）', example: true, default: true },
                     locationGeo: {
                         type: 'object',
