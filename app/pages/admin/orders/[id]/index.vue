@@ -331,7 +331,7 @@ const userStore = useUserStore();
 const orderId = route.params.id as string;
 
 const steps = [
-  { id: 1, title: '等待接單', icon: 'mdi-store-clock-outline' },
+  { id: 1, title: '沒人接QAQ', icon: 'mdi-store-clock-outline' },
   { id: 2, title: '準備中', icon: 'mdi-chef-hat' },
   { id: 3, title: '已送達', icon: 'mdi-map-marker-check' },
   { id: 4, title: '已接收', icon: 'mdi-hand-shake' },

@@ -8,12 +8,12 @@
   >
     <div class="d-flex align-center flex-wrap px-5 py-3 bg-grey-lighten-4">
       <v-chip
-          :color="getStatusColor(order.customerStatus)"
+          :color="getStepColor(currentStep)"
           variant="flat"
           class="font-weight-bold mr-3 text-subtitle-1 px-4"
           label
       >
-        {{ getStatusText(order.customerStatus) }}
+        {{ getStepTitle(currentStep) }}
       </v-chip>
 
       <span class="text-h6 font-weight-black text-grey-darken-3 mr-auto">
@@ -92,6 +92,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+
 interface DisplayOrder {
   id: string;
   restaurantNames: string;
@@ -103,31 +105,41 @@ interface DisplayOrder {
   total: number;
   deliveryFee: number;
   customerStatus: string;
+  deliveryStatus: string;
   createdAtFormatted: string;
 }
 
-defineProps<{
+const props = defineProps<{
   order: DisplayOrder
 }>();
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'preparing': return 'orange-darken-2';
-    case 'on_the_way': return 'info';
-    case 'received': return 'purple';
-    case 'completed': return 'success';
-    default: return 'grey';
-  }
+const steps = [
+  { id: 1, title: '沒人接QAQ', color: 'grey' },
+  { id: 2, title: '準備中', color: 'orange-darken-2' },
+  { id: 3, title: '已送達', color: 'info' },
+  { id: 4, title: '已接收', color: 'purple' },
+  { id: 5, title: '已完成', color: 'success' },
+];
+
+const currentStep = computed(() => {
+  const cStatus = props.order.customerStatus;
+  const dStatus = props.order.deliveryStatus;
+
+  if (cStatus === 'completed') return 5;
+  if (cStatus === 'received') return 4;
+  if (dStatus === 'delivered') return 3;
+  if (dStatus === 'on_the_way') return 2;
+  return 1;
+});
+
+const getStepTitle = (stepId: number) => {
+  const step = steps.find(s => s.id === stepId);
+  return step ? step.title : '未知狀態';
 };
 
-const getStatusText = (status: string) => {
-  const map: Record<string, string> = {
-    'preparing': '沒人接QAQ',
-    'on_the_way': '準備中',
-    'received': '已接收',
-    'completed': '已完成',
-  };
-  return map[status] || status;
+const getStepColor = (stepId: number) => {
+  const step = steps.find(s => s.id === stepId);
+  return step ? step.color : 'grey';
 };
 </script>
 
