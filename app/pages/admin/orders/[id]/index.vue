@@ -145,6 +145,28 @@
                       </div>
                     </v-list-item-subtitle>
                   </v-list-item>
+                  <v-divider
+                    v-if="orderData.deliveryStatus === 'on_the_way'"
+                    inset
+                    class="my-4"
+                  ></v-divider>
+
+                  <v-list-item v-if="orderData.deliveryStatus === 'on_the_way'">
+                    <template v-slot:prepend>
+                      <v-avatar color="green-lighten-5" size="56" class="mr-4">
+                        <v-icon color="green" size="32">mdi-clock-outline</v-icon>
+                      </v-avatar>
+                    </template>
+                    <v-list-item-title class="text-h6 font-weight-bold mb-1">
+                      預計送達時間
+                    </v-list-item-title>
+                    <v-list-item-subtitle class="text-subtitle-1 text-high-emphasis">
+                      {{
+                        etaTimeString ||
+                        (isEtaLoading ? "計算中..." : "無法取得")
+                      }}
+                    </v-list-item-subtitle>
+                  </v-list-item>
                 </v-list>
               </v-card>
             </v-col>
@@ -273,6 +295,7 @@
 <script setup lang="ts">
 import { useOrderTracking } from '@composable/useOrderTracking';
 import { useUserStore } from '@stores/user';
+import { useDeliveryEta } from '@composable/useDeliveryEta';
 
 interface ApiOrderItem {
   _id: string;
@@ -398,6 +421,17 @@ const restaurantPositions = computed<LatLng[]>(() => {
 
 const { driverPosition: courierPosition } = useOrderTracking(orderId);
 
+const isEtaActive = computed(
+  () =>
+    Boolean(courierPosition.value && customerPosition.value) &&
+    orderData.value?.deliveryStatus === 'on_the_way'
+);
+const { etaTimeString, isLoading: isEtaLoading } = useDeliveryEta({
+  origin: courierPosition,
+  destination: customerPosition,
+  enabled: isEtaActive,
+  refreshIntervalMs: 60000,
+});
 const getStepColor = (stepId: number) => {
   if (currentStep.value === 5) return 'success';
   if (stepId === currentStep.value) return 'primary';

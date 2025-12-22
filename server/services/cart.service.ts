@@ -174,8 +174,7 @@ export function calculateDeliveryFee(customer: [number, number], restaurants: [n
         });
     }
 
-    // 計算每個餐廳到使用者地址的距離，然後取平均值
-    // 可能未來改成取最遠距離或其他規則
+    // 計算每個餐廳到使用者地址的距離，然後加起來
     const totalDistance = restaurants.reduce((distanceSum, restaurantCoords) => {
         const distance = haversineDistance(restaurantCoords, customer);
         return distanceSum + distance;

@@ -244,6 +244,7 @@
 </template>
 
 <script setup lang="ts">
+import { useDeliveryEta } from '@composable/useDeliveryEta';
 import { useOrderTracking } from '@composable/useOrderTracking';
 import { useUserStore } from '@stores/user';
 import { useNotificationStore } from '@stores/notification';
@@ -324,6 +325,17 @@ const restaurantPositions = computed<LatLng[]>(() => {
   return positions
 })
 const { driverPosition: courierPosition } = useOrderTracking(orderId)
+const isEtaActive = computed(
+  () =>
+    Boolean(courierPosition.value && customerPosition.value) &&
+    orderData.value?.deliveryStatus === 'on_the_way'
+);
+const { etaTimeString, isLoading: isEtaLoading } = useDeliveryEta({
+  origin: courierPosition,
+  destination: customerPosition,
+  enabled: isEtaActive,
+  refreshIntervalMs: 60000,
+});
 if (orderData.value && orderData.value.deliveryPerson && orderData.value.customerStatus === 'preparing') {
   isUpdating.value = true;
   try {
@@ -355,13 +367,22 @@ if (orderData.value && orderData.value.deliveryPerson && orderData.value.custome
 const currentStep = computed(() => {
   return statusToStepMap[orderData.value.customerStatus];
 });
+const formatArriveTime = (arriveTime?: string) => {
+  if (!arriveTime) return "";
+  const date = new Date(arriveTime);
+  return date.toLocaleString();
+};
 
 const deliver = computed(() => {
   if (orderData.value?.deliveryPerson) {
     const deliveryStatus = orderData.value.deliveryStatus;
     let statusText = '外送員正在處理您的訂單';
     if (deliveryStatus === 'on_the_way') {
-      statusText = '預計送達時間：' + new Date(orderData.value.arriveTime).toLocaleString();
+      // statusText = '預計送達時間：' + new Date(orderData.value.arriveTime).toLocaleString();
+      const etaDisplay =
+        etaTimeString.value ||
+        (isEtaLoading.value ? '計算中...' : formatArriveTime(orderData.value.arriveTime));
+      statusText = `預計送達時間：${etaDisplay || '無法取得'}`;
     } else if (deliveryStatus === 'delivered') {
       statusText = '已送達指定地點';
     } else if (deliveryStatus === 'completed') {

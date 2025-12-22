@@ -124,6 +124,13 @@
                 subtitle="顧客電話"
               >
               </v-list-item>
+              <template v-if="orderData.deliveryStatus === 'on_the_way'">
+                <v-divider inset></v-divider>
+                <v-list-item
+                  :title="etaTimeString || (isEtaLoading ? '計算中...' : '無法取得')"
+                  subtitle="預計送達時間"
+                ></v-list-item>
+              </template>
               <v-divider v-if="orderData.deliveryInfo.note" inset></v-divider>
               <v-list-item
                 v-if="orderData.deliveryInfo.note"
@@ -218,6 +225,7 @@
 
 <script setup lang="ts">
 import DeliveryMap from "@components/DeliveryMap.vue";
+import { useDeliveryEta } from "@composable/useDeliveryEta";
 import { useOrderTracking } from "@composable/useOrderTracking";
 import { useNotificationStore } from "@stores/notification";
 import { useUserStore } from "@stores/user";
@@ -300,6 +308,17 @@ const {
   sendLocation,
   disconnect: stopTrackingSocket,
 } = useOrderTracking(orderId);
+const isEtaActive = computed(
+  () =>
+    Boolean(courierPosition.value && customerPosition.value) &&
+    orderData.value?.deliveryStatus === "on_the_way"
+);
+const { etaTimeString, isLoading: isEtaLoading } = useDeliveryEta({
+  origin: courierPosition,
+  destination: customerPosition,
+  enabled: isEtaActive,
+  refreshIntervalMs: 60000,
+});
 const geolocationWatchId = ref<number | null>(null);
 const shouldShareLocation = computed(
   () =>
