@@ -46,6 +46,58 @@
           </v-stepper>
 
           <v-card flat border rounded="lg" class="mb-6">
+            <v-card-title class="text-h6 font-weight-bold d-flex align-center">
+              <v-icon icon="mdi-map-marker-radius" start color="green" class="mr-2"></v-icon>
+              取餐資訊
+            </v-card-title>
+            
+            <v-divider></v-divider>
+
+            <v-card-text class="pa-5">
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <div class="text-caption text-medium-emphasis mb-1">取餐人暱稱</div>
+                  <div class="text-body-1 font-weight-medium d-flex align-center">
+                    <v-icon icon="mdi-account-outline" size="small" class="mr-2 text-medium-emphasis"></v-icon>
+                    {{ orderData.deliveryInfo?.contactName }}
+                  </div>
+                </v-col>
+
+                <v-col cols="12" sm="6">
+                  <div class="text-caption text-medium-emphasis mb-1 mt-3 mt-sm-0">連絡電話</div>
+                  <div class="text-body-1 font-weight-medium d-flex align-center">
+                    <v-icon icon="mdi-phone-outline" size="small" class="mr-2 text-medium-emphasis"></v-icon>
+                    {{ orderData.deliveryInfo?.contactPhone }}
+                  </div>
+                </v-col>
+
+                <v-col cols="12">
+                  <div class="text-caption text-medium-emphasis mb-1 mt-3">取餐地點</div>
+                  <div class="text-body-1 font-weight-medium d-flex align-center">
+                    <v-icon icon="mdi-map-marker-outline" size="small" class="mr-2 text-medium-emphasis"></v-icon>
+                    {{ orderData.deliveryInfo?.address }}
+                  </div>
+                </v-col>
+
+                <v-col cols="12">
+                  <v-alert
+                    color="info"
+                    variant="tonal"
+                    density="compact"
+                    class="mt-3"
+                    icon="mdi-note-text-outline"
+                  >
+                    <div class="text-caption text-medium-emphasis">備註</div>
+                    <div class="text-body-2 font-weight-medium">
+                      {{ orderData.deliveryInfo?.note || '無' }}
+                    </div>
+                  </v-alert>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+
+          <v-card flat border rounded="lg" class="mb-6">
             <v-list-item lines="two" class="pa-5">
               <template v-slot:prepend>
                 <v-avatar size="56" class="me-4">
@@ -130,6 +182,22 @@
             </v-card-text>
           </v-card>
 
+          <v-badge
+              :model-value="notificationStore.hasMessage(orderId)"
+              color="error"
+              dot
+              class="w-100 mt-4 notification-badge"
+          >
+            <v-btn
+                color="primary"
+                block
+                size="large"
+                @click="navigateTo(`/chat/${orderId}`)"
+            >
+                <span class="text-h6 font-weight-bold">聯絡外送員</span>
+            </v-btn>
+          </v-badge>
+
           <v-btn
               :color="currentStep === 1 ? 'error' : 'success'"
               block
@@ -175,8 +243,9 @@
 </template>
 
 <script setup lang="ts">
+import { useOrderTracking } from '@composable/useOrderTracking';
 import { useUserStore } from '@stores/user';
-import { useOrderTracking } from '@app/composable/useOrderTracking';
+import { useNotificationStore } from '@stores/notification';
 
 type LatLng = [number, number]
 const steps = ref([
@@ -196,6 +265,16 @@ const statusToStepMap: Record<string, number> = {
 const route = useRoute();
 const orderId = route.params.id as string;
 const userStore = useUserStore();
+const notificationStore = useNotificationStore();
+
+// 進入頁面時清除狀態更新通知
+onMounted(() => {
+    notificationStore.clearStatus(orderId);
+});
+
+onActivated(() => {
+    notificationStore.clearStatus(orderId);
+});
 
 const isUpdating = ref(false);
 
@@ -284,6 +363,8 @@ const deliver = computed(() => {
       statusText = '預計送達時間：' + new Date(orderData.value.arriveTime).toLocaleString();
     } else if (deliveryStatus === 'delivered') {
       statusText = '已送達指定地點';
+    } else if (deliveryStatus === 'completed') {
+      statusText = '訂單已完成';
     }
     return {
       name: `外送員：${orderData.value.deliveryPerson.name}`,
@@ -374,3 +455,24 @@ useHead({
   title: '訂單狀態',
 });
 </script>
+
+<style scoped>
+.notification-badge :deep(.v-badge__badge) {
+  animation: pulse 1.5s infinite;
+  border: 2px solid white;
+  width: 12px;
+  height: 12px;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 82, 82, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+  }
+}
+</style>

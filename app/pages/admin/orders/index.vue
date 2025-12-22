@@ -167,63 +167,11 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '@stores/user'
-
-interface ApiOrderItem {
-  name: string;
-  quantity: number;
-  restaurant: {
-    name: string;
-  };
-}
-
-interface ApiOrder {
-  _id: string;
-  user: {
-    name: string;
-  };
-  deliveryPerson: {
-    name: string;
-    phone: string;
-  } | null;
-  items: ApiOrderItem[];
-  total: number;
-  deliveryFee: number;
-  customerStatus: string;
-  createdAt: string;
-  arriveTime: string;
-  deliveryInfo: {
-    contactName: string;
-    contactPhone: string;
-    address: string;
-  };
-}
-
-interface ApiResponse {
-  success: boolean;
-  count: number;
-  data: ApiOrder[];
-}
-
-interface DisplayOrder {
-  id: string;
-  restaurantNames: string;
-  userName: string;
-  userPhone: string;
-  deliveryPersonName: string | null;
-  deliveryPersonPhone: string | null;
-  items: { name: string; quantity: number }[];
-  total: number;
-  deliveryFee: number;
-  customerStatus: string;
-  createdAtFormatted: string;
-}
+import { useInfiniteFetch } from '@composable/useInfiniteFetch';
+import { useUserStore } from '@stores/user';
 
 const userStore = useUserStore();
 const tab = ref('inProgress');
-const pending = ref(false);
-const error = ref<Error | null>(null);
-const orders = ref<DisplayOrder[]>([]);
 const rawDateFrom = ref<Date | null>(null);
 const rawDateTo = ref<Date | null>(null);
 const menuFrom = ref(false);
@@ -244,7 +192,7 @@ const sortItems = [
 ];
 
 const handleTabChange = () => {
-  fetchOrders();
+  fetchItems({ reset: true });
 };
 
 const updateDate = (type: 'from' | 'to', date: any) => {
@@ -262,7 +210,7 @@ const updateDate = (type: 'from' | 'to', date: any) => {
     filters.value.to = formattedDate;
     menuTo.value = false;
   }
-  fetchOrders();
+  fetchItems({ reset: true });
 };
 
 const clearDate = (type: 'from' | 'to') => {
@@ -273,82 +221,58 @@ const clearDate = (type: 'from' | 'to') => {
     filters.value.to = '';
     rawDateTo.value = null;
   }
-  fetchOrders();
+  fetchItems({ reset: true });
 };
 
-const fetchOrders = async () => {
-  if (!userStore.token) {
-    error.value = new Error('請先登入管理員帳號');
-    return;
-  }
-
-  pending.value = true;
-  error.value = null;
-
-  try {
+const { items: rawOrders, pending, loadingMore, error, fetchItems } = useInfiniteFetch<ApiOrder>({
+  api: '/api/admin/orders',
+  limit: 20,
+  buildQuery: (skip) => {
     const [sortBy, order] = filters.value.sortOption.split('_');
     const isCompleted = tab.value === 'completed';
-
     const queryParams: any = {
       completed: isCompleted,
-      sortBy: sortBy,
-      order: order,
+      sortBy,
+      order,
+      skip,
+      limit: 20,
     };
-
     if (filters.value.from) queryParams.from = filters.value.from;
     if (filters.value.to) queryParams.to = filters.value.to;
+    return queryParams;
+  },
+  immediate: true
+});
 
-    const response = await $fetch<ApiResponse>('/api/admin/orders', {
-      method: 'GET',
-      query: queryParams,
-      headers: {
-        'Authorization': `Bearer ${userStore.token}`,
-        'Accept': 'application/json',
-      }
-    });
+const orders = computed(() => rawOrders.value.map(order => {
+  const restaurantNames = Array.from(
+      new Set(order.items.map(item => item.restaurant.name))
+  ).join(', ');
 
-    if (response && response.success) {
-      orders.value = response.data.map(order => {
-        const restaurantNames = Array.from(
-            new Set(order.items.map(item => item.restaurant.name))
-        ).join(', ');
+  const d = new Date(order.createdAt);
+  const dateStr = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 
-        const d = new Date(order.createdAt);
-        const dateStr = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  return {
+    id: order._id,
+    restaurantNames: restaurantNames,
+    userName: order.deliveryInfo.contactName || order.user.name,
+    userPhone: order.deliveryInfo.contactPhone,
+    deliveryPersonName: order.deliveryPerson ? order.deliveryPerson.name : null,
+    deliveryPersonPhone: order.deliveryPerson ? order.deliveryPerson.phone : null,
+    items: order.items.map(i => ({ name: i.name, quantity: i.quantity })),
+    total: order.total,
+    deliveryFee: order.deliveryFee,
+    customerStatus: order.customerStatus,
+    createdAtFormatted: dateStr,
+  };
+}));
 
-        return {
-          id: order._id,
-          restaurantNames: restaurantNames,
-          userName: order.deliveryInfo.contactName || order.user.name,
-          userPhone: order.deliveryInfo.contactPhone,
-          deliveryPersonName: order.deliveryPerson ? order.deliveryPerson.name : null,
-          deliveryPersonPhone: order.deliveryPerson ? order.deliveryPerson.phone : null,
-          items: order.items.map(i => ({ name: i.name, quantity: i.quantity })),
-          total: order.total,
-          deliveryFee: order.deliveryFee,
-          customerStatus: order.customerStatus,
-          createdAtFormatted: dateStr,
-        };
-      });
-    } else {
-      throw new Error('API 回傳資料異常');
-    }
-
-  } catch (err: any) {
-    console.error('Fetch error:', err);
-    error.value = err;
-    orders.value = [];
-  } finally {
-    pending.value = false;
-  }
-};
-
-onMounted(() => {
-  fetchOrders();
+watch([() => filters.value.sortOption, () => filters.value.from, () => filters.value.to, tab], () => {
+  fetchItems({ reset: true });
 });
 
 onActivated(() => {
-  fetchOrders();
+  fetchItems({ reset: true });
 });
 
 useHead({

@@ -63,7 +63,7 @@
           md="4"
           lg="3"
       >
-        <StoreCard :id="store._id" :name="store.name" :image="store.image" :info="store.info" />
+        <StoreCard :id="store._id" :name="store.name" :image="store.image" :rating="store.rating" />
       </v-col>
     </v-row>
 
@@ -83,13 +83,13 @@
 </template>
 
 <script setup lang="ts">
-import debounce from 'lodash-es/debounce';
+import { useInfiniteFetch } from '@composable/useInfiniteFetch';
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
-import { useInfiniteFetch } from '@composable/useInfiniteFetch';
+import debounce from 'lodash-es/debounce';
 
 interface menuItem { _id: string; name: string; price: number; image: string; info: string; }
-interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; menu: menuItem[]; }
+interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; menu: menuItem[]; rating: number; }
 interface PresetLocation { title: string; value: string; }
 
 const presetLocations = [

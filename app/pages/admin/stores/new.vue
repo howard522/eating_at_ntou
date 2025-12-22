@@ -246,7 +246,7 @@
 
 <script setup lang="ts">
 import { useUserStore } from '@stores/user';
-import { useSnackbarStore } from '@utils/snackbar'
+import { useSnackbarStore } from '@utils/snackbar';
 import { useRouter } from 'vue-router';
 
 interface MenuItem {
@@ -316,7 +316,6 @@ const getDefaultStore = (): Store => ({
 });
 
 const resetForm = () => {
-  cleanupPreviews();
   newStore.value = getDefaultStore();
   menuItems.value = [];
   imagePreviewUrl.value = undefined;

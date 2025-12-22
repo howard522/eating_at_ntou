@@ -1,5 +1,5 @@
-import { useUserStore } from '@stores/user'
 import { addRouteMiddleware, navigateTo } from '#app'
+import { useUserStore } from '@stores/user'
 
 export default defineNuxtPlugin((nuxtApp: any) => {
     const userStore = useUserStore()
@@ -104,8 +104,8 @@ export default defineNuxtPlugin((nuxtApp: any) => {
                 if (to.path !== home) return navigateTo(home)
                 return
             }
-            // customer/delivery 可進入 /profile
-            if (to.path === '/profile') {
+            // customer/delivery 可進入 /profile 或 /chat 以下的頁面
+            if (to.path === '/profile' || to.path.startsWith('/chat')) {
                 if (role === 'customer' || role === 'delivery') return
                 return navigateTo(home)
             }

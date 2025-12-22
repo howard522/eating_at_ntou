@@ -179,6 +179,15 @@ function onAvatarCropped(blob: Blob) {
 }
 
 async function saveChanges() {
+  // 地址格式檢查
+  if (formData.value.address.trim()) {
+    const regex = /(?<zipcode>(^\d{5}|^\d{3})?)(?<city>\D+[縣市])(?<district>\D+?(市區|鎮區|鎮市|[鄉鎮市區]))(?<others>.+)/;
+    if (!regex.test(formData.value.address)) {
+      snackbarStore.showSnackbar('地址格式不正確，請輸入完整地址。', 'error');
+      return;
+    }
+  }
+
   // 密碼一致性檢查
   if (formData.value.password) {
     if (formData.value.password.length < 6) {

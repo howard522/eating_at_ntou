@@ -1,27 +1,29 @@
 {
-  "compilerOptions": {
-    "types": [
-      "@types/node",
-      "nuxt/schema"
-    ],
-    "baseUrl": ".",
-    "paths": {
-      "@app/*": ["./app/*"],
-      "@server/*": ["./server/*"],
-      "@stores/*": ["./stores/*"]
+    "compilerOptions": {
+        "types": ["@types/node", "nuxt/schema"],
+        "baseUrl": ".",
+        "paths": {
+            "@app/*": ["./app/*"],
+            "@composable/*": ["./app/composable/*"],
+            "@components/*": ["./app/components/*"],
+            "@stores/*": ["./app/stores/*"],
+            "@types/*": ["./app/types/*"],
+            "@utils/*": ["./app/utils/*"],
+            "@server/*": ["./server/*"],
+            "$interfaces/*": ["./server/interfaces/*"],
+            "$models/*": ["./server/models/*"],
+            "$services/*": ["./server/services/*"],
+            "$utils/*": ["./server/utils/*"],
+            "@test/*": ["./test/*"],
+            "@mocks/*": ["./test/__mocks__/*"]
+        },
+        "moduleResolution": "bundler",
+        "allowJs": true,
+        "strict": true,
+        "esModuleInterop": true,
+        "module": "ESNext",
+        "target": "ESNext"
     },
-    "moduleResolution": "bundler",
-    "allowJs": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "module": "ESNext",
-    "target": "ESNext"
-  },
-  "include": [
-    "nuxt.config.ts",
-    "**/*.ts",
-    "**/*.vue",
-    ".nuxt/**/*.ts"
-  ],
-  "extends": "./.nuxt/tsconfig.json"
+    "include": ["nuxt.config.ts", "**/*.ts", "**/*.vue", ".nuxt/**/*.ts"],
+    "extends": "./.nuxt/tsconfig.json"
 }

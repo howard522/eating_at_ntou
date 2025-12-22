@@ -96,6 +96,18 @@
       </v-card>
     </v-col>
   </v-container>
+
+  <v-snackbar
+    v-model="snackbarStore.show"
+    :color="snackbarStore.color"
+    :timeout="snackbarStore.timeout"
+    location="top"
+  >
+    {{ snackbarStore.text }}
+    <template v-slot:actions>
+      <v-btn variant="text" @click="snackbarStore.show = false">關閉</v-btn>
+    </template>
+  </v-snackbar>
 </template>
 
 <script setup lang="ts">
@@ -157,6 +169,7 @@ useHead({title: '登入', });
 <style scoped>
 .login-container {
   min-height: 100vh;
+  min-width: 100vw;
   background: linear-gradient(180deg, #f5f9ff 0%, #ffffff 100%);
 }
 

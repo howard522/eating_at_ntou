@@ -15,21 +15,19 @@ export function useChat(orderId: string, messages: Ref<ChatPayload[]>) {
     const role = userStore.currentRole; // "customer" 或 "delivery"
 
     // 建立 WebSocket 連線
-    ws.value = new WebSocket(`ws://${location.host}/ws/${orderId}`);
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    ws.value = new WebSocket(`${protocol}://${location.host}/ws/${orderId}`);
 
     // 處理收到的訊息
     ws.value.onmessage = (event) => {
         const message = JSON.parse(event.data);
         if (message.type === "message") {
             messages.value.push(message.data);
-        } else if (message.type === "join") {
-            messages.value.push(message.data);
-        } else if (message.type === "leave") {
-            messages.value.push(message.data);
         } else if (message.type === "error") {
             console.error("WebSocket error:", message.message);
         } else {
-            console.warn("Unknown WebSocket message type:", message);
+            // join/leave 類型不再加入 messages
+            // console.debug("Ignored WebSocket message type:", message.type);
         }
     };
 

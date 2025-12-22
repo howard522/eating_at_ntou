@@ -1,10 +1,26 @@
+// server/utils/nominatim.ts
+
+import type { IGeoPoint } from "$interfaces/geo.interface";
+import geoCache from "$models/geoCache.model";
+import KeelongAddressMap from "$models/KeelongAddressMap";
+
+/**
+ * TODO:
+ * 這裡除了地址正規化、轉換成經緯度之外，還涉及了一些資料庫的查詢與快取機制，
+ * 包含 KeelongAddressMap 與 geoCache 的使用。
+ * 這些邏輯其實不太適合放在 utils 裡面，應該要有一個專門的 service 來處理這些事情。
+ * （不過目前先這樣寫，等有空再重構吧）
+ */
+
 export function normalizeAddress(addr: string): string {
     if (!addr) return addr;
     let s = addr.trim();
     // 將常見分隔符改成空白
-    s = s.replace(/[，,、\/\\]+/g, ' ');
+    s = s.replace(/[，,、\/\\]+/g, " ");
+    // 去掉郵遞區號（3-5位數字開頭）
+    s = s.replace(/^\d{3,5}\s*/g, "");
     //71-7號 -> 71之7號
-    s = s.replace(/(\d+)[\-\–](\d+)/g, '$1之$2');
+    s = s.replace(/(\d+)[\-\–](\d+)/g, "$1之$2");
     // 在常見地址後綴（市/區/路/街/段/巷/弄/號等）後面若接中文，通常插入空白。
     // 但若接續的是路段形式（例如：西園路二段 / 中山路三段），不要在「路」與「二段」之間插空白。
     s = s.replace(/(縣|市|區|鄉|鎮|里|路|街|段|巷|弄|號)(?=[\p{Script=Han}])/gu, (match, suffix, offset, full) => {
@@ -14,25 +30,25 @@ export function normalizeAddress(addr: string): string {
         if (/^[\p{Script=Han}0-9之\-–]*段/u.test(look)) {
             return match;
         }
-        return match + ' ';
+        return match + " ";
     });
     // 若有「號」，只保留到第一個「號」，去掉後面的樓層/房號等（例如：242號1樓 -> 242號），
     // 再把末尾的「號」字移除以增加 Nominatim 的命中率（例如: 242號 -> 242）
-    s = s.replace(/^(.+?號).*/u, '$1');
-    s = s.replace(/號$/u, '');
+    s = s.replace(/^(.+?號).*/u, "$1");
+    s = s.replace(/號$/u, "");
 
     // 若地址沒有號，但有樓層/室等附加資訊，移除這些部分（例如：某路 3樓 -> 某路）
-    s = s.replace(/(樓層|樓|F|f|層|室|房|之樓|之F|之層).*$/u, '');
+    s = s.replace(/(樓層|樓|F|f|層|室|房|之樓|之F|之層).*$/u, "");
 
     // 在中文與數字之間插入空格（例如 北寧路2號 -> 北寧路 2號）
-    s = s.replace(/([\p{Script=Han}])(\d)/gu, '$1 $2');
-    s = s.replace(/(\d)([\p{Script=Han}])/gu, '$1 $2');
+    s = s.replace(/([\p{Script=Han}])(\d)/gu, "$1 $2");
+    s = s.replace(/(\d)([\p{Script=Han}])/gu, "$1 $2");
     // 在中文與英文字母之間插入空格
-    s = s.replace(/([\p{Script=Han}])([A-Za-z])/gu, '$1 $2');
-    s = s.replace(/([A-Za-z])([\p{Script=Han}])/gu, '$1 $2');
+    s = s.replace(/([\p{Script=Han}])([A-Za-z])/gu, "$1 $2");
+    s = s.replace(/([A-Za-z])([\p{Script=Han}])/gu, "$1 $2");
     // 合併多個空白為一個，並 trim
-    s = s.replace(/\s+/g, ' ').trim();
-    console.log('Normalized address:', s);
+    s = s.replace(/\s+/g, " ").trim();
+    console.log("Normalized address:", s);
     return s;
 }
 
@@ -46,24 +62,106 @@ export function normalizeAddress(addr: string): string {
 export async function geocodeAddress(address: string) {
     if (!address) return null;
     const q = normalizeAddress(address);
+
+    // 查 KeelongAddressMap，先去掉"基隆市"
+    // 正規化地址
+    const qWithoutKeelong = q.replace(/^基隆市\s*/, "");
+    const keelongEntry = await KeelongAddressMap.findOne({ normalizedAddress: qWithoutKeelong });
+    if (keelongEntry) {
+        let lat = parseFloat(keelongEntry.lat);
+        let lon = parseFloat(keelongEntry.lon);
+        console.log("Geocode KeelongAddressMap hit for address:", qWithoutKeelong);
+        console.log("Found coordinates:", { lat, lon });
+        return { lat, lon };
+    }
+
+    // 先查 cache
+    const cached = await geoCache.findOne({ address: q });
+    if (cached) {
+        console.log("Geocode cache hit for address:", q);
+        return { lat: cached.lat, lon: cached.lon };
+    }
+
+    // 查 Nominatim
+    // TODO: 節流機制應該要在這裡處理才對（尚未實作）
+    // INFO: 節流：Nominatim 建議每秒不要超過 1 次，這裡設 1.1 秒
+
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
     const res = await fetch(url, {
         headers: {
             // Nominatim 要求必須提供有效的 User-Agent 與 Referer
-            'User-Agent': 'eating_at_ntou/1.0',
-            'Referer': 'https://github.com/howard522/eating_at_ntou'
-        }
+            "User-Agent": "eating_at_ntou/1.0",
+            Referer: "https://github.com/howard522/eating_at_ntou",
+        },
     });
     if (!res.ok) return null;
     const data = await res.json();
     if (!Array.isArray(data) || data.length === 0) return null;
     const { lat, lon } = data[0];
+    // 存 cache
+    const geo = new geoCache({
+        address: q,
+        lat: parseFloat(lat),
+        lon: parseFloat(lon),
+    });
+    await geo.save();
     return { lat: parseFloat(lat), lon: parseFloat(lon) };
 }
 
-export function sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+/**
+ * 透過地址取得經緯度，若成功回傳 GeoJSON Point 格式
+ *
+ * @param address 地址字串
+ * @returns 經緯度資料或 undefined（若無法取得）
+ */
+export async function getGeocodeFromAddress(address: string): Promise<IGeoPoint | null> {
+    try {
+        const coords = await geocodeAddress(address);
+        if (coords) {
+            return {
+                type: "Point",
+                coordinates: [coords.lon, coords.lat],
+            };
+        }
+    } catch (err) {
+        console.error("Geocoding failed:", err);
+    }
+
+    return null;
 }
+
+export function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * 驗證經緯度資料是否有效
+ *
+ * @param coords 經緯度資料
+ * @returns 是否有效
+ */
+export function validateGeocode(coords: IGeoPoint | null | undefined): boolean {
+    // 基本檢查
+    if (!coords || coords.type !== "Point" || !Array.isArray(coords.coordinates)) {
+        return false;
+    }
+    if (coords.coordinates.length !== 2) {
+        return false;
+    }
+
+    // 經度與緯度範圍檢查
+    const [lon, lat] = coords.coordinates;
+    if (typeof lon !== "number" || typeof lat !== "number") {
+        return false;
+    }
+    if (lon < -180 || lon > 180 || lat < -90 || lat > 90) {
+        return false;
+    }
+
+    // 全部通過，回傳 true
+    return true;
+}
+
 //for testing
 //npx tsx server/utils/nominatim.ts
 // (async () => {

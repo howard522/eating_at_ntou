@@ -1,9 +1,7 @@
-import { defineEventHandler, createError } from 'h3'
-import connectDB from '@server/utils/db'
-import Cart from '@server/models/cart.model'
-import { verifyJwtFromEvent } from '@server/utils/auth'
-import { clearUserCart } from '@server/utils/cart'
+// server/api/cart/index.delete.ts
 
+import { clearCartByUserId } from "$services/cart.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi
@@ -41,23 +39,17 @@ import { clearUserCart } from '@server/utils/cart'
  *                     createdAt: "2025-10-23T20:57:53.449Z"
  *                     updatedAt: "2025-11-02T10:00:00.000Z"
  *       401:
- *         description: 未提供或無效的 JWT。
- *       404:
- *         description: 找不到使用者的購物車。
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  */
 export default defineEventHandler(async (event) => {
-    await connectDB()
-    const payload = await verifyJwtFromEvent(event)
-    const userId = payload.id
-    if (!userId) {
-        throw createError({ statusCode: 401, statusMessage: 'Invalid token payload' })
-    }
-    const cart = await clearUserCart(userId)
-    if (!cart) {
-        throw createError({ statusCode: 404, statusMessage: 'Cart not found' })
-    }
+    const userId = getCurrentUser(event).id;
 
-    return { success: true, data: cart }
+    const cart = await clearCartByUserId(userId);
 
-})
-
+    return {
+        success: true,
+        data: cart,
+    };
+});

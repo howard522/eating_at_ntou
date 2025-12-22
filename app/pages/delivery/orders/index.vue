@@ -15,7 +15,12 @@
               :key="order.id"
               cols="12"
           >
-            <OrderCard role="delivery" :order="order" :path="`/delivery/customer-order-state/${order.id}`"/>
+            <OrderCard
+                role="delivery"
+                :order="order"
+                :path="`/delivery/customer-order-state/${order.id}`"
+                :has-notification="notificationStore.hasMessage(order.id) || notificationStore.hasStatusUpdate(order.id)"
+            />
           </v-col>
           <v-col v-if="inProgressOrders.length === 0" cols="12">
             <p class="text-center text-medium-emphasis mt-10">
@@ -28,7 +33,12 @@
       <v-window-item value="completed">
         <v-row>
           <v-col v-for="order in completedOrders" :key="order.id" cols="12">
-            <OrderCard role="delivery" :order="order" :path="`/delivery/customer-order-state/${order.id}`"/>
+            <OrderCard
+                role="delivery"
+                :order="order"
+                :path="`/delivery/customer-order-state/${order.id}`"
+                :has-notification="notificationStore.hasMessage(order.id) || notificationStore.hasStatusUpdate(order.id)"
+            />
           </v-col>
           <v-col v-if="completedOrders.length === 0" cols="12">
             <p class="text-center text-medium-emphasis mt-10">
@@ -42,67 +52,50 @@
 </template>
 
 <script setup lang="ts">
+import { useInfiniteFetch } from '@composable/useInfiniteFetch';
+import { useNotificationStore } from '@stores/notification';
 import { useUserStore } from '@stores/user';
-import type { ApiOrder, ApiResponse, DisplayOrder } from '@types/order'
+import type { ApiOrder, ApiResponse, DisplayOrder } from '@types/order';
 
 const tab = ref('inProgress');
 const userStore = useUserStore();
-const allOrders = ref<DisplayOrder[]>([]);
-const pending = ref(false);
-const error = ref<Error | null>(null);
+const notificationStore = useNotificationStore();
 
-const fetchOrders = async () => {
-  if (!userStore.token) {
-    console.warn('No user token, skipping order fetch.');
-    error.value = new Error('請先登入以查看訂單');
-    return;
-  }
-  pending.value = true;
-  error.value = null;
-  try {
-    const response = await $fetch<ApiResponse<ApiOrder[]>>('/api/orders', {
-      method: 'GET',
-      query: { role: 'delivery' },
-      headers: {
-        'Authorization': `Bearer ${userStore.token}`,
-        'Accept': 'application/json',
-      }
-    });
-    if (response && response.success) {
-      allOrders.value = response.data.map(order => {
-        const restaurantNames = Array.from(
-            new Set(order.items.map(item => item.restaurant.name))
-        ).join(', ');
-        const d = new Date(order.createdAt);
-        const date = `${d.getFullYear()}年${(d.getMonth() + 1).toString().padStart(2, '0')}月${d.getDate().toString().padStart(2, '0')}日`;
-        const ad = new Date(order.arriveTime);
-        const arriveTimeFormatted = `${ad.getHours().toString().padStart(2, '0')}:${ad.getMinutes().toString().padStart(2, '0')}`;
-        const displayItems = order.items.map(item => ({
-          name: item.name,
-          quantity: item.quantity
-        }));
-        return {
-          id: order._id,
-          restaurantNames: restaurantNames,
-          date: date,
-          items: displayItems,
-          total: order.total,
-          status: order.deliveryStatus!,
-          deliveryFee: order.deliveryFee,
-          deliveryAddress: order.deliveryInfo.address,
-          arriveTime: arriveTimeFormatted,
-        };
-      });
-    } else {
-      throw new Error('API response indicates failure');
-    }
-  } catch (err: any) {
-    console.error('取得訂單失敗:', err);
-    error.value = err;
-  } finally {
-    pending.value = false;
-  }
-};
+const { items: rawOrders, fetchItems } = useInfiniteFetch<ApiOrder>({
+  api: '/api/orders',
+  buildQuery: (skip) => ({ role: 'delivery', skip, limit: 20 }),
+  immediate: true
+});
+
+// 監聽通知更新，重新抓取訂單列表
+watch(() => notificationStore.lastUpdate, () => {
+    fetchItems({ reset: true });
+});
+
+const allOrders = computed(() => rawOrders.value.map(order => {
+  const restaurantNames = Array.from(
+      new Set(order.items.map(item => item.restaurant.name))
+  ).join(', ');
+  const d = new Date(order.createdAt);
+  const date = `${d.getFullYear()}年${(d.getMonth() + 1).toString().padStart(2, '0')}月${d.getDate().toString().padStart(2, '0')}日`;
+  const ad = new Date(order.arriveTime);
+  const arriveTimeFormatted = `${ad.getHours().toString().padStart(2, '0')}:${ad.getMinutes().toString().padStart(2, '0')}`;
+  const displayItems = order.items.map(item => ({
+    name: item.name,
+    quantity: item.quantity
+  }));
+  return {
+    id: order._id,
+    restaurantNames: restaurantNames,
+    date: date,
+    items: displayItems,
+    total: order.total,
+    status: order.deliveryStatus!,
+    deliveryFee: order.deliveryFee,
+    deliveryAddress: order.deliveryInfo.address,
+    arriveTime: arriveTimeFormatted,
+  };
+}));
 
 const inProgressStatuses = ['preparing', 'on_the_way', 'delivered'];
 
@@ -113,19 +106,10 @@ const completedOrders = computed(() =>
     allOrders.value.filter(order => order.status === 'completed')
 );
 
-onMounted(() => {
-  fetchOrders();
-});
-
-onActivated(() => {
-  fetchOrders();
-});
-
 useHead({
   title: '我的訂單',
 });
 </script>
 
 <style scoped>
-
 </style>

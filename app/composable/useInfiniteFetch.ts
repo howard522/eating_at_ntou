@@ -1,5 +1,6 @@
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useUserStore } from '@stores/user'
 import debounce from 'lodash-es/debounce'
+import { computed, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from 'vue'
 
 // 使用範例請見 app/pages/customer/stores/index.vue
 interface UseInfiniteFetchOptions<T> {
@@ -23,6 +24,8 @@ export function useInfiniteFetch<T>(options: UseInfiniteFetchOptions<T>) {
         scrollDelay = 200,
         immediate = true
     } = options
+
+    const userStore = useUserStore()
 
     const allItems = ref<T[]>([])
     const offset = ref(0)
@@ -48,8 +51,12 @@ export function useInfiniteFetch<T>(options: UseInfiniteFetchOptions<T>) {
 
         try {
             const query = buildQuery(offset.value)
-            const response = await $fetch<{ data: T[]; count?: number }>(api, { query })
-            const items = response.data ?? []
+            const headers: Record<string, string> = {}
+            if (userStore.token) {
+                headers.Authorization = `Bearer ${userStore.token}`
+            }
+            const response = await $fetch<{ data?: T[]; reviews?: T[]; count?: number }>(api, { query, headers })
+            const items: T[] = response.data ?? response.reviews ?? []
 
             if (reset) {
                 allItems.value = items
@@ -66,6 +73,11 @@ export function useInfiniteFetch<T>(options: UseInfiniteFetchOptions<T>) {
         } finally {
             pending.value = false
             loadingMore.value = false
+            nextTick(() => {
+                if (hasMore.value && document.documentElement.scrollHeight <= window.innerHeight) {
+                    fetchItems()
+                }
+            })
         }
     }
 
@@ -84,6 +96,12 @@ export function useInfiniteFetch<T>(options: UseInfiniteFetchOptions<T>) {
         if (immediate) fetchItems({ reset: true })
     })
     onUnmounted(() => {
+        window.removeEventListener('scroll', handleScroll)
+    })
+    onActivated(() => {
+        window.addEventListener('scroll', handleScroll)
+    })
+    onDeactivated(() => {
         window.removeEventListener('scroll', handleScroll)
     })
 

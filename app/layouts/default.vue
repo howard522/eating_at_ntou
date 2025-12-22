@@ -32,6 +32,13 @@
             variant="text"
           >
             {{ link.title }}
+            <v-badge
+              v-if="(link.value === 'customer-orders' || link.value === 'delivery-orders') && notificationStore.notificationCount > 0"
+              color="error"
+              :content="notificationStore.notificationCount"
+              inline
+              class="ml-1 notification-badge"
+            ></v-badge>
           </v-btn>
         </v-btn-toggle>
       </div>
@@ -92,11 +99,12 @@
 </template>
 
 <script setup lang="ts">
-import AdLayout from './AdLayout.vue'
+import { useAdPopup } from '@composable/useAdPopup';
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
+import { useNotificationStore } from '@stores/notification';
 import { useSnackbarStore } from '@utils/snackbar';
-import { useAdPopup } from '@composable/useAdPopup'
+import AdLayout from './AdLayout.vue';
 
 const { showAd, closeAd } = useAdPopup()
 
@@ -116,6 +124,7 @@ provide('cartIconEl', fridgeIconEl);
 
 const cartStore = useCartStore();
 const userStore = useUserStore();
+const notificationStore = useNotificationStore();
 const snackbarStore = useSnackbarStore();
 
 const role = computed(() => {
@@ -146,7 +155,7 @@ const links = computed<link[]>(() => {
     return [
       { title: '管理店家', to: '/admin/stores', value: 'admin-stores' },
       { title: '查看訂單', to: '/admin/orders', value: 'admin-orders' },
-      { title: '管理會員', to: '/admin/accounts', value: 'admin-accounts' },
+      { title: '管理會員', to: '/admin/users', value: 'admin-users' },
     ];
   }
   else {
@@ -157,12 +166,18 @@ const links = computed<link[]>(() => {
 watch(links, (newLinks) => {
   if (newLinks.length > 0)
   {
-    activeNav.value = newLinks[0]?.value || '';
+    activeNav.value = newLinks[0?.value] || '';
   } else
   {
     activeNav.value = '';
   }
 }, { immediate: true });
+
+onMounted(async () => {
+  if (role.value === 'customer') {
+    await cartStore.fetchCart();
+  }
+});
 </script>
 
 <style scoped>
@@ -182,6 +197,22 @@ watch(links, (newLinks) => {
 
 .v-btn--active {
   background-color: #e0e0e0 !important;
+}
+
+.notification-badge :deep(.v-badge__badge) {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(255, 82, 82, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+  }
 }
 
 .cart-shake {

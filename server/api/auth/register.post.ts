@@ -1,11 +1,17 @@
-// FILE: server/api/auth/register.post.ts
+// server/api/auth/register.post.ts
+
+import type { IUserCreate } from "$interfaces/user.interface";
+import { registerUser } from "$services/auth.service";
+
 /**
  * @openapi
  * /api/auth/register:
  *   post:
  *     summary: 使用者註冊
- *     description: 建立新帳號（email 唯一），成功回傳 JWT 與使用者資料（不回傳密碼）。
- *     tags: [Auth]
+ *     description: |
+ *       建立新帳號（email 唯一），成功回傳 JWT 與使用者資料（不回傳密碼）。
+ *     tags:
+ *       - Auth
  *     requestBody:
  *       required: true
  *       content:
@@ -41,67 +47,34 @@
  *                     address: ""
  *                     phone: ""
  *       400:
- *         description: 請求不正確或 email 已存在
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 statusCode: { type: integer, example: 400 }
- *                 statusMessage: { type: string, example: email already in use }
+ *         $ref: '#/components/responses/BadRequest'
+ *       409:
+ *         $ref: '#/components/responses/Conflict'
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
-import { defineEventHandler, readBody, createError } from "h3";
-import connectDB from "@server/utils/db";
-import User from "@server/models/user.model";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "@server/utils/auth";
-
 export default defineEventHandler(async (event) => {
-  await connectDB();
-  const body = await readBody(event);
-  const name = (body.name || "這個人很懶，不想取暱稱") as string;
-  const email = (body.email || "") as string;
-  const password = (body.password || "") as string;
-  const role = (body.role || "multi") as string;
+    const body = await readBody<IUserCreate>(event);
+    body.name ??= "這個人很懶，不想取暱稱";
+    body.role ??= "multi";
 
-  if (!email || !password) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "缺少電子信箱或密碼",
-    });
-  }
-  const existing = await User.findOne({ email });
-  if (existing) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "電子信箱已經註冊",
-    });
-  }
+    if (!body.email || !body.password) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required fields: email, password.",
+        });
+    }
 
-  const u = new User({
-    name,
-    email,
-    password,
-    role,
-    // 預設不指定 img/address/phone
-  });
-  await u.save();
+    const { user, token } = await registerUser(body);
 
-  const token = jwt.sign({ id: u._id, role: u.role }, JWT_SECRET, {
-    expiresIn: "7d",
-  });
+    setResponseStatus(event, 201); // 201 Created
 
-  return {
-    success: true,
-    token,
-    user: {
-      id: u._id,
-      name: u.name,
-      email: u.email,
-      role: u.role,
-      img: u.img || "",
-      address: u.address || "",
-      phone: u.phone || "",
-    },
-  };
+    return {
+        success: true,
+        token,
+        user,
+    };
 });

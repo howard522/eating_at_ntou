@@ -1,7 +1,8 @@
-import { defineEventHandler, readBody, createError } from 'h3'
-import connectDB from '@server/utils/db'
-import Order from '@server/models/order.model'
-import { verifyJwtFromEvent } from '@server/utils/auth'
+// server/api/orders/[id]/status.patch.ts
+
+import type { UpdateOrderStatusBody } from "$interfaces/order.interface";
+import { getOrderOwnership, updateOrderStatusById } from "$services/order.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi
@@ -49,44 +50,33 @@ import { verifyJwtFromEvent } from '@server/utils/auth'
  *                 data:
  *                   $ref: '#/components/schemas/Order'
  */
-
 export default defineEventHandler(async (event) => {
-    await connectDB()
-    const payload = await verifyJwtFromEvent(event)
-    const userId = payload.id
-    const orderId = event.context.params?.id
-    if (!orderId) throw createError({ statusCode: 400, statusMessage: 'Missing order id' })
-    const body = await readBody(event)
+    const user = getCurrentUser(event);
 
-    const order = await Order.findById(orderId)
-    if (!order) throw createError({ statusCode: 404, statusMessage: 'Order not found' })
+    const orderId = getRouterParam(event, "id") as string;
 
-    // 權限判斷（若非訂單擁有者或外送員則拒絕）
-    if (String(order.user) !== userId && String(order.deliveryPerson) !== userId) {
-        throw createError({ statusCode: 403, statusMessage: 'Not allowed to modify this order' })
+    if (!orderId)
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameter: order id.",
+        });
+
+    const ownership = await getOrderOwnership(orderId, user.id);
+
+    const body = await readBody<UpdateOrderStatusBody>(event);
+
+    // 權限判斷：必須是訂單擁有者或外送員才能更新狀態
+    // QUESTION: 顧客可以更新 deliveryStatus 嗎？目前允許但實際上應該不會這樣做
+    if (user.role !== "admin" && !ownership.isOwner && !ownership.isDeliveryPerson) {
+        throw createError({
+            statusCode: 403,
+            statusMessage: "Forbidden",
+            message: "Not allowed to update this status.",
+        });
     }
 
-    // 更新狀態
-    if (body.customerStatus) order.customerStatus = body.customerStatus
-    if (body.deliveryStatus) order.deliveryStatus = body.deliveryStatus
+    const updatedOrder = await updateOrderStatusById(orderId, body);
 
-    // 自動完成訂單
-    const isCustomerDone = ['received', 'completed'].includes(order.customerStatus)
-    const isDeliveryDone = ['delivered', 'completed'].includes(order.deliveryStatus)
-
-    if (isCustomerDone && isDeliveryDone) {
-        order.customerStatus = 'completed'
-        order.deliveryStatus = 'completed'
-    }
-
-    await order.save()
-
-    // 若有外送員，populate deliveryPerson 以回傳 name/img/phone（與其他 endpoint 保持一致）
-    try {
-        if (order.deliveryPerson) await order.populate('deliveryPerson', 'name img phone')
-    } catch (e) {
-        // ignore
-    }
-
-    return { success: true, data: order }
-})
+    return { success: true, data: updatedOrder };
+});
