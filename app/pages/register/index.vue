@@ -232,6 +232,7 @@ onMounted(async () => {
   min-height: 100vh;
   min-width: 100vw;
   background: linear-gradient(180deg, #f5f9ff 0%, #ffffff 100%);
+  padding: 1rem;
 }
 
 .v-text-field {

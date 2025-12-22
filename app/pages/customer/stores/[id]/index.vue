@@ -4,7 +4,7 @@
         :src="store?.image"
         height="400px"
         cover
-        class="w-100 position-relative"
+        class="w-100 position-relative store-cover"
     >
       <template #error>
         <v-sheet
@@ -193,5 +193,27 @@ useHead({
 .menu-info {
   position: relative;
   top: -60px;
+}
+
+@media (max-width: 600px) {
+  .store-cover {
+    height: 250px !important;
+  }
+  
+  .info-card {
+    top: -50px;
+    padding: 16px !important;
+    margin-bottom: -30px;
+  }
+
+  .store-name {
+    font-size: 1.5rem !important;
+    white-space: normal;
+  }
+
+  .menu-info {
+    top: 0;
+    margin-top: 0 !important;
+  }
 }
 </style>

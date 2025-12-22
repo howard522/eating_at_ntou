@@ -183,22 +183,25 @@ useHead({ title: '登入' })
   min-height: 100vh;
   min-width: 100vw;
   background: linear-gradient(180deg, #f5f9ff 0%, #ffffff 100%);
+  padding: 1rem;
 }
 
 .login-card {
   width: 420px;
-  max-width: 92vw;
+  max-width: 100%;
   border-radius: 12px;
   box-shadow: 0 12px 28px rgba(21, 62, 110, 0.12) !important;
 }
 
 .ais-logo {
   text-align: center;
+  max-width: 100%;
 }
 .ais-logo .logo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
 }
 .ais-logo .school-name .name-ch {
   font-size: 18px;
@@ -209,6 +212,19 @@ useHead({ title: '登入' })
 .ais-logo .school-name .name-en {
   font-size: 12px;
   color: #6b7280;
+}
+
+@media (max-width: 400px) {
+  .ais-logo .school-name .name-ch {
+    font-size: 16px;
+  }
+  .ais-logo .school-name .name-en {
+    font-size: 10px;
+  }
+  .ntou-logo-img {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 .ntou-logo-img {

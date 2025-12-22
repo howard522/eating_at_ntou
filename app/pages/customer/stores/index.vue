@@ -21,7 +21,7 @@
     </v-row>
 
     <v-row class="mt-n4">
-      <div style="width: 1200px; height: 60px;">
+      <div class="search-container">
         <v-text-field
           v-model="searchTerm"
           label="搜尋餐廳、美食"
@@ -110,7 +110,7 @@ const searchTerm = ref('');               // 即時輸入
 const debouncedSearchTerm = ref('');      // 防抖後的搜尋詞
 const selectedTags = ref<string[]>([]);
 
-const addressInput = ref<PresetLocation | string>('電資暨綜合教學大樓');
+const addressInput = ref<PresetLocation | string>(cartStore.deliveryAddress || '電資暨綜合教學大樓');
 const debouncedAddressInput = ref<PresetLocation | string>(addressInput.value);
 
 // 計算送貨地址
@@ -157,7 +157,24 @@ watch(deliveryAddress, (newVal) => {
     receiveName: userStore.info?.name || '劉俊麟',
     note: cartStore.note,
   });
-}, { immediate: true });
+});
+
+onMounted(() => {
+  cartStore.loadFromStorage();
+  if (cartStore.deliveryAddress) {
+    if (addressInput.value !== cartStore.deliveryAddress) {
+      addressInput.value = cartStore.deliveryAddress;
+      debouncedAddressInput.value = cartStore.deliveryAddress;
+    }
+  } else {
+    cartStore.setDeliveryDetails({
+      address: deliveryAddress.value,
+      phone: userStore.info?.phone || '0912345678',
+      receiveName: userStore.info?.name || '劉俊麟',
+      note: cartStore.note,
+    });
+  }
+});
 
 const { items: stores, pending, loadingMore, fetchItems } = useInfiniteFetch<store>({
   api: '/api/restaurants/near',
@@ -187,5 +204,9 @@ useHead({ title: '瀏覽店家' });
 </script>
 
 <style scoped>
-
+.search-container {
+  width: 100%;
+  max-width: 1200px;
+  height: 60px;
+}
 </style>

@@ -33,7 +33,7 @@
       </template>
     </v-card-item>
 
-    <v-card-text class="pt-2 text-body-1">
+    <v-card-text class="pt-2 text-body-1" style="word-break: break-word; white-space: pre-wrap;">
       {{ review.content || '沒有留下文字評論。' }}
     </v-card-text>
   </v-card>

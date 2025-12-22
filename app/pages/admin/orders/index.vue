@@ -3,15 +3,24 @@
     <v-row justify="center">
       <v-col cols="12" lg="10" xl="8">
 
-        <div class="mb-6 px-2">
-          <h1 class="text-h4 font-weight-bold text-grey-darken-3">訂單管理</h1>
-          <p class="text-body-1 text-grey-darken-1 mt-1">檢視所有歷史與進行中的訂單詳情</p>
-        </div>
+        <!-- 頂部標題與操作區 -->
+        <v-row align="center" justify="space-between" class="mb-8 mt-2 px-2">
+          <v-col cols="12">
+            <h1 class="text-h4 font-weight-bold text-primary d-flex align-center">
+              <v-icon start color="primary" class="mr-3">mdi-clipboard-list-outline</v-icon>
+              訂單管理
+            </h1>
+            <p class="text-subtitle-1 text-medium-emphasis mt-1">
+              檢視所有歷史與進行中的訂單詳情
+            </p>
+          </v-col>
+        </v-row>
 
-        <v-card class="mb-6 rounded-lg border-none" elevation="1">
-          <v-card-text class="pt-5 pb-5">
+        <!-- 搜尋與篩選區 -->
+        <v-card elevation="0" border rounded="lg" class="mb-8 bg-white">
+          <v-card-text class="py-4 py-md-6 px-4 px-md-6">
             <v-row dense align="center">
-              <v-col cols="12" sm="4" md="3">
+              <v-col cols="12" sm="6" md="3">
                 <v-menu v-model="menuFrom" :close-on-content-click="false" location="bottom start">
                   <template v-slot:activator="{ props }">
                     <v-text-field
@@ -40,7 +49,7 @@
                 </v-menu>
               </v-col>
 
-              <v-col cols="12" sm="4" md="3">
+              <v-col cols="12" sm="6" md="3">
                 <v-menu v-model="menuTo" :close-on-content-click="false" location="bottom start">
                   <template v-slot:activator="{ props }">
                     <v-text-field
@@ -69,7 +78,7 @@
                 </v-menu>
               </v-col>
 
-              <v-col cols="12" sm="4" md="3">
+              <v-col cols="12" sm="6" md="3">
                 <v-select
                     v-model="filters.sortOption"
                     :items="sortItems"
@@ -85,7 +94,7 @@
                 ></v-select>
               </v-col>
 
-              <v-col cols="12" sm="12" md="3" class="d-flex align-center justify-end pl-4">
+              <v-col cols="12" sm="6" md="3" class="d-flex align-center justify-end pl-4">
                 <v-btn
                     icon="mdi-refresh"
                     variant="tonal"

@@ -30,7 +30,7 @@
               v-model="currentStep"
               alt-labels
               flat
-              class="my-10"
+              class="my-10 order-stepper"
           >
             <v-stepper-header>
               <template v-for="(step, index) in steps" :key="step.id">
@@ -199,16 +199,17 @@
           </v-badge>
 
           <v-btn
-              :color="currentStep === 1 ? 'error' : 'success'"
+              v-if="currentStep > 1"
+              color="success"
               block
               size="x-large"
               class="mt-4"
               :disabled="currentStep >= 3 || isUpdating"
               :loading="isUpdating"
-              @click="currentStep === 1 ? cancelOrder() : openConfirmDialog()"
+              @click="openConfirmDialog()"
           >
             <span class="text-h6 font-weight-bold">
-              {{ currentStep === 1 ? '取消訂單' : (currentStep < 3 ? '我已收到餐點' : '已接收') }}
+              {{ currentStep < 3 ? '我已收到餐點' : '已接收' }}
             </span>
           </v-btn>
 
@@ -386,38 +387,6 @@ const openConfirmDialog = () => {
   isConfirmDialogVisible.value = true;
 };
 
-const cancelOrder = async () => {
-  if (currentStep.value !== 1) return;
-  isUpdating.value = true;
-  try {
-    const response: any = await $fetch(
-      `/api/orders/${orderId}/status`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${userStore.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: {
-          customerStatus: 'received',
-          deliveryStatus: 'delivered',
-        },
-      }
-    );
-
-    if (response.success && orderData.value) {
-      orderData.value.customerStatus = response.data.customerStatus;
-      orderData.value.deliveryStatus = response.data.deliveryStatus;
-    } else {
-      console.error('Failed to cancel order', response);
-    }
-  } catch (err) {
-    console.error('Error cancelling order', err);
-  } finally {
-    isUpdating.value = false;
-  }
-};
-
 const markAsReceived = async () => {
   
   if (currentStep.value >= 3) return;
@@ -473,6 +442,22 @@ useHead({
   }
   100% {
     box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+  }
+}
+
+@media (max-width: 600px) {
+  .order-stepper {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  :deep(.v-stepper-item__title) {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  
+  .text-h3 {
+    font-size: 2rem !important;
   }
 }
 </style>

@@ -3,7 +3,7 @@
     <h1 class="text-h4 font-weight-bold mb-6">待接單：顧客訂單列表</h1>
     
     <v-row>
-      <v-col cols="12" sm="5" md="4">
+      <v-col cols="12" sm="6" md="4">
         <v-text-field
           v-model="keyword"
           label="搜尋餐廳名稱"
@@ -15,7 +15,7 @@
         ></v-text-field>
       </v-col>
 
-      <v-col cols="12" sm="4" md="3">
+      <v-col cols="12" sm="6" md="3">
         <v-select
             v-model="sortOption"
             :items="sortItems"

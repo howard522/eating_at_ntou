@@ -14,6 +14,8 @@
               v-for="order in inProgressOrders"
               :key="order.id"
               cols="12"
+              md="6"
+              lg="4"
           >
             <OrderCard
                 role="delivery"
@@ -32,7 +34,7 @@
 
       <v-window-item value="completed">
         <v-row>
-          <v-col v-for="order in completedOrders" :key="order.id" cols="12">
+          <v-col v-for="order in completedOrders" :key="order.id" cols="12" md="6" lg="4">
             <OrderCard
                 role="delivery"
                 :order="order"

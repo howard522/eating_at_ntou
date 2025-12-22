@@ -19,7 +19,7 @@
     <div class="d-flex align-center justify-space-between mb-4">
       <h3 class="text-h6">所有評價</h3>
 
-      <div class="d-flex align-center" style="width: 200px;">
+      <div class="d-flex align-center" style="width: 200px; max-width: 50%;">
         <v-select
             v-model="sortBy"
             :items="sortOptions"
@@ -52,11 +52,11 @@
           no-gutters
       >
 
-        <v-col cols="10" class="pa-0">
+        <v-col cols="12" sm="10" class="pa-0">
           <CustomerReviewCard :review="review" />
         </v-col>
 
-        <v-col cols="2" tabindex="-1" class="d-flex align-center pa-0">
+        <v-col cols="12" sm="2" tabindex="-1" class="d-flex align-center justify-end justify-sm-center pa-0 mt-2 mt-sm-0">
           <v-btn
               color="red"
               variant="text"

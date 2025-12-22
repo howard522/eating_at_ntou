@@ -167,9 +167,17 @@ function clampCenterToImageBounds() {
 }
 
 function getPointerPos(e: PointerEvent) {
-  const rect = canvasRef.value?.getBoundingClientRect()
-  if (!rect) return { x: 0, y: 0 }
-  return { x: e.clientX - rect.left, y: e.clientY - rect.top }
+  const canvas = canvasRef.value
+  const rect = canvas?.getBoundingClientRect()
+  if (!rect || !canvas) return { x: 0, y: 0 }
+
+  const scaleX = canvas.width / rect.width
+  const scaleY = canvas.height / rect.height
+
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY
+  }
 }
 
 function startDrag(e: PointerEvent) {

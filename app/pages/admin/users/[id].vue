@@ -85,11 +85,11 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" md="7" lg="6">
+      <v-col cols="12" md="8" lg="9">
         <v-card elevation="2" title="帳號資訊" height="auto">
           <v-card-text class="pt-4">
             <v-row>
-              <v-col cols="12" md="6" class="pb-4">
+              <v-col cols="12" sm="6" md="6" class="pb-4">
                 <div class="d-flex align-start">
                   <v-icon color="primary" class="mr-3 mt-1">mdi-identifier</v-icon>
                   <div>
@@ -99,7 +99,7 @@
                 </div>
               </v-col>
 
-              <v-col cols="12" md="6" class="pb-4">
+              <v-col cols="12" sm="6" md="6" class="pb-4">
                 <div class="d-flex align-start">
                   <v-icon color="primary" class="mr-3 mt-1">mdi-calendar-clock</v-icon>
                   <div>
@@ -109,7 +109,7 @@
                 </div>
               </v-col>
 
-              <v-col cols="12" md="6" class="pb-4">
+              <v-col cols="12" sm="6" md="6" class="pb-4">
                 <div class="d-flex align-start">
                   <v-icon color="primary" class="mr-3 mt-1">mdi-phone</v-icon>
                   <div>
@@ -119,7 +119,7 @@
                 </div>
               </v-col>
 
-              <v-col cols="12" md="6" class="pb-4">
+              <v-col cols="12" sm="6" md="6" class="pb-4">
                 <div class="d-flex align-start">
                   <v-icon color="primary" class="mr-3 mt-1">mdi-map-marker</v-icon>
                   <div>

@@ -30,6 +30,13 @@ const toggleLanguage = () => {
   transition: background-color 0.3s;
 }
 
+@media (max-width: 600px) {
+  .switch {
+    transform: scale(0.85);
+    transform-origin: center;
+  }
+}
+
 .switch:hover {
   background-color: #bbb;
 }

@@ -75,7 +75,7 @@
             v-if="cartStore.items.length > 0"
             elevation="2"
             rounded="lg"
-            style="position: sticky; top: 0px; margin-top: 37px;">
+            class="summary-card">
 
           <v-card-text class="pa-5">
             <div class="d-flex justify-space-between mb-4">
@@ -150,5 +150,22 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.summary-card {
+  position: sticky;
+  top: 80px;
+  margin-top: 37px;
+}
+
+@media (max-width: 960px) {
+  .summary-card {
+    position: static;
+    margin-top: 0;
+  }
+  
+  .text-h4 {
+    font-size: 1.75rem !important;
+  }
 }
 </style>

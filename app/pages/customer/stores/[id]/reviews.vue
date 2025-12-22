@@ -57,10 +57,10 @@
 
     <v-divider class="my-6"></v-divider>
 
-    <div class="d-flex align-center justify-space-between mb-4">
+    <div class="d-flex align-center justify-space-between mb-4 flex-wrap gap-2">
       <h3 class="text-h6">所有評價</h3>
 
-      <div class="d-flex align-center" style="width: 200px;">
+      <div class="d-flex align-center sort-select-container">
         <v-select
           v-model="sortBy"
           :items="sortOptions"
@@ -212,5 +212,17 @@ useHead({
 </script>
 
 <style scoped>
+.sort-select-container {
+  width: 200px;
+}
 
+@media (max-width: 600px) {
+  .text-h4 {
+    font-size: 1.75rem !important;
+  }
+  
+  .sort-select-container {
+    width: 160px;
+  }
+}
 </style>

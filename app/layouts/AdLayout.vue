@@ -1,6 +1,6 @@
 <template>
   <slot />
-  <v-dialog v-model="showAd" max-width="400px" persistent>
+  <v-dialog v-model="showAd" width="auto" style="max-width: 400px; width: 90vw;" persistent>
     <v-card>
       <v-card-title class="text-h6 font-weight-bold text-center">廣告</v-card-title>
       <v-card-text class="text-center py-4">

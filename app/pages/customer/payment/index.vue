@@ -3,7 +3,7 @@
     <h1 class="text-h4 font-weight-bold mb-6">確認訂單</h1>
 
     <v-row>
-      <v-col cols="12" md="7">
+      <v-col cols="12" md="7" lg="8">
         <v-card flat border class="mb-6">
           <v-card-title class="text-h6">外送詳細資訊</v-card-title>
           <v-card-text>
@@ -62,80 +62,82 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" md="5">
-        <v-card elevation="2" rounded="lg">
-          <v-card-title class="text-h6 border-b">訂單摘要</v-card-title>
-          <v-card-text>
-            <v-list lines="two" bg-color="transparent">
-              <v-list-item v-for="item in items" :key="item._id" class="mb-2">
-                <template v-slot:prepend>
-                  <v-img
-                      :src="item.image"
-                      width="56"
-                      height="56"
-                      class="rounded me-4"
-                      cover
-                  >
-                    <template #error>
-                      <v-sheet
-                          class="d-flex align-center justify-center fill-height rounded"
-                          style="background-color: #f8e8ee"
-                      >
-                        <span
-                            class="text-h6 font-weight-bold"
-                            style="color: #e0b4c3"
-                        >???</span
+      <v-col cols="12" md="5" lg="4">
+        <div class="position-sticky" style="top: 24px">
+          <v-card elevation="2" rounded="lg">
+            <v-card-title class="text-h6 border-b">訂單摘要</v-card-title>
+            <v-card-text>
+              <v-list lines="two" bg-color="transparent">
+                <v-list-item v-for="item in items" :key="item._id" class="mb-2">
+                  <template v-slot:prepend>
+                    <v-img
+                        :src="item.image"
+                        width="56"
+                        height="56"
+                        class="rounded me-4"
+                        cover
+                    >
+                      <template #error>
+                        <v-sheet
+                            class="d-flex align-center justify-center fill-height rounded"
+                            style="background-color: #f8e8ee"
                         >
-                      </v-sheet>
-                    </template>
-                  </v-img>
-                </template>
+                          <span
+                              class="text-h6 font-weight-bold"
+                              style="color: #e0b4c3"
+                          >???</span
+                          >
+                        </v-sheet>
+                      </template>
+                    </v-img>
+                  </template>
 
-                <v-list-item-title class="font-weight-medium"> {{ item.name }} </v-list-item-title>
-                <v-list-item-subtitle>{{ item.restaurantName  }} </v-list-item-subtitle>
+                  <v-list-item-title class="font-weight-medium"> {{ item.name }} </v-list-item-title>
+                  <v-list-item-subtitle>{{ item.restaurantName  }} </v-list-item-subtitle>
 
-                <template v-slot:append>
-                  <span class="text-body-1 ms-2"> ${{ item.price }} x {{ item.quantity }} </span>
-                </template>
-              </v-list-item>
-            </v-list>
+                  <template v-slot:append>
+                    <span class="text-body-1 ms-2"> ${{ item.price }} x {{ item.quantity }} </span>
+                  </template>
+                </v-list-item>
+              </v-list>
 
-            <v-divider class="my-4"></v-divider>
+              <v-divider class="my-4"></v-divider>
 
-            <div class="d-flex justify-space-between mt-4">
-              <p class="text-body-1 text-medium-emphasis">餐點小計</p>
-              <p class="text-body-1 font-weight-medium">$ {{ totalPrice }}</p>
-            </div>
-            <div class="d-flex justify-space-between mt-2">
-              <p class="text-body-1 text-medium-emphasis">外送費</p>
-              <p class="text-body-1 font-weight-medium">$ {{ deliveryFee }}</p>
-            </div>
+              <div class="d-flex justify-space-between mt-4">
+                <p class="text-body-1 text-medium-emphasis">餐點小計</p>
+                <p class="text-body-1 font-weight-medium">$ {{ totalPrice }}</p>
+              </div>
+              <div class="d-flex justify-space-between mt-2">
+                <p class="text-body-1 text-medium-emphasis">外送費</p>
+                <p class="text-body-1 font-weight-medium">$ {{ deliveryFee }}</p>
+              </div>
 
-            <v-divider class="my-4"></v-divider>
+              <v-divider class="my-4"></v-divider>
 
-            <div class="d-flex justify-space-between">
-              <p class="text-h6 font-weight-bold">訂單總金額</p>
-              <p class="text-h6 font-weight-bold">$ {{ total }}</p>
-            </div>
+              <div class="d-flex justify-space-between">
+                <p class="text-h6 font-weight-bold">訂單總金額</p>
+                <p class="text-h6 font-weight-bold">$ {{ total }}</p>
+              </div>
 
-            <div class="d-flex justify-space-between mt-2">
-              <p class="text-h6 font-weight-bold">預計送達時間</p>
-              <p class="text-h6 font-weight-bold">
-                {{ estimatedDeliveryTime }}
-              </p>
-            </div>
-            <v-btn
-                color="primary"
-                block
-                size="large"
-                class="mt-6"
-                :disabled="!isFormValid || loading"
-                @click="submitOrder"
-            >
-              <span class="text-h6 font-weight-bold">確認送出訂單</span>
-            </v-btn>
-          </v-card-text>
-        </v-card>
+              <div class="d-flex justify-space-between mt-2">
+                <p class="text-h6 font-weight-bold">預計送達時間</p>
+                <p class="text-h6 font-weight-bold">
+                  {{ estimatedDeliveryTime }}
+                </p>
+              </div>
+              <v-btn
+                  color="primary"
+                  block
+                  size="large"
+                  class="mt-6"
+                  :disabled="!isFormValid || loading"
+                  @click="submitOrder"
+              >
+                <span class="text-h6 font-weight-bold">確認送出訂單</span>
+              </v-btn>
+            </v-card-text>
+          </v-card>
+        </div>
       </v-col>
     </v-row>
 
@@ -254,6 +256,12 @@ const submitOrder = async () => {
 const form = ref();
 
 onMounted(() => {
+  cartStore.loadFromStorage();
+  localDeliveryAddress.value = cartStore.deliveryAddress;
+  localPhoneNumber.value = cartStore.phoneNumber;
+  localReceiveName.value = cartStore.receiveName;
+  localNote.value = cartStore.note;
+
   updateArriveTime();
   timer = setInterval(updateArriveTime, 60 * 1000);
   if (cartStore.items.length === 0) {

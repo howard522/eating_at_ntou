@@ -1,15 +1,15 @@
 <template>
   <v-card flat border rounded="lg" class="mb-4">
     <v-card-text class="pa-5">
-      <div class="d-flex justify-space-between align-start mb-3">
-        <h3 class="text-h6 font-weight-bold text-blue-darken-1">
+      <div class="d-flex justify-space-between align-start mb-3 flex-wrap">
+        <h3 class="text-h6 font-weight-bold text-blue-darken-1 mr-2 mb-1">
           新任務 #{{ shortId }}
         </h3>
         <v-chip
             color="primary"
             variant="outlined"
             size="small"
-            class="font-weight-bold"
+            class="font-weight-bold mb-1"
         >
           <v-icon start icon="mdi-clock-fast"></v-icon>
           送達時間 {{ formattedTime }}
@@ -21,10 +21,10 @@
         <strong class="mr-1">從：</strong>
         <span>{{ order.restaurantNameDisplay }}</span>
       </div>
-      <div class="d-flex align-center text-body-1 mb-4">
-        <v-icon color="blue" start>mdi-map-marker-outline</v-icon>
-        <strong class="mr-1">至：</strong>
-        <span>{{ order.deliveryAddress }}</span>
+      <div class="d-flex align-start text-body-1 mb-4">
+        <v-icon color="blue" start class="mt-1">mdi-map-marker-outline</v-icon>
+        <strong class="mr-1 mt-1">至：</strong>
+        <span style="word-break: break-word;">{{ order.deliveryAddress }}</span>
       </div>
 
       <div class="text-right">

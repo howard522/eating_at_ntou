@@ -213,6 +213,12 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
+@media (max-width: 600px) {
+  .delivery-map {
+    height: 300px;
+  }
+}
+
 /* 簡單陰影，提升白底可讀性 */
 .emoji-marker {
   background: transparent;
