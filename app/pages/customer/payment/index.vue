@@ -254,6 +254,12 @@ const submitOrder = async () => {
 const form = ref();
 
 onMounted(() => {
+  cartStore.loadFromStorage();
+  localDeliveryAddress.value = cartStore.deliveryAddress;
+  localPhoneNumber.value = cartStore.phoneNumber;
+  localReceiveName.value = cartStore.receiveName;
+  localNote.value = cartStore.note;
+
   updateArriveTime();
   timer = setInterval(updateArriveTime, 60 * 1000);
   if (cartStore.items.length === 0) {
