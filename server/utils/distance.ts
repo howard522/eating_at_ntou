@@ -1,3 +1,5 @@
+// server/utils/distance.ts
+
 const EARTH_RADIUS = 6371e3; // 地球半徑 (m)
 
 // 轉換度數到弧度

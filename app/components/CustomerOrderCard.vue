@@ -49,8 +49,8 @@
 </template>
 
 <script setup lang="ts">
-import type { AvailableDisplayOrder as DisplayOrder } from '@types/order'
-import type { PropType } from 'vue'
+import type { AvailableDisplayOrder as DisplayOrder } from '@types/order';
+import type { PropType } from 'vue';
 
 const props = defineProps({
   order: {

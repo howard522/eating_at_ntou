@@ -1,5 +1,4 @@
-import { getOrdersForAdmin } from "@server/services/order.service";
-import { verifyJwtFromEvent } from "@server/utils/auth";
+import { getOrdersForAdmin } from "$services/order.service";
 
 /**
  * @openapi
@@ -62,7 +61,6 @@ import { verifyJwtFromEvent } from "@server/utils/auth";
  *         description: 成功回傳訂單清單
  */
 export default defineEventHandler(async (event) => {
-    await verifyJwtFromEvent(event); // 確保為管理員
     const DEFAULT_LIMIT = 50;
     const MAX_LIMIT = 200;
 

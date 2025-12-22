@@ -1,8 +1,8 @@
 // server/api/ads/index.post.ts
 
-import { createAd } from "@server/services/ad.service";
-import { parseForm } from "@server/utils/parseForm";
-import type { IAd } from "@server/interfaces/ad.interface";
+import type { IAdCreate } from "$interfaces/ad.interface";
+import { createAd } from "$services/ad.service";
+import { parseForm } from "$utils/parseForm";
 
 /**
  * @openapi
@@ -90,7 +90,9 @@ import type { IAd } from "@server/interfaces/ad.interface";
  */
 export default defineEventHandler(async (event) => {
     const form = await readMultipartFormData(event);
-    const data = await parseForm<IAd>(form);
+    const data = await parseForm<IAdCreate>(form);
+
+    data.isActive = data.isActive ?? true; // 預設為 true
 
     const ad = await createAd(data);
 

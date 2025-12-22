@@ -1,17 +1,17 @@
-// FILE: server/api/auth/me.patch.ts  (新增/更新)
-// ============================================================================
+// server/api/auth/me.patch.ts
 
-import type { UpdateUserBody } from "@server/interfaces/user.interface";
-import { updateUser } from "@server/services/user.service";
-import { getUserFromEvent, toPublicUser } from "@server/utils/auth";
-import { parseForm } from "@server/utils/parseForm";
+import type { IUserUpdate } from "$interfaces/user.interface";
+import { updateUser } from "$services/user.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
+import { parseForm } from "$utils/parseForm";
 
 /**
  * @openapi
  * /api/auth/me:
  *   patch:
  *     summary: 更新我的個人資料
- *     tags: [Users]
+ *     tags:
+ *       - Users
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -21,21 +21,35 @@ import { parseForm } from "@server/utils/parseForm";
  *           schema:
  *             type: object
  *             properties:
- *               name: { type: string }
- *               address: { type: string }
- *               phone: { type: string }
+ *               name:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               phone:
+ *                 type: string
  *               img:
  *                 type: string
  *                 format: binary
  *     responses:
- *       200: { description: 已更新 }
+ *       200:
+ *         description: 已更新
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
-    const me = await getUserFromEvent(event); // 取得目前使用者，11/15更新後會檔掉被封鎖的使用者
+    const userId = getCurrentUser(event).id;
+
     const form = await readMultipartFormData(event);
-    const data = await parseForm<UpdateUserBody>(form);
+    const data = await parseForm<IUserUpdate>(form);
 
-    const updated = await updateUser(me._id, data);
+    const updated = await updateUser(userId, data);
 
-    return { success: true, user: toPublicUser(updated) };
+    return {
+        success: true,
+        user: updated,
+    };
 });

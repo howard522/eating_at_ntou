@@ -169,6 +169,7 @@ useHead({title: '登入', });
 <style scoped>
 .login-container {
   min-height: 100vh;
+  min-width: 100vw;
   background: linear-gradient(180deg, #f5f9ff 0%, #ffffff 100%);
 }
 

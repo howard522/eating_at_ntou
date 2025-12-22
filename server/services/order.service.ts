@@ -1,12 +1,14 @@
 // server/services/order.service.ts
 
-import type { IOrder, OrderInfo, OrderStatusUpdate } from "@server/interfaces/order.interface";
-import Cart from "@server/models/cart.model";
-import Order from "@server/models/order.model";
-import { haversineDistance } from "@server/utils/distance";
-import type { FilterQuery, Types } from "mongoose";
-import { clearCartByUserId } from "./cart.service";
-import { getRestaurantsByQuery } from "./restaurants.service";
+import type { ObjectIdLike } from "$interfaces/common.interface";
+import type { IOrder, OrderInfo, UpdateOrderStatusBody } from "$interfaces/order.interface";
+import Cart from "$models/cart.model";
+import Order from "$models/order.model";
+import { clearCartByUserId } from "$services/cart.service";
+import { getRestaurantsByQuery } from "$services/restaurants.service";
+import { haversineDistance } from "$utils/distance";
+import { broadcastToOrder } from "$utils/wsContext";
+import type { FilterQuery } from "mongoose";
 
 /**
  * 判斷使用者是否為訂單的擁有者或外送員
@@ -15,10 +17,15 @@ import { getRestaurantsByQuery } from "./restaurants.service";
  * @param userId 使用者 ID
  * @returns 回傳一個物件，包含 isOwner 和 isDeliveryPerson 布林值
  */
-export async function getOrderOwnership(orderId: string, userId: string) {
+export async function getOrderOwnership(orderId: ObjectIdLike, userId: ObjectIdLike) {
     const order = await Order.findById(orderId).select("user deliveryPerson");
 
-    if (!order) throw createError({ statusCode: 404, message: "Order not found" });
+    if (!order)
+        throw createError({
+            statusCode: 404,
+            statusMessage: "Not Found",
+            message: "Order not found",
+        });
 
     return {
         isOwner: String(order.user) === String(userId),
@@ -32,10 +39,15 @@ export async function getOrderOwnership(orderId: string, userId: string) {
  * @param orderId 訂單 ID
  * @returns 訂單的顧客狀態和外送員狀態
  */
-export async function getOrderStatus(orderId: string) {
+export async function getOrderStatus(orderId: ObjectIdLike) {
     const order = await Order.findById(orderId).select("customerStatus deliveryStatus");
 
-    if (!order) throw createError({ statusCode: 404, message: "Order not found" });
+    if (!order)
+        throw createError({
+            statusCode: 404,
+            statusMessage: "Not Found",
+            message: "Order not found",
+        });
 
     return {
         customerStatus: order.customerStatus,
@@ -48,11 +60,10 @@ export async function getOrderStatus(orderId: string) {
  *
  * @param userId 使用者 ID
  */
-export async function createOrder(userId: string | Types.ObjectId, OrderInfo: OrderInfo) {
+export async function createOrder(userId: ObjectIdLike, OrderInfo: OrderInfo) {
     const { deliveryInfo, arriveTime } = OrderInfo;
 
-    const deliveryFee =
-        typeof OrderInfo.deliveryFee === "number" && OrderInfo.deliveryFee >= 0 ? OrderInfo.deliveryFee : 0;
+    const deliveryFee = Math.max(Number(OrderInfo.deliveryFee) || 0, 0);
 
     if (deliveryInfo.address) {
         try {
@@ -148,17 +159,34 @@ export async function createOrder(userId: string | Types.ObjectId, OrderInfo: Or
     return newOrder;
 }
 
-export async function getOrderById(orderId: string) {
+export async function getOrderById(orderId: ObjectIdLike) {
     // OPTIMIZE: 待整理
 
     // 將外送員回傳必要欄位：name, img, phone
     const order = await Order.findById(orderId)
         .populate("user", "name img email")
         .populate("deliveryPerson", "name img phone")
+        .populate("items.restaurant.id", "locationGeo")
         .lean();
     // items.restaurant.phone 已存為 snapshot，無需額外 populate
 
     if (!order) throw createError({ statusCode: 404, statusMessage: "Order not found" });
+
+    // 補上餐廳經緯度
+    if (order.items) {
+        order.items.forEach((item) => {
+            if (
+                item.restaurant &&
+                item.restaurant.id &&
+                item.restaurant.id.locationGeo &&
+                item.restaurant.id.locationGeo.coordinates
+            ) {
+                const [lng, lat] = item.restaurant.id.locationGeo.coordinates;
+                item.restaurant.location = { lat, lng };
+                item.restaurant.id = item.restaurant.id._id;
+            }
+        });
+    }
 
     // 正規化 deliveryPerson：考慮可能為 null（尚未被外送員接單）或未被 populate
     try {
@@ -194,7 +222,7 @@ export async function getOrderById(orderId: string) {
  * @returns 符合條件的訂單列表
  */
 export async function getOrdersByUserRole(
-    userId: string,
+    userId: ObjectIdLike,
     role: "customer" | "delivery",
     options?: { limit?: number; skip?: number }
 ): Promise<IOrder[]> {
@@ -288,7 +316,7 @@ export async function getAvailableOrdersForDeliveryPerson(
         .skip(skip);
 
     // 若有經緯度，計算外送員與餐廳的距離
-    const distance: Map<Types.ObjectId, number> = new Map();
+    const distance: Map<ObjectIdLike, number> = new Map();
     if (lat && lon) {
         const userPos: [number, number] = [lon, lat];
 
@@ -343,7 +371,7 @@ export async function getAvailableOrdersForDeliveryPerson(
  * @returns 符合條件的訂單列表
  */
 export async function getOrdersForAdmin(
-    orderId?: string,
+    orderId?: ObjectIdLike,
     options?: {
         completed?: boolean;
         from?: Date;
@@ -425,26 +453,43 @@ export async function getOrdersForAdmin(
  * @param deliveryPersonId 外送員 ID
  * @returns 更新後的訂單
  */
-export async function updateOrderDeliveryPerson(orderId: string, deliveryPersonId: string | Types.ObjectId) {
+export async function updateOrderDeliveryPerson(orderId: ObjectIdLike, deliveryPersonId: ObjectIdLike) {
     const order = await Order.findById(orderId);
 
-    if (!order) throw createError({ statusCode: 404, statusMessage: "Order not found" });
+    if (!order)
+        throw createError({
+            statusCode: 404,
+            statusMessage: "Not Found",
+            message: "Order not found.",
+        });
 
     if (order.deliveryPerson) {
-        throw createError({ statusCode: 409, message: "Order already accepted" });
+        throw createError({
+            statusCode: 409,
+            statusMessage: "Conflict",
+            message: "Order already accepted.",
+        });
     }
 
-    order.deliveryPerson = deliveryPersonId as Types.ObjectId;
+    order.deliveryPerson = deliveryPersonId;
     order.deliveryStatus = "on_the_way";
 
     await order.save();
 
-    // populate deliveryPerson so API 回傳格式與其他 endpoint 一致（含 name/img/phone）
     try {
         await order.populate("deliveryPerson", "name img phone");
     } catch (e) {
         // ignore populate errors
     }
+
+    // 廣播狀態更新
+    broadcastToOrder(String(order._id), {
+        type: "status",
+        data: {
+            deliveryPerson: order.deliveryPerson,
+            deliveryStatus: order.deliveryStatus,
+        },
+    });
 
     return order;
 }
@@ -456,7 +501,7 @@ export async function updateOrderDeliveryPerson(orderId: string, deliveryPersonI
  * @param status 訂單狀態更新物件
  * @returns 更新後的訂單
  */
-export async function updateOrderStatusById(orderId: string, status: OrderStatusUpdate) {
+export async function updateOrderStatusById(orderId: ObjectIdLike, status: UpdateOrderStatusBody) {
     const order = await Order.findById(orderId);
 
     if (!order) throw createError({ statusCode: 404, statusMessage: "Order not found" });
@@ -475,12 +520,20 @@ export async function updateOrderStatusById(orderId: string, status: OrderStatus
 
     await order.save();
 
-    // 若有外送員，populate deliveryPerson 以回傳 name/img/phone（與其他 endpoint 保持一致）
     try {
         if (order.deliveryPerson) await order.populate("deliveryPerson", "name img phone");
     } catch (e) {
         // ignore
     }
+
+    // 廣播狀態更新
+    broadcastToOrder(String(order._id), {
+        type: "status",
+        data: {
+            customerStatus: order.customerStatus,
+            deliveryStatus: order.deliveryStatus,
+        },
+    });
 
     return order;
 }

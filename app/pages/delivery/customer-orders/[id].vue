@@ -149,8 +149,8 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
 import { useUserStore } from '@stores/user';
+import { useRouter } from 'vue-router';
 
 const route = useRoute();
 const router = useRouter();

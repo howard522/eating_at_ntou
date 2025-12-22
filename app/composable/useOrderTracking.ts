@@ -1,5 +1,5 @@
-import { onBeforeUnmount, ref } from "vue";
 import { useUserStore } from "@stores/user";
+import { onBeforeUnmount, ref } from "vue";
 
 type LatLng = [number, number];
 

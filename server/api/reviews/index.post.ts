@@ -1,8 +1,8 @@
 // server/api/reviews/index.post.ts
 
-import { getRestaurantById } from "@server/services/restaurants.service";
-import { createReview } from "@server/services/reviews.service";
-import { verifyJwtFromEvent } from "@server/utils/auth";
+import { getRestaurantById } from "$services/restaurants.service";
+import { createReview } from "$services/reviews.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi
@@ -54,25 +54,29 @@ import { verifyJwtFromEvent } from "@server/utils/auth";
  *         description: 未授權
  *       404:
  *         description: 找不到餐廳
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
  */
 export default defineEventHandler(async (event) => {
+    const userId = getCurrentUser(event).id;
+
     const body = await readBody(event);
-    const payload = await verifyJwtFromEvent(event);
-    const userId = payload.id;
 
     const { restaurantId, rating, content } = body;
 
     if (!restaurantId || !rating || !content) {
         throw createError({
             statusCode: 400,
-            statusMessage: "Missing required fields: restaurantId, rating, content",
+            statusMessage: "Bad Request",
+            message: "Missing required fields: restaurantId, rating, content.",
         });
     }
 
     if (rating < 1 || rating > 5) {
         throw createError({
-            statusCode: 400,
-            statusMessage: "Rating must be between 1 and 5",
+            statusCode: 422,
+            statusMessage: "Unprocessable Entity",
+            message: "Rating must be between 1 and 5.",
         });
     }
 
@@ -80,11 +84,17 @@ export default defineEventHandler(async (event) => {
     if (!restaurant) {
         throw createError({
             statusCode: 404,
-            statusMessage: "Restaurant not found",
+            statusMessage: "Not Found",
+            message: "Restaurant not found.",
         });
     }
 
-    const review = await createReview(restaurantId, userId, rating, content);
+    const review = await createReview({
+        restaurant: restaurantId,
+        user: userId,
+        rating,
+        content,
+    });
 
     return {
         success: true,

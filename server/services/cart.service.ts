@@ -1,19 +1,40 @@
-import type { ICartItem, ICartItemResponse, ICartResponse } from "@server/interfaces/cart.interface";
-import type { IRestaurant } from "@server/interfaces/restaurant.interface";
-import Cart from "@server/models/cart.model";
-import { calculateDeliveryFeeByDistance } from "@server/utils/calcPrice";
-import { haversineDistance } from "@server/utils/distance";
-import { getGeocodeFromAddress } from "@server/utils/nominatim";
-import type { ObjectId } from "mongoose";
-import { getMenuItemById, getRestaurantById } from "./restaurants.service";
+// server/services/cart.service.ts
 
-async function findCartByUserId(userId: string | ObjectId) {
-    const cart = await Cart.findOne({ user: userId });
+import type { ICart, ICartResponse, ICartUpdate } from "$interfaces/cart.interface";
+import type { ObjectIdLike } from "$interfaces/common.interface";
+import Cart from "$models/cart.model";
+import { calculateDeliveryFeeByDistance } from "$utils/calcPrice";
+import { haversineDistance } from "$utils/distance";
+import { omit } from "lodash-es";
+
+/**
+ * 建立新的購物車
+ *
+ * @param userId 使用者的 ID
+ * @returns 新建立的購物車
+ */
+async function createCart(userId: ObjectIdLike) {
+    const cart = new Cart({ user: userId, items: [] });
+    await cart.save();
+
+    return cart;
+}
+
+/**
+ * 根據使用者 ID 獲取購物車文件
+ *
+ * @param userId 使用者的 ID
+ * @returns 購物車文件
+ */
+async function findOrCreateCartDocByUserId(userId: ObjectIdLike) {
+    const cart = await Cart.findOne({ user: userId })
+        // .populate("user", "img name email") // 可能不需要
+        .populate("items.restaurant", "name menu locationGeo");
 
     // 沒有購物車就創建一個新的
     if (!cart) {
         // console.log("No cart found, creating a new one for user:", userId);
-        return await createCartForUser(userId);
+        return createCart(userId);
     }
 
     return cart;
@@ -25,18 +46,21 @@ async function findCartByUserId(userId: string | ObjectId) {
  * @param userId 使用者的 ID
  * @returns 新建立的購物車
  */
-export async function createCartForUser(userId: string | ObjectId) {
-    // FIXME: 可能會導致重複建立購物車
-    // const existingCart = await findCartByUserId(userId);
+export async function createCartForUser(userId: ObjectIdLike) {
+    // 避免重複建立購物車
+    const existingCart = await Cart.findOne({ user: userId });
 
-    // if (existingCart) {
-    //     throw new Error("Cart already exists for this user");
-    // }
+    if (existingCart) {
+        throw createError({
+            statusCode: 409,
+            statusMessage: "Conflict",
+            message: "Cart already exists for this user.",
+        });
+    }
 
-    const cart = new Cart({ user: userId, items: [] });
-    await cart.save();
+    const cart = await createCart(userId);
 
-    return cart;
+    return cart.toObject<ICart>();
 }
 
 /**
@@ -45,57 +69,38 @@ export async function createCartForUser(userId: string | ObjectId) {
  * @param userId 使用者的 ID
  * @returns 購物車
  */
-export async function getCartByUserId(userId: string | ObjectId): Promise<ICartResponse | null> {
-    const cart = await findCartByUserId(userId);
+export async function getCartByUserId(userId: ObjectIdLike): Promise<ICartResponse> {
+    const cart = (await findOrCreateCartDocByUserId(userId)).toObject<ICart>();
 
-    const cartResponse: ICartResponse = {
-        _id: cart._id.toString(),
-        user: cart.user.toString(),
-        items: [],
-        currency: cart.currency,
-        total: cart.total,
-        status: cart.status,
-        createdAt: cart.createdAt,
-        updatedAt: cart.updatedAt,
+    // 組合成 ICartItemResponse 陣列
+    const items = cart.items.map((it) => {
+        const restaurant = it.restaurant;
+        const menuItem = it.restaurant?.menu.find((mi) => String(mi._id) === String(it.menuItemId));
+
+        if (!restaurant || !menuItem) {
+            console.warn(
+                `Warning: Missing restaurant or menu item for cart item. Restaurant ID: ${it.restaurantId}, Menu Item ID: ${it.menuItemId}`
+            );
+        }
+
+        // QUESTION: 被刪除的餐廳、菜單項目怎麼辦？
+
+        return {
+            ...omit(it, ["restaurant"]), // 移除 mongoose virtual 屬性
+            restaurantName: restaurant?.name ?? "未知餐廳",
+
+            // 優先使用最新的菜單資訊
+            name: menuItem?.name ?? it.name,
+            price: menuItem?.price ?? it.price,
+            image: menuItem?.image ?? "",
+            info: menuItem?.info ?? "",
+        };
+    });
+
+    return {
+        ...cart,
+        items,
     };
-
-    cartResponse.items = await Promise.all(
-        cart.items.map(async (it) => {
-            const item: ICartItemResponse = {
-                restaurantId: it.restaurantId.toString(),
-                menuItemId: it.menuItemId.toString(),
-                restaurantName: "未知餐廳",
-                name: it.name,
-                price: it.price,
-                image: "",
-                info: "",
-                quantity: it.quantity,
-                options: it.options,
-            };
-
-            try {
-                // 購物車資訊可能過時，嘗試從菜單取得最新資訊
-                const menuItem = await getMenuItemById(it.restaurantId, it.menuItemId);
-                const restaurant = menuItem.parent() as IRestaurant;
-
-                item.restaurantName = restaurant.name;
-                item.name = menuItem.name;
-                item.price = menuItem.price;
-                item.image = menuItem.image;
-                item.info = menuItem.info;
-
-                return item;
-            } catch (error) {
-                // 如果取得菜單失敗，仍然回傳基本資訊
-                // TODO: 可能是已被刪除的菜單項目
-                // TODO: 若餐廳已被下架，還要不要顯示這個項目？
-                console.warn(`Failed to fetch menu item ${it.menuItemId} in restaurant ${it.restaurantId}:`, error);
-                return item;
-            }
-        })
-    );
-
-    return cartResponse;
 }
 
 /**
@@ -105,23 +110,28 @@ export async function getCartByUserId(userId: string | ObjectId): Promise<ICartR
  * @param items 購物車項目陣列
  * @returns 更新後的購物車
  */
-export async function updateCartByUserId(userId: string | ObjectId, items: Partial<ICartItem>[]) {
+export async function updateCartByUserId(userId: ObjectIdLike, items: ICartUpdate["items"]) {
+    // 允許清空購物車
     if (!items.length) {
-        // return { success: false, message: 'items array required' }
-        // 允許清空購物車 好耶 (2025/11/02)
         return await clearCartByUserId(userId);
     }
 
-    // Upsert cart for user
-    const cart = await findCartByUserId(userId);
+    // 取得購物車（不存在就建立）
+    const cart = await findOrCreateCartDocByUserId(userId);
 
-    // if cart is locked, disallow modifications
+    // 如果 cart 被鎖定，拒絕修改
     if (cart.status === "locked") {
-        throw new Error("Cart is locked and cannot be modified");
+        throw createError({
+            statusCode: 423,
+            statusMessage: "Locked",
+            message: "Cart is locked and cannot be modified.",
+        });
     }
+
+    // WARNING: name, price 等資料可能已過時或遭到竄改（尚未處理）
+
     // naive merge: replace items with provided
-    cart.items.splice(0, cart.items.length); // 清空陣列
-    cart.items.push(...items); // 新增新項目
+    cart.items = items as any; // TODO: type casting
 
     await cart.save();
 
@@ -134,8 +144,10 @@ export async function updateCartByUserId(userId: string | ObjectId, items: Parti
  * @param userId 使用者的 ID
  * @returns 清空後的購物車
  */
-export async function clearCartByUserId(userId: string | ObjectId) {
-    const cart = await findCartByUserId(userId);
+export async function clearCartByUserId(userId: ObjectIdLike) {
+    // QUESTION: 如果被 Locked (已送出訂單) 但還沒完成，是否允許清空購物車？
+
+    const cart = await findOrCreateCartDocByUserId(userId);
 
     cart.items.splice(0, cart.items.length); // 清空陣列
     cart.total = 0;
@@ -147,44 +159,36 @@ export async function clearCartByUserId(userId: string | ObjectId) {
 }
 
 /**
- * 根據使用者 ID 計算外送費用
+ * 根據顧客位置與餐廳位置陣列計算外送費用
  *
- * @param userId 使用者的 ID
- * @param address 使用者的外送地址
- * @returns 外送費用
+ * @param customer 顧客的經緯度 [longitude, latitude]
+ * @param restaurants 餐廳的經緯度陣列 [longitude, latitude][]
+ * @returns 外送費用與平均距離 (公里)
  */
-export async function calculateDeliveryFee(userId: string | ObjectId, address: string) {
-    const cart = await findCartByUserId(userId);
-
-    if (!cart.items.length) {
-        return 0; // 沒有項目，暫時回傳 0
-        // throw new Error("Cart is empty, cannot calculate delivery fee");
+export function calculateDeliveryFee(customer: [number, number], restaurants: [number, number][]) {
+    if (!restaurants.length) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "At least one restaurant coordinate is required to calculate delivery fee",
+        });
     }
 
-    const location = await getGeocodeFromAddress(address);
-    if (!location) {
-        throw new Error("Failed to get geocode from address");
-    }
+    // 計算每個餐廳到使用者地址的距離，然後取平均值
+    // 可能未來改成取最遠距離或其他規則
+    const totalDistance = restaurants.reduce((distanceSum, restaurantCoords) => {
+        const distance = haversineDistance(restaurantCoords, customer);
+        return distanceSum + distance;
+    }, 0);
 
-    let totalDistance = 0;
-    for (const item of cart.items) {
-        const restaurant = await getRestaurantById(item.restaurantId);
-        if (!restaurant) {
-            throw new Error(`Restaurant with ID ${item.restaurantId} not found`);
-        }
-
-        let dis = haversineDistance(restaurant.locationGeo!.coordinates, location.coordinates);
-
-        totalDistance += dis;
-    }
-
-    // 使用平均距離來計算外送費用
-    const avgDistance = totalDistance / cart.items.length / 1000; // 轉換為公里
+    const avgDistance = totalDistance / restaurants.length / 1000; // 轉換為公里
 
     console.log(`Calculated average delivery distance: ${avgDistance.toFixed(2)} km`);
 
+    const fee = calculateDeliveryFeeByDistance(avgDistance);
+
     return {
         distance: avgDistance,
-        fee: calculateDeliveryFeeByDistance(avgDistance),
+        fee,
     };
 }

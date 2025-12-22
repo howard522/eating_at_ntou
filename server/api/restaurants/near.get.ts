@@ -1,7 +1,7 @@
 // server/api/restaurants/near.get.ts
 
-import { searchRestaurantsNearByAddress } from "@server/services/restaurants.service";
-import { parseInteger } from "@server/utils/parseNumber";
+import { searchRestaurantsNearByAddress } from "$services/restaurants.service";
+import { parseInteger } from "$utils/parseNumber";
 
 /**
  * @openapi
@@ -64,6 +64,12 @@ import { parseInteger } from "@server/utils/parseNumber";
  *                           distance:
  *                             type: number
  *                             description: 距離（公尺）
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 export default defineEventHandler(async (event) => {
     // 防止過長造成效能問題
@@ -79,7 +85,12 @@ export default defineEventHandler(async (event) => {
     const skip = parseInteger(query.skip, 0, 0);
     const maxDistance = query.maxDistance ? Number(query.maxDistance) : undefined; // meters
 
-    const results = await searchRestaurantsNearByAddress(address, search, true, { limit, skip, maxDistance });
+    const results = await searchRestaurantsNearByAddress(address, search, {
+        limit,
+        skip,
+        maxDistance,
+        activeOnly: true,
+    });
 
     return {
         success: true,

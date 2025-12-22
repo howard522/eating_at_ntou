@@ -60,8 +60,8 @@
 </template>
 
 <script setup lang="ts">
+import { useInfiniteFetch } from '@composable/useInfiniteFetch';
 import debounce from 'lodash-es/debounce';
-import { useInfiniteFetch } from '~/composable/useInfiniteFetch';
 
 interface menuItem { _id: string; name: string; price: number; image: string; info: string; }
 interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; menu: menuItem[]; }

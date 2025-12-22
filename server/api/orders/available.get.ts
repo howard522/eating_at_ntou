@@ -1,7 +1,6 @@
 // server/api/orders/available.get.ts
 
-import { getAvailableOrdersForDeliveryPerson } from "@server/services/order.service";
-import { verifyJwtFromEvent } from "@server/utils/auth";
+import { getAvailableOrdersForDeliveryPerson } from "$services/order.service";
 
 /**
  * @openapi
@@ -168,9 +167,6 @@ import { verifyJwtFromEvent } from "@server/utils/auth";
  *                   example: "未登入或 Token 錯誤"
  */
 export default defineEventHandler(async (event) => {
-    // Auth
-    const payload = await verifyJwtFromEvent(event);
-
     const query = getQuery(event);
     const { keyword = "", sortBy = "createdAt", order = "desc", lat, lon } = query;
     // 分頁參數
@@ -179,6 +175,14 @@ export default defineEventHandler(async (event) => {
     let limit = Number(query.limit) || DEFAULT_LIMIT;
     limit = Math.min(limit, MAX_LIMIT);
     const skip = Number(query.skip) || 0;
+
+    if (!["createdAt", "deliveryFee", "arriveTime", "distance"].includes(sortBy as string)) {
+        throw createError({
+            statusCode: 422,
+            statusMessage: "Unprocessable Entity",
+            message: "Invalid sortBy parameter. Must be one of createdAt, deliveryFee, arriveTime, distance.",
+        });
+    }
 
     // 查詢訂單
     let orders = await getAvailableOrdersForDeliveryPerson(
