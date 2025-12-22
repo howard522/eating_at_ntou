@@ -35,7 +35,7 @@
       </div>
     </div>
 
-    <div v-if="pending && filteredReviews.length === 0">
+    <div v-if="pending && reviews.length === 0">
       <v-skeleton-loader
           v-for="n in 3"
           :key="n"
@@ -46,7 +46,7 @@
 
     <div v-else>
       <v-row
-          v-for="review in filteredReviews"
+          v-for="review in reviews"
           :key="review._id"
           class="mb-4 align-start"
           no-gutters
@@ -74,7 +74,7 @@
       <v-skeleton-loader type="list-item-avatar-three-line"></v-skeleton-loader>
     </div>
 
-    <div v-if="!pending && filteredReviews.length === 0" class="text-center py-10">
+    <div v-if="!pending && reviews.length === 0" class="text-center py-10">
       <v-icon size="64" color="grey-lighten-2">mdi-comment-off-outline</v-icon>
       <p class="text-h6 text-grey mt-2">目前還沒有評論。</p>
     </div>
@@ -96,7 +96,9 @@
 <script setup lang="ts">
 import { useInfiniteFetch } from '@composable/useInfiniteFetch'
 import type { Review } from '@types/review'
+import { useUserStore } from "@stores/user"
 
+const userStore = useUserStore()
 const route = useRoute()
 const storeId = route.params.id as string
 
@@ -128,10 +130,6 @@ watch(sortBy, () => {
   fetchItems({ reset: true })
 })
 
-// 因為目前還沒有刪除評論的api，所以先做一個假裝刪除的功能
-const deletedIds = ref<string[]>([])
-const filteredReviews = computed(() => reviews.value.filter(r => !deletedIds.value.includes(r._id)))
-
 const deleting = ref<string | null>(null)
 const snackbar = ref({
   show: false,
@@ -143,11 +141,22 @@ const deleteReview = async (id: string) => {
   if (!id) return
   deleting.value = id
   try {
-    deletedIds.value.push(id)
+    await $fetch(`/api/admin/reviews/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${userStore.token}`
+      }
+    })
+    // 本地即時更新
+    const index = reviews.value.findIndex(r => r._id === id)
+    if (index !== -1) {
+      reviews.value.splice(index, 1)
+    }
+
     snackbar.value = { show: true, text: '刪除成功', color: 'success' }
-  } catch (e) {
-    console.error('刪除評論錯誤:', e)
-    snackbar.value = { show: true, text: '刪除失敗', color: 'error' }
+  } catch (e: any) {
+    const errorMsg = e.response?._data?.message || '刪除失敗，請稍後再試'
+    snackbar.value = { show: true, text: errorMsg, color: 'error' }
   } finally {
     deleting.value = null
   }
