@@ -199,16 +199,17 @@
           </v-badge>
 
           <v-btn
-              :color="currentStep === 1 ? 'error' : 'success'"
+              v-if="currentStep > 1"
+              color="success"
               block
               size="x-large"
               class="mt-4"
               :disabled="currentStep >= 3 || isUpdating"
               :loading="isUpdating"
-              @click="currentStep === 1 ? cancelOrder() : openConfirmDialog()"
+              @click="openConfirmDialog()"
           >
             <span class="text-h6 font-weight-bold">
-              {{ currentStep === 1 ? '取消訂單' : (currentStep < 3 ? '我已收到餐點' : '已接收') }}
+              {{ currentStep < 3 ? '我已收到餐點' : '已接收' }}
             </span>
           </v-btn>
 
@@ -384,38 +385,6 @@ const deliver = computed(() => {
 
 const openConfirmDialog = () => {
   isConfirmDialogVisible.value = true;
-};
-
-const cancelOrder = async () => {
-  if (currentStep.value !== 1) return;
-  isUpdating.value = true;
-  try {
-    const response: any = await $fetch(
-      `/api/orders/${orderId}/status`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${userStore.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: {
-          customerStatus: 'received',
-          deliveryStatus: 'delivered',
-        },
-      }
-    );
-
-    if (response.success && orderData.value) {
-      orderData.value.customerStatus = response.data.customerStatus;
-      orderData.value.deliveryStatus = response.data.deliveryStatus;
-    } else {
-      console.error('Failed to cancel order', response);
-    }
-  } catch (err) {
-    console.error('Error cancelling order', err);
-  } finally {
-    isUpdating.value = false;
-  }
 };
 
 const markAsReceived = async () => {
