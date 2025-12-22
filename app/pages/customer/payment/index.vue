@@ -3,7 +3,7 @@
     <h1 class="text-h4 font-weight-bold mb-6">確認訂單</h1>
 
     <v-row>
-      <v-col cols="12" md="7">
+      <v-col cols="12" md="7" lg="8">
         <v-card flat border class="mb-6">
           <v-card-title class="text-h6">外送詳細資訊</v-card-title>
           <v-card-text>
@@ -11,39 +11,39 @@
               <div class="mb-4">
                 <p class="text-caption text-medium-emphasis">外送地址</p>
                 <v-text-field
-                    v-model="localDeliveryAddress"
-                    class="mt-1"
-                    :rules="addressRules"
-                    validate-on="blur"
-                    @blur="updateDetailsInStore"
+                  v-model="localDeliveryAddress"
+                  class="mt-1"
+                  :rules="addressRules"
+                  validate-on="blur"
+                  @blur="updateDetailsInStore"
                 ></v-text-field>
               </div>
               <div class="mb-4">
                 <p class="text-caption text-medium-emphasis">聯絡人暱稱</p>
                 <v-text-field
-                    v-model="localReceiveName"
-                    class="mt-1"
-                    :rules="[(value: string) => !!value || '聯絡人暱稱為必填。']"
-                    validate-on="blur"
-                    @blur="updateDetailsInStore"
+                  v-model="localReceiveName"
+                  class="mt-1"
+                  :rules="[(value: string) => !!value || '聯絡人暱稱為必填。']"
+                  validate-on="blur"
+                  @blur="updateDetailsInStore"
                 ></v-text-field>
               </div>
               <div class="mb-4">
                 <p class="text-caption text-medium-emphasis">聯絡電話</p>
                 <v-text-field
-                    v-model="localPhoneNumber"
-                    class="mt-1"
-                    :rules="phoneRules"
-                    validate-on="blur"
-                    @blur="updateDetailsInStore"
+                  v-model="localPhoneNumber"
+                  class="mt-1"
+                  :rules="phoneRules"
+                  validate-on="blur"
+                  @blur="updateDetailsInStore"
                 ></v-text-field>
               </div>
               <div class="mb-4">
                 <p class="text-caption text-medium-emphasis">備註</p>
                 <v-text-field
-                    v-model="localNote"
-                    class="mt-1"
-                    @blur="updateDetailsInStore"
+                  v-model="localNote"
+                  class="mt-1"
+                  @blur="updateDetailsInStore"
                 ></v-text-field>
               </div>
             </v-form>
@@ -53,10 +53,10 @@
           <v-card-title class="text-h6">付款方式</v-card-title>
           <v-card-text>
             <v-select
-                v-model="paymentMethod"
-                :items="paymentOptions"
-                variant="outlined"
-                hide-details
+              v-model="paymentMethod"
+              :items="paymentOptions"
+              variant="outlined"
+              hide-details
             ></v-select>
           </v-card-text>
         </v-card>
@@ -70,53 +70,64 @@
               <v-list-item v-for="item in items" :key="item._id" class="mb-2">
                 <template v-slot:prepend>
                   <v-img
-                      :src="item.image"
-                      width="56"
-                      height="56"
-                      class="rounded me-4"
-                      cover
+                    :src="item.image"
+                    width="56"
+                    height="56"
+                    class="rounded me-4"
+                    cover
                   >
                     <template #error>
                       <v-sheet
-                          class="d-flex align-center justify-center fill-height rounded"
-                          style="background-color: #f8e8ee"
+                        class="d-flex align-center justify-center fill-height rounded"
+                        style="background-color: #f8e8ee"
                       >
                         <span
-                            class="text-h6 font-weight-bold"
-                            style="color: #e0b4c3"
-                        >???</span
+                          class="text-h6 font-weight-bold"
+                          style="color: #e0b4c3"
+                          >???</span
                         >
-                      </v-sheet>
-                    </template>
-                  </v-img>
-                </template>
+                          <span
+                              class="text-h6 font-weight-bold"
+                              style="color: #e0b4c3"
+                          >???</span
+                          >
+                        </v-sheet>
+                      </template>
+                    </v-img>
+                  </template>
 
-                <v-list-item-title class="font-weight-medium"> {{ item.name }} </v-list-item-title>
-                <v-list-item-subtitle>{{ item.restaurantName  }} </v-list-item-subtitle>
+                <v-list-item-title class="font-weight-medium">
+                  {{ item.name }}
+                </v-list-item-title>
+                <v-list-item-subtitle
+                  >{{ item.restaurantName }}
+                </v-list-item-subtitle>
 
                 <template v-slot:append>
-                  <span class="text-body-1 ms-2"> ${{ item.price }} x {{ item.quantity }} </span>
+                  <span class="text-body-1 ms-2">
+                    ${{ item.price }} x {{ item.quantity }}
+                  </span>
                 </template>
               </v-list-item>
             </v-list>
 
-            <v-divider class="my-4"></v-divider>
+              <v-divider class="my-4"></v-divider>
 
-            <div class="d-flex justify-space-between mt-4">
-              <p class="text-body-1 text-medium-emphasis">餐點小計</p>
-              <p class="text-body-1 font-weight-medium">$ {{ totalPrice }}</p>
-            </div>
-            <div class="d-flex justify-space-between mt-2">
-              <p class="text-body-1 text-medium-emphasis">外送費</p>
-              <p class="text-body-1 font-weight-medium">$ {{ deliveryFee }}</p>
-            </div>
+              <div class="d-flex justify-space-between mt-4">
+                <p class="text-body-1 text-medium-emphasis">餐點小計</p>
+                <p class="text-body-1 font-weight-medium">$ {{ totalPrice }}</p>
+              </div>
+              <div class="d-flex justify-space-between mt-2">
+                <p class="text-body-1 text-medium-emphasis">外送費</p>
+                <p class="text-body-1 font-weight-medium">$ {{ deliveryFee }}</p>
+              </div>
 
-            <v-divider class="my-4"></v-divider>
+              <v-divider class="my-4"></v-divider>
 
-            <div class="d-flex justify-space-between">
-              <p class="text-h6 font-weight-bold">訂單總金額</p>
-              <p class="text-h6 font-weight-bold">$ {{ total }}</p>
-            </div>
+              <div class="d-flex justify-space-between">
+                <p class="text-h6 font-weight-bold">訂單總金額</p>
+                <p class="text-h6 font-weight-bold">$ {{ total }}</p>
+              </div>
 
             <div class="d-flex justify-space-between mt-2">
               <p class="text-h6 font-weight-bold">預計送達時間</p>
@@ -125,12 +136,12 @@
               </p>
             </div>
             <v-btn
-                color="primary"
-                block
-                size="large"
-                class="mt-6"
-                :disabled="!isFormValid || loading"
-                @click="submitOrder"
+              color="primary"
+              block
+              size="large"
+              class="mt-6"
+              :disabled="!isFormValid || loading"
+              @click="submitOrder"
             >
               <span class="text-h6 font-weight-bold">確認送出訂單</span>
             </v-btn>
@@ -138,7 +149,6 @@
         </v-card>
       </v-col>
     </v-row>
-
   </v-container>
 </template>
 
