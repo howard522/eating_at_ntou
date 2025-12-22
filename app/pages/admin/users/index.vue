@@ -17,7 +17,7 @@
     <v-card elevation="0" border rounded="lg" class="mb-8 bg-grey-lighten-5">
       <v-card-text class="py-6 px-6">
         <v-row align="center">
-          <v-col cols="12" md="4">
+          <v-col cols="12" sm="6" md="4">
             <v-text-field
               v-model="searchTerm"
               label="依據暱稱或Email進行搜尋"
@@ -31,7 +31,7 @@
             ></v-text-field>
           </v-col>
 
-          <v-col cols="6" md="3">
+          <v-col cols="6" sm="3" md="3">
             <v-select
               v-model="sortBy"
               :items="sortByOptions"
@@ -47,7 +47,7 @@
             ></v-select>
           </v-col>
 
-          <v-col cols="6" md="3">
+          <v-col cols="6" sm="3" md="3">
             <v-select
               v-model="sortOrder"
               :items="sortOrderOptions"

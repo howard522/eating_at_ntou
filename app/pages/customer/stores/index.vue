@@ -21,7 +21,7 @@
     </v-row>
 
     <v-row class="mt-n4">
-      <div style="width: 1200px; height: 60px;">
+      <div class="search-container">
         <v-text-field
           v-model="searchTerm"
           label="搜尋餐廳、美食"
@@ -204,5 +204,9 @@ useHead({ title: '瀏覽店家' });
 </script>
 
 <style scoped>
-
+.search-container {
+  width: 100%;
+  max-width: 1200px;
+  height: 60px;
+}
 </style>

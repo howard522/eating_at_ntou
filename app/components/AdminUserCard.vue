@@ -40,12 +40,12 @@
     </v-card-item>
 
     <v-card-text class="pt-2">
-      <div class="d-flex align-center justify-space-between">
+      <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-sm-space-between">
         <v-chip
           :color="roleColor"
           size="small"
           label
-          class="font-weight-medium"
+          class="font-weight-medium mb-2 mb-sm-0"
         >
           {{ roleDisplay }}
         </v-chip>

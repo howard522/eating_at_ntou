@@ -3,7 +3,7 @@
   <ClientOnly>
     <div
       id="simple-map"
-      style="height: 400px; width: 100%;"
+      class="map-container"
     ></div>
   </ClientOnly>
 </template>
@@ -26,3 +26,16 @@ onMounted(async () => {
   }).addTo(map)
 })
 </script>
+
+<style scoped>
+.map-container {
+  width: 100%;
+  height: 300px;
+}
+
+@media (min-width: 600px) {
+  .map-container {
+    height: 400px;
+  }
+}
+</style>

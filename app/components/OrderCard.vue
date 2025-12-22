@@ -1,6 +1,6 @@
 <template>
   <v-card flat border rounded="lg">
-    <v-card-text class="pa-5">
+    <v-card-text class="pa-3 pa-sm-5">
 
       <div v-if="role === 'customer'">
         <div class="d-flex justify-space-between align-start mb-2">
@@ -65,7 +65,7 @@
 
     </v-card-text>
 
-    <v-card-actions v-if="!(role === 'delivery' && order.status === 'completed')" class="pa-4 pt-0">
+    <v-card-actions v-if="!(role === 'delivery' && order.status === 'completed')" class="pa-3 pa-sm-4 pt-0">
       <div class="d-flex w-100" style="gap: 12px">
         <v-badge
             :model-value="hasNotification"

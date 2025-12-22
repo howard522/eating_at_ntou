@@ -28,7 +28,7 @@
             <p class="text-h6 text-medium-emphasis">請依據下列資訊完成配送</p>
           </div>
 
-          <v-stepper v-model="currentStep" alt-labels flat class="my-10">
+          <v-stepper v-model="currentStep" alt-labels flat class="my-10 order-stepper">
             <v-stepper-header>
               <template v-for="(step, index) in steps" :key="step.id">
                 <v-stepper-item
@@ -508,6 +508,17 @@ useHead({
   }
   100% {
     box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+  }
+}
+
+@media (max-width: 600px) {
+  .order-stepper {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .text-h3 {
+    font-size: 2rem !important;
   }
 }
 </style>

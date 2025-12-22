@@ -1,19 +1,53 @@
 <template>
   <AdLayout>
     <v-app>
+    <v-navigation-drawer
+      v-model="drawer"
+      temporary
+      location="left"
+      v-if="mobile"
+    >
+      <v-list>
+        <v-list-item
+          v-for="link in links"
+          :key="link.value"
+          :to="link.to"
+          :value="link.value"
+          color="primary"
+        >
+          <v-list-item-title>
+            {{ link.title }}
+            <v-badge
+              v-if="(link.value === 'customer-orders' || link.value === 'delivery-orders') && notificationStore.notificationCount > 0"
+              color="error"
+              :content="notificationStore.notificationCount"
+              inline
+              class="ml-1 notification-badge"
+            ></v-badge>
+          </v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
     <v-app-bar app color="white" flat border>
+      <v-app-bar-nav-icon
+        variant="text"
+        @click.stop="drawer = !drawer"
+        class="d-md-none"
+      ></v-app-bar-nav-icon>
+
       <v-btn
           to="/introduction"
           variant="tonal"
           color="#27187E"
           class="font-weight-bold ml-2"
           rounded="lg"
-          size="large"
+          :size="mobile ? 'default' : 'large'"
       >
         海大
       </v-btn>
 
-      <div class="ml-4">
+      <div class="ml-4 d-none d-md-block">
         <v-btn-toggle
           v-model="activeNav"
           mandatory
@@ -66,7 +100,7 @@
 
       <v-tooltip v-if="role !== 'admin'" text="我的帳戶" location="bottom">
         <template #activator="{ props }">
-          <v-btn icon to="/profile" v-bind="props" class="md-4 mr-8">
+          <v-btn icon to="/profile" v-bind="props" class="ml-2 mr-2 mr-md-8">
             <v-icon>mdi-account-outline</v-icon>
           </v-btn>
         </template>
@@ -77,7 +111,7 @@
           location="bottom"
       >
         <template #activator="{ props }">
-          <v-btn icon v-bind="props" class="md-4 mr-8" @click="userStore.logout()" to="/login">
+          <v-btn icon v-bind="props" class="ml-2 mr-2 mr-md-8" @click="userStore.logout()" to="/login">
             <v-icon>mdi-logout</v-icon>
           </v-btn>
         </template>
@@ -104,9 +138,12 @@ import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
 import { useNotificationStore } from '@stores/notification';
 import { useSnackbarStore } from '@utils/snackbar';
+import { useDisplay } from 'vuetify';
 import AdLayout from './AdLayout.vue';
 
 const { showAd, closeAd } = useAdPopup()
+const { mobile } = useDisplay();
+const drawer = ref(false);
 
 interface link {
   title: string;

@@ -4,7 +4,7 @@
       <v-col cols="12" lg="10" xl="8">
 
         <v-row class="align-center mb-8 px-2" no-gutters>
-          <v-col cols="auto" class="d-flex align-center">
+          <v-col cols="12" md="auto" class="d-flex align-center mb-4 mb-md-0">
             <v-btn
                 icon="mdi-arrow-left"
                 variant="text"
@@ -33,9 +33,9 @@
             </div>
           </v-col>
 
-          <v-spacer></v-spacer>
+          <v-spacer class="d-none d-md-block"></v-spacer>
 
-          <v-col cols="auto" class="d-flex align-center">
+          <v-col cols="12" md="auto" class="d-flex align-center justify-start justify-md-end">
             <v-chip
                 v-if="orderData"
                 :color="getStatusColor(currentStep)"

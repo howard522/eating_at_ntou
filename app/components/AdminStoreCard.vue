@@ -3,11 +3,21 @@
     flat
     border
     rounded="lg"
-    class="d-flex flex-row align-center pa-4 h-100 transition-swing cursor-pointer"
+    class="d-flex flex-row align-center pa-3 pa-sm-4 h-100 transition-swing cursor-pointer"
     @click="navigateToEdit"
   >
     <!-- Image -->
-    <v-avatar size="88" rounded="lg" class="mr-5 border bg-grey-lighten-5 flex-shrink-0">
+    <v-avatar size="72" rounded="lg" class="mr-3 d-flex d-sm-none border bg-grey-lighten-5 flex-shrink-0">
+      <v-img :src="image" :alt="name" cover>
+        <template #error>
+          <div class="d-flex align-center justify-center fill-height text-grey-lighten-1">
+            <v-icon size="32">mdi-store-outline</v-icon>
+          </div>
+        </template>
+      </v-img>
+    </v-avatar>
+
+    <v-avatar size="88" rounded="lg" class="mr-5 d-none d-sm-flex border bg-grey-lighten-5 flex-shrink-0">
       <v-img :src="image" :alt="name" cover>
         <template #error>
           <div class="d-flex align-center justify-center fill-height text-grey-lighten-1">
@@ -19,8 +29,8 @@
 
     <!-- Content -->
     <div class="flex-grow-1 min-w-0">
-      <div class="d-flex align-center mb-1">
-        <div class="text-h6 font-weight-bold text-truncate mr-3 text-high-emphasis">{{ name }}</div>
+      <div class="d-flex align-center mb-1 flex-wrap">
+        <div class="text-subtitle-1 text-sm-h6 font-weight-bold text-truncate mr-2 mr-sm-3 text-high-emphasis">{{ name }}</div>
         <v-chip
           v-if="rating > 0"
           size="x-small"
@@ -34,7 +44,7 @@
         <v-chip v-else size="x-small" variant="tonal" color="grey">無評價</v-chip>
       </div>
 
-      <div class="text-body-2 text-medium-emphasis d-flex align-center flex-wrap gap-4 mt-2">
+      <div class="text-caption text-sm-body-2 text-medium-emphasis d-flex align-center flex-wrap gap-2 gap-sm-4 mt-1 mt-sm-2">
         <div class="d-flex align-center">
           <v-icon size="small" start color="primary" class="mr-1">mdi-phone-outline</v-icon>
           {{ phone || '未提供' }}
@@ -47,7 +57,7 @@
     </div>
 
     <!-- Actions -->
-    <div class="d-flex align-center gap-2 ml-4">
+    <div class="d-flex align-center gap-1 gap-sm-2 ml-2 ml-sm-4">
       <v-btn
         variant="text"
         color="medium-emphasis"
@@ -62,6 +72,7 @@
         variant="text"
         color="medium-emphasis"
         class="d-flex d-sm-none"
+        size="small"
         @click.stop="navigateToReviews"
       ></v-btn>
 
@@ -80,6 +91,7 @@
         color="primary"
         class="d-flex d-sm-none"
         rounded="circle"
+        size="small"
       ></v-btn>
     </div>
   </v-card>
@@ -125,10 +137,13 @@ const navigateToReviews = () => {
 </script>
 
 <style scoped>
+.gap-1 {
+  gap: 4px;
+}
 .gap-2 {
   gap: 8px;
 }
-.gap-4 {
+.gap-sm-4 {
   gap: 16px;
 }
 .min-w-0 {

@@ -1,7 +1,7 @@
 <template>
-  <v-dialog v-model="dialog" max-width="500px">
+  <v-dialog v-model="dialog" :max-width="$vuetify.display.xs ? '95%' : '500px'">
     <v-card v-if="item" rounded="lg">
-      <v-img :src="item.image" height="200px" cover ref="itemImg"></v-img>
+      <v-img :src="item.image" :height="$vuetify.display.xs ? '250px' : '200px'" cover ref="itemImg"></v-img>
 
       <v-card-title class="text-h5 font-weight-bold pt-4">
         {{ item.name }}
@@ -29,18 +29,20 @@
 
       <v-card-actions class="pa-4">
         <v-btn
-            size="large"
+            :size="$vuetify.display.xs ? 'default' : 'large'"
             variant="tonal"
             @click="closeDialog"
+            class="flex-grow-1 flex-sm-grow-0"
         >
           再想想
         </v-btn>
-        <v-spacer></v-spacer>
+        <v-spacer class="d-none d-sm-block"></v-spacer>
         <v-btn
             color="primary"
-            size="large"
+            :size="$vuetify.display.xs ? 'default' : 'large'"
             variant="flat"
             @click="confirmAddToCart"
+            class="flex-grow-1 flex-sm-grow-0 ml-2 ml-sm-0"
         >
           {{ isInCart ? '再來一份' : '馬上冰！' }}
         </v-btn>

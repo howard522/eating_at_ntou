@@ -84,9 +84,15 @@ const { hoverBgColor } = useImageHoverColor(toRef(props, 'image'));
 .store-card {
   transition: transform 0.3s ease !important;
   background-color: #FFFFFF !important;
-  min-height: 230px;
+  min-height: 210px;
   display: flex;
   flex-direction: column;
+}
+
+@media (min-width: 600px) {
+  .store-card {
+    min-height: 230px;
+  }
 }
 
 .store-card:hover {

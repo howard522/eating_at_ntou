@@ -1,14 +1,14 @@
 <template>
   <div class="black-screen" @click="goBack">
     <div class="scrolling-text" ref="scrollingText">
-      <p style="font-size: 28px; margin-bottom: 16px;">感謝您使用本系統</p>
+      <p class="intro-title">感謝您使用本系統</p>
       <p>我們致力於打造一個</p>
       <p>專屬於海大學生的餐飲外送平台</p>
       <p>讓顧客能快速下單，外送員能便捷接單</p>
       <p>系統能維護訂單流程完整，確保穩定無錯誤</p>
       <br /> 
       <br /> 
-      <p style="font-size: 28px; margin-bottom: 16px;">— 製作團隊 Production Team —</p> 
+      <p class="intro-title">— 製作團隊 Production Team —</p> 
       <p>前端技術總監（Front-End Director）</p> 
       <p>前端大大大姐頭 KarryLin 林津瑄</p> 
 <br /> 
@@ -94,10 +94,34 @@ export default {
   text-align: center;
   animation: scrollUp var(--animation-duration) linear infinite;
   animation-delay: 0s;
+  padding: 0 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.intro-title {
+  font-size: 28px;
+  margin-bottom: 16px;
+  font-weight: bold;
 }
 
 .scrolling-text p {
   margin-bottom: 25px;
+}
+
+@media (max-width: 768px) {
+  .scrolling-text {
+    font-size: 18px;
+  }
+  
+  .intro-title {
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+
+  .scrolling-text p {
+    margin-bottom: 16px;
+  }
 }
 
 @keyframes scrollUp {

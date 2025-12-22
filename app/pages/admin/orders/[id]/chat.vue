@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-row justify="center">
-      <v-col cols="12" md="8">
+      <v-col cols="12" md="10" lg="8" xl="6">
         <v-btn @click="goBack" color="secondary" class="mb-4">返回上一頁</v-btn>
 
         <div class="messages" ref="messagesContainer">

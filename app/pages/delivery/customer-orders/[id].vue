@@ -27,8 +27,8 @@
               <div class="text-subtitle-1 font-weight-bold mb-1">訂單詳細資訊</div>
               <v-divider class="mb-4"></v-divider>
 
-              <v-row> <v-col cols="4" class="text-body-2 text-medium-emphasis">取餐餐廳</v-col>
-                <v-col cols="8">
+              <v-row> <v-col cols="12" sm="4" class="text-body-2 text-medium-emphasis pb-0 pb-sm-3">取餐餐廳</v-col>
+                <v-col cols="12" sm="8">
                   <div
                       v-for="(restaurant, index) in uniqueRestaurants"
                       :key="restaurant.id"
@@ -48,32 +48,32 @@
                   </div>
                 </v-col>
               </v-row>
-              <v-row align="center"> <v-col cols="4" class="text-body-2 text-medium-emphasis">外送地點</v-col>
-                <v-col cols="8">
+              <v-row align="center"> <v-col cols="12" sm="4" class="text-body-2 text-medium-emphasis pb-0 pb-sm-3">外送地點</v-col>
+                <v-col cols="12" sm="8">
                   <div class="text-body-1 font-weight-bold text-primary-darken-1">
                     {{ orderData.deliveryInfo.address }}
                   </div>
                 </v-col>
               </v-row>
 
-              <v-row align="center"> <v-col cols="4" class="text-body-2 text-medium-emphasis">預計送達時間</v-col>
-                <v-col cols="8">
+              <v-row align="center"> <v-col cols="12" sm="4" class="text-body-2 text-medium-emphasis pb-0 pb-sm-3">預計送達時間</v-col>
+                <v-col cols="12" sm="8">
                   <div class="text-body-1 font-weight-bold text-primary-darken-1">
                     {{ formattedArriveTime }}
                   </div>
                 </v-col>
               </v-row>
 
-              <v-row align="center"> <v-col cols="4" class="text-body-2 text-medium-emphasis">顧客暱稱</v-col>
-                <v-col cols="8">
+              <v-row align="center"> <v-col cols="12" sm="4" class="text-body-2 text-medium-emphasis pb-0 pb-sm-3">顧客暱稱</v-col>
+                <v-col cols="12" sm="8">
                   <div class="text-body-1 font-weight-bold text-primary-darken-1">
                     {{ maskedCustomerName }}
                   </div>
                 </v-col>
               </v-row>
 
-              <v-row align="center"> <v-col cols="4" class="text-body-2 text-medium-emphasis">顧客電話</v-col>
-                <v-col cols="8">
+              <v-row align="center"> <v-col cols="12" sm="4" class="text-body-2 text-medium-emphasis pb-0 pb-sm-3">顧客電話</v-col>
+                <v-col cols="12" sm="8">
                   <div class="text-body-1 font-weight-bold text-primary-darken-1">
                     {{ maskedCustomerPhone }}
                   </div>

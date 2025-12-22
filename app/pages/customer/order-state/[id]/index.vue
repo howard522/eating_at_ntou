@@ -30,7 +30,7 @@
               v-model="currentStep"
               alt-labels
               flat
-              class="my-10"
+              class="my-10 order-stepper"
           >
             <v-stepper-header>
               <template v-for="(step, index) in steps" :key="step.id">
@@ -442,6 +442,22 @@ useHead({
   }
   100% {
     box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+  }
+}
+
+@media (max-width: 600px) {
+  .order-stepper {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  :deep(.v-stepper-item__title) {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  
+  .text-h3 {
+    font-size: 2rem !important;
   }
 }
 </style>

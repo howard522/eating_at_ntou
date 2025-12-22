@@ -27,7 +27,7 @@
               </v-btn>
             </v-toolbar>
 
-            <v-card-text class="pa-8">
+            <v-card-text class="pa-4 pa-md-8">
               <!-- 餐廳資訊區 -->
               <h3 class="section-title mb-6">餐廳資訊</h3>
               <v-row>
@@ -152,7 +152,7 @@
                   >
                     <v-card-text>
                       <v-row>
-                        <v-col cols="12" md="3">
+                        <v-col cols="12" sm="4" md="3">
                           <p class="text-subtitle-2 mb-2 ml-1">餐點照片</p>
                           <div class="menu-image-wrapper mx-auto">
                             <v-img
@@ -188,7 +188,7 @@
                           </div>
                         </v-col>
 
-                        <v-col cols="12" md="9">
+                        <v-col cols="12" sm="8" md="9">
                           <v-row>
                             <v-col cols="12" md="6">
                               <p class="text-subtitle-2 mb-1 label-required">名稱</p>
