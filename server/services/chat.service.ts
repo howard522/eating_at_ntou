@@ -3,6 +3,7 @@
 import type { IChatMessage, IChatMessageCreate, IChatMessageResponse } from "$interfaces/chatMessage.interface";
 import type { ObjectIdLike, QueryPaginationOptions } from "$interfaces/common.interface";
 import ChatMessage from "$models/chatMessage.model";
+import { broadcastToOrder } from "$utils/wsContext";
 import type { FilterQuery } from "mongoose";
 
 export async function createChatMessage(data: IChatMessageCreate) {
@@ -13,7 +14,15 @@ export async function createChatMessage(data: IChatMessageCreate) {
 
     await chatMessage.save();
 
-    return chatMessage.toObject<IChatMessage>();
+    const messageObj = chatMessage.toObject<IChatMessage>();
+
+    // 廣播訊息給 WebSocket 客戶端，觸發前端通知
+    broadcastToOrder(String(data.order), {
+        type: "message",
+        data: messageObj,
+    });
+
+    return messageObj;
 }
 
 export async function getChatMessagesByOrderId(

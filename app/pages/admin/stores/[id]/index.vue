@@ -44,7 +44,6 @@
                   <p class="text-subtitle-2 mb-1 mt-4 label-required">介紹</p>
                   <v-textarea
                     v-model="editableStore.info"
-                    :rules="[(v: string) => !!v || '介紹為必填。']"
                     variant="outlined"
                     rows="3"
                     placeholder="簡述餐廳特色與招牌餐點..."
@@ -216,7 +215,6 @@
                           <p class="text-subtitle-2 mb-1 mt-2 label-required">介紹</p>
                           <v-textarea
                             v-model="item.info"
-                            :rules="[(v: string) => !!v || '介紹為必填。']"
                             variant="outlined"
                             rows="3"
                             density="comfortable"
