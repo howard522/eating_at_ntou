@@ -180,7 +180,7 @@ export function calculateDeliveryFee(customer: [number, number], restaurants: [n
         return distanceSum + distance;
     }, 0);
 
-    const avgDistance = totalDistance / restaurants.length / 1000; // 轉換為公里
+    const avgDistance = totalDistance / 1000; // 轉換為公里
 
     console.log(`Calculated average delivery distance: ${avgDistance.toFixed(2)} km`);
 
