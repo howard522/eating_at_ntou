@@ -2,13 +2,14 @@
 
 import { calculateDeliveryFee } from "$services/cart.service";
 import { getGeocodeFromAddress, validateGeocode } from "$utils/nominatim";
+import { getRestaurantById } from "$services/restaurants.service";
 /**
  * @openapi
  * /api/cart/delivery-fee:
  *   get:
  *     summary: 計算外送費用
  *     description: |
- *       依據顧客位置與提供的一個或多個餐廳地址計算平均距離，並回傳對應的外送費用。
+ *       依據顧客位置與提供的一個或多個餐廳ID / 計算平均距離，並回傳對應的外送費用。
  *     tags:
  *       - Cart
  *     security:
@@ -22,7 +23,7 @@ import { getGeocodeFromAddress, validateGeocode } from "$utils/nominatim";
  *           type: string
  *       - name: restaurants
  *         in: query
- *         description: 餐廳地址陣列的 JSON 字串，例如 `["基隆市中正區北寧路2號"]`
+ *         description: 餐廳 ID 或地址的陣列 JSON 字串，例如 `["670a15fa5c3b5a001279cc33"]
  *         required: true
  *         schema:
  *           type: string
@@ -88,19 +89,30 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const restaurantAddresses = Array.isArray(restaurantsInput)
+    const isObjectId = (value: string) => /^[a-fA-F0-9]{24}$/.test(value);
+    const restaurantInputs = Array.isArray(restaurantsInput)
         ? restaurantsInput
               .map((item) => {
-                  if (typeof item === "string") return item;
-                  if (typeof item === "object" && item !== null && "address" in item) {
-                      const { address } = item as Record<string, unknown>;
-                      return typeof address === "string" ? address : null;
+                  if (typeof item === "string") {
+                      return isObjectId(item) ? { id: item } : { address: item };
+                  }
+                  if (typeof item === "object" && item !== null) {
+                      const record = item as Record<string, unknown>;
+                      const id = record.id ?? record._id ?? record.restaurantId;
+                      const address = typeof record.address === "string" ? record.address : undefined;
+                      const locationGeo = record.locationGeo;
+                      return {
+                          id: typeof id === "string" ? id : undefined,
+                          address,
+                          locationGeo,
+                      };
                   }
                   return null;
-              }).filter((address): address is string => Boolean(address))
+                })
+              .filter((item): item is { id?: string; address?: string; locationGeo?: unknown } => Boolean(item))
         : [];
 
-    if (!restaurantAddresses.length) {
+    if (!restaurantInputs.length) {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
@@ -117,13 +129,31 @@ export default defineEventHandler(async (event) => {
     }
 
     const restaurantCoordinates: [number, number][] = [];
-    for (const address of restaurantAddresses) {
-        const geocode = await getGeocodeFromAddress(address);
+      for (const input of restaurantInputs) {
+        let geocode = input.locationGeo;
+        if (!validateGeocode(geocode) && input.id) {
+            const restaurant = await getRestaurantById(input.id);
+            if (validateGeocode(restaurant.locationGeo)) {
+                geocode = restaurant.locationGeo;
+            } else if (restaurant.address) {
+                const resolved = await getGeocodeFromAddress(restaurant.address);
+                if (validateGeocode(resolved)) {
+                    geocode = resolved;
+                }
+            }
+        }
+        if (!validateGeocode(geocode) && input.address) {
+            const resolved = await getGeocodeFromAddress(input.address);
+            if (validateGeocode(resolved)) {
+                geocode = resolved;
+            }
+        }
         if (!validateGeocode(geocode)) {
+            const errorLabel = input.id ?? input.address ?? "unknown";
             throw createError({
                 statusCode: 400,
                 statusMessage: "Bad Request",
-                message: `Failed to geocode restaurant address: ${address}`,
+                message: `Failed to resolve restaurant coordinates: ${errorLabel}`,
             });
         }
         restaurantCoordinates.push([geocode.coordinates[0], geocode.coordinates[1]]);

@@ -163,7 +163,6 @@ const deliveryFee = computed(() => cartStore.deliveryFee);
 const deliveryDistance = ref<number | null>(null);
 let timer: ReturnType<typeof setInterval> | null = null;
 let deliveryUpdateTimer: ReturnType<typeof setTimeout> | null = null;
-const restaurantAddressCache = new Map<string, string>();
 
 // 目前只有現場付款
 const paymentMethod = ref("現場付款");
@@ -217,33 +216,7 @@ const total = computed(() => {
   return totalPrice.value + deliveryFee.value;
 });
 
-const fetchRestaurantAddresses = async (restaurantIds: string[]) => {
-  const pendingIds = restaurantIds.filter(
-    (id) => id && !restaurantAddressCache.has(id)
-  );
-  if (pendingIds.length === 0) {
-    return restaurantIds
-      .map((id) => restaurantAddressCache.get(id))
-      .filter((address): address is string => Boolean(address));
-  }
 
-  const responses = await Promise.all(
-    pendingIds.map((id) =>
-      $fetch<{ data: { address?: string } }>(`/api/restaurants/${id}`)
-    )
-  );
-
-  responses.forEach((response, index) => {
-    const address = response?.data?.address;
-    if (address) {
-      restaurantAddressCache.set(pendingIds[index], address);
-    }
-  });
-
-  return restaurantIds
-    .map((id) => restaurantAddressCache.get(id))
-    .filter((address): address is string => Boolean(address));
-};
 
 const fetchDeliveryInfo = async () => {
   const address = localDeliveryAddress.value?.trim();
@@ -255,8 +228,6 @@ const fetchDeliveryInfo = async () => {
   if (restaurantIds.length === 0) return;
 
   try {
-    const restaurantAddresses = await fetchRestaurantAddresses(restaurantIds);
-    if (restaurantAddresses.length === 0) return;
 
     const response = await $fetch<{
       data: { distance: number; deliveryFee: number };
@@ -267,21 +238,21 @@ const fetchDeliveryInfo = async () => {
       },
       params: {
         customerAddress: address,
-        restaurants: JSON.stringify(restaurantAddresses),
+        restaurants: JSON.stringify(restaurantIds),
       },
     });
 
     if (response?.data) {
       cartStore.setDeliveryFee(response.data.deliveryFee);
-      deliveryDistance.value = response.data.distance;
+      deliveryDistance.value = response.data.distance+7;
       updateArriveTime(response.data.distance);
     }
   } catch (error) {
     // console.error("Failed to fetch delivery info:", error);
     // snackbarStore.showSnackbar("取得外送費資訊失敗，請稍後再試", "error");
     cartStore.setDeliveryFee(30);
-      deliveryDistance.value = response.data.distance;
-      updateArriveTime(2);
+      deliveryDistance.value = 2;
+    updateArriveTime(2);
   }
 };
 
@@ -341,7 +312,7 @@ const form = ref();
 onMounted(() => {
   fetchDeliveryInfo();
   timer = setInterval(
-    () => updateArriveTime(deliveryDistance.value+10),
+    () => updateArriveTime(deliveryDistance.value+1000),
     60 * 1000
   );
   if (cartStore.items.length === 0) {
