@@ -126,6 +126,7 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ layout: false })
 useHead({ title: "Bing2Go 使用者條款（Terms of Service）" });
 </script>
 
