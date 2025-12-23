@@ -3,6 +3,7 @@
 import type { IGeoPoint } from "$interfaces/geo.interface";
 import geoCache from "$models/geoCache.model";
 import KeelongAddressMap from "$models/KeelongAddressMap";
+import NTOULocation from "$models/ntouLocation.model";
 
 /**
  * TODO:
@@ -60,10 +61,23 @@ export function normalizeAddress(addr: string): string {
 // 但還是有可能會有例外，畢竟地址本來就沒有標準格式這種東西，隨便啦。
 
 export async function geocodeAddress(address: string) {
+    // 地址為空直接回傳 null
     if (!address) return null;
+
+    // 1. 先查是否為校內樓館
+    const ntouLocation = await NTOULocation.findOne({ name: address });
+    if (ntouLocation) {
+        let lat = parseFloat(ntouLocation.lat);
+        let lon = parseFloat(ntouLocation.lon);
+        console.log("Geocode NTOULocation hit for address:", address);
+        console.log("Found coordinates:", { lat, lon });
+        return { lat, lon };
+    }
+
+    // 2. 地址正規化
     const q = normalizeAddress(address);
 
-    // 查 KeelongAddressMap，先去掉"基隆市"
+    // 3. 查 KeelongAddressMap，先去掉"基隆市"
     // 正規化地址
     const qWithoutKeelong = q.replace(/^基隆市\s*/, "");
     const keelongEntry = await KeelongAddressMap.findOne({ normalizedAddress: qWithoutKeelong });
@@ -75,14 +89,14 @@ export async function geocodeAddress(address: string) {
         return { lat, lon };
     }
 
-    // 先查 cache
+    // 4. 查 geoCache
     const cached = await geoCache.findOne({ address: q });
     if (cached) {
         console.log("Geocode cache hit for address:", q);
         return { lat: cached.lat, lon: cached.lon };
     }
 
-    // 查 Nominatim
+    // 5. 查 Nominatim
     // TODO: 節流機制應該要在這裡處理才對（尚未實作）
     // INFO: 節流：Nominatim 建議每秒不要超過 1 次，這裡設 1.1 秒
 

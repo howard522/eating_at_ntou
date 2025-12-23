@@ -146,6 +146,7 @@
 import { useCartStore } from "@stores/cart";
 import { useUserStore } from "@stores/user";
 import { useSnackbarStore } from "@utils/snackbar";
+import locationsInNTOU from "@data/locationsInNTOU.json";
 
 const cartStore = useCartStore();
 const userStore = useUserStore();
@@ -188,6 +189,10 @@ function updateDetailsInStore() {
 const addressRules = [
   (value: string) => !!value || "外送地址為必填欄位。",
   (value: string) => {
+    // 檢查是否為校內地點 (特殊需求)
+    if (locationsInNTOU.some(loc => loc.title === value)) {
+      return true;
+    }
     const regex =
       /(?<zipcode>(^\d{5}|^\d{3})?)(?<city>\D+[縣市])(?<district>\D+?(市區|鎮區|鎮市|[鄉鎮市區]))(?<others>.+)/;
     return regex.test(value) || "地址格式不正確，請輸入完整地址。";
