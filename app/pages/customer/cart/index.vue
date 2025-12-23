@@ -109,12 +109,14 @@
 
 <script setup lang="ts">
 import { useCartStore, type CartItem } from '@stores/cart';
+import { useUserStore } from '@stores/user';
 
 const cartStore = useCartStore();
+const userStore = useUserStore(); 
 
-// 外送費計算方式可能要改
-const deliveryFee = ref(30);
-cartStore.setDeliveryFee(deliveryFee.value);
+const deliveryFee = computed(() => cartStore.deliveryFee);
+const deliveryDistance = ref<number | null>(null);
+let deliveryUpdateTimer: ReturnType<typeof setTimeout> | null = null;
 
 const finalTotal = computed(() => cartStore.totalPrice + deliveryFee.value);
 
@@ -133,7 +135,47 @@ const groupedCart = computed(() => {
 const removeRestaurant = (restaurantName: string) => {
   cartStore.removeRestaurantItems(restaurantName);
 };
+const fetchDeliveryInfo = async () => {
+  const address = cartStore.deliveryAddress?.trim();
+  if (!address || cartStore.items.length === 0) return;
 
+  const restaurantIds = Array.from(
+    new Set(cartStore.items.map((item) => item.restaurantId).filter(Boolean))
+  );
+  if (restaurantIds.length === 0) return;
+
+  try {
+    const response = await $fetch<{
+      data: { distance: number; deliveryFee: number };
+    }>("/api/cart/delivery-fee", {
+      headers: {
+        Authorization: `Bearer ${userStore.token}`,
+        Accept: "application/json",
+      },
+      params: {
+        customerAddress: address,
+        restaurants: JSON.stringify(restaurantIds),
+      },
+    });
+
+    if (response?.data) {
+      cartStore.setDeliveryFee(response.data.deliveryFee);
+      deliveryDistance.value = response.data.distance;
+    }
+  } catch (error) {
+    cartStore.setDeliveryFee(30);
+    deliveryDistance.value = null;
+  }
+};
+
+const scheduleDeliveryInfoUpdate = () => {
+  if (deliveryUpdateTimer) {
+    clearTimeout(deliveryUpdateTimer);
+  }
+  deliveryUpdateTimer = setTimeout(() => {
+    fetchDeliveryInfo();
+  }, 400);
+};
 useHead({
   title: '您的購物冰箱',
 });
@@ -142,7 +184,19 @@ onMounted(() => {
   if (cartStore.items.length === 0) {
     cartStore.fetchCart();
   }
+  fetchDeliveryInfo();
 });
+onUnmounted(() => {
+  if (deliveryUpdateTimer) {
+    clearTimeout(deliveryUpdateTimer);
+  }
+});
+
+watch(
+  [() => cartStore.deliveryAddress, () => cartStore.items],
+  scheduleDeliveryInfoUpdate,
+  { deep: true }
+);
 </script>
 
 <style scoped>

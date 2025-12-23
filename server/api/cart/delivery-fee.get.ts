@@ -1,34 +1,29 @@
 // server/api/cart/delivery-fee.get.ts
 
 import { calculateDeliveryFee } from "$services/cart.service";
-
+import { getGeocodeFromAddress, validateGeocode } from "$utils/nominatim";
+import { getRestaurantById } from "$services/restaurants.service";
 /**
  * @openapi
  * /api/cart/delivery-fee:
  *   get:
  *     summary: 計算外送費用
  *     description: |
- *       依據顧客位置與提供的一個或多個餐廳座標計算平均距離，並回傳對應的外送費用。
+ *       依據顧客位置與提供的一個或多個餐廳ID / 計算平均距離，並回傳對應的外送費用。
  *     tags:
  *       - Cart
  *     security:
  *       - BearerAuth: []
  *     parameters:
- *       - name: customerLatitude
+ *       - name: customerAddress
  *         in: query
- *         description: 顧客位置的緯度
+ *         description: 顧客位置的地址
  *         required: true
  *         schema:
- *           type: number
- *       - name: customerLongitude
- *         in: query
- *         description: 顧客位置的經度
- *         required: true
- *         schema:
- *           type: number
+ *           type: string
  *       - name: restaurants
  *         in: query
- *         description: 餐廳經緯度陣列的 JSON 字串，例如 `[{"lat":25.1,"lng":121.5}]`
+ *         description: 餐廳 ID 或地址的陣列 JSON 字串，例如 `["670a15fa5c3b5a001279cc33"]
  *         required: true
  *         schema:
  *           type: string
@@ -63,14 +58,13 @@ import { calculateDeliveryFee } from "$services/cart.service";
  */
 export default defineEventHandler(async (event) => {
     const query = getQuery(event);
-    const customerLatitude = Number(query.customerLatitude);
-    const customerLongitude = Number(query.customerLongitude);
+    const customerAddress = typeof query.customerAddress === "string" ? query.customerAddress : "";
 
-    if (!Number.isFinite(customerLatitude) || !Number.isFinite(customerLongitude)) {
+    if (!customerAddress) {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
-            message: "Missing or invalid customer coordinates.",
+            message: "Missing or invalid customer address.",
         });
     }
 
@@ -95,44 +89,80 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const restaurantCoordinates = Array.isArray(restaurantsInput)
+    const isObjectId = (value: string) => /^[a-fA-F0-9]{24}$/.test(value);
+    const restaurantInputs = Array.isArray(restaurantsInput)
         ? restaurantsInput
-              .map((coord) => {
-                  if (Array.isArray(coord) && coord.length >= 2) {
-                      const [lat, lng] = coord;
-                      const latNum = Number(lat);
-                      const lngNum = Number(lng);
-
-                      if (Number.isFinite(latNum) && Number.isFinite(lngNum)) {
-                          return [lngNum, latNum] as [number, number];
-                      }
-
-                      return null;
+              .map((item) => {
+                  if (typeof item === "string") {
+                      return isObjectId(item) ? { id: item } : { address: item };
                   }
-
-                  if (typeof coord === "object" && coord !== null) {
-                      const { lat, lng, latitude, longitude } = coord as Record<string, unknown>;
-                      const latNum = Number(lat ?? latitude);
-                      const lngNum = Number(lng ?? longitude);
-
-                      if (Number.isFinite(latNum) && Number.isFinite(lngNum)) {
-                          return [lngNum, latNum] as [number, number];
-                      }
+                  if (typeof item === "object" && item !== null) {
+                      const record = item as Record<string, unknown>;
+                      const id = record.id ?? record._id ?? record.restaurantId;
+                      const address = typeof record.address === "string" ? record.address : undefined;
+                      const locationGeo = record.locationGeo;
+                      return {
+                          id: typeof id === "string" ? id : undefined,
+                          address,
+                          locationGeo,
+                      };
                   }
                   return null;
-              })
-              .filter((coord): coord is [number, number] => Array.isArray(coord))
+                })
+              .filter((item): item is { id?: string; address?: string; locationGeo?: unknown } => Boolean(item))
         : [];
 
-    if (!restaurantCoordinates.length) {
+    if (!restaurantInputs.length) {
         throw createError({
             statusCode: 400,
             statusMessage: "Bad Request",
-            message: "Missing required parameter: address.",
+            message: "Missing required parameter: restaurants.",
+        });
+    }
+    const customerGeocode = await getGeocodeFromAddress(customerAddress);
+    if (!validateGeocode(customerGeocode)) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Failed to geocode customer address.",
         });
     }
 
-    const { distance, fee } = calculateDeliveryFee([customerLongitude, customerLatitude], restaurantCoordinates);
+    const restaurantCoordinates: [number, number][] = [];
+      for (const input of restaurantInputs) {
+        let geocode = input.locationGeo;
+        if (!validateGeocode(geocode) && input.id) {
+            const restaurant = await getRestaurantById(input.id);
+            if (validateGeocode(restaurant.locationGeo)) {
+                geocode = restaurant.locationGeo;
+            } else if (restaurant.address) {
+                const resolved = await getGeocodeFromAddress(restaurant.address);
+                if (validateGeocode(resolved)) {
+                    geocode = resolved;
+                }
+            }
+        }
+        if (!validateGeocode(geocode) && input.address) {
+            const resolved = await getGeocodeFromAddress(input.address);
+            if (validateGeocode(resolved)) {
+                geocode = resolved;
+            }
+        }
+        if (!validateGeocode(geocode)) {
+            const errorLabel = input.id ?? input.address ?? "unknown";
+            throw createError({
+                statusCode: 400,
+                statusMessage: "Bad Request",
+                message: `Failed to resolve restaurant coordinates: ${errorLabel}`,
+            });
+        }
+        restaurantCoordinates.push([geocode.coordinates[0], geocode.coordinates[1]]);
+    }
+
+    const { distance, fee } = calculateDeliveryFee(
+        [customerGeocode.coordinates[0], customerGeocode.coordinates[1]],
+        restaurantCoordinates,
+    );
 
     return {
         success: true,
