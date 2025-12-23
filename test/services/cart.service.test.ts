@@ -3,6 +3,7 @@
 import { cartMocks as mocks } from "@mocks/models/cart.model.mock";
 import { createChainedQueryMock } from "@mocks/query.mock";
 import { calcPriceUtilMocks, mockCalcPriceUtils } from "@mocks/utils/calcPrice.mock";
+import { distanceUtilMocks, mockDistanceUtils } from "@mocks/utils/distance.mock";
 import { beforeEach, describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------
@@ -203,7 +204,7 @@ describe("cart.service", () => {
             expect(result).toThrowError(expect.objectContaining({ statusCode: 400 }));
         });
 
-        it("當計算平均距離和配送費用時，應該正確計算並返回結果", () => {
+        it("當計算距離和配送費用時，應該正確計算並返回結果", () => {
             
             haversineDistanceMock.mockReturnValueOnce(1000).mockReturnValueOnce(3000);
             calculateDeliveryFeeMock.mockReturnValue(50);
@@ -217,7 +218,7 @@ describe("cart.service", () => {
             );
             expect(haversineDistanceMock).toHaveBeenCalledTimes(2);
             expect(calculateDeliveryFeeMock).toHaveBeenCalledWith(4); // (1 km + 3 km) / 2
-            expect(result).toEqual({ distance: 2, fee: 50 });
+            expect(result).toEqual({ distance: 4, fee: 50 });
         });
     });
 });
