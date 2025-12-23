@@ -473,8 +473,9 @@ const openConfirmDialog = () => {
 
 const updateDeliveryStatus = async () => {
   if (!nextDeliveryStatus.value) return;
+  const targetStatus = nextDeliveryStatus.value;
   const requestBody: { deliveryStatus: string; customerStatus?: string } = {
-    deliveryStatus: nextDeliveryStatus.value,
+    deliveryStatus: targetStatus,
   };
 
   isUpdating.value = true;
@@ -491,6 +492,25 @@ const updateDeliveryStatus = async () => {
     if (response.success && orderData.value) {
       orderData.value.customerStatus = response.data.customerStatus;
       orderData.value.deliveryStatus = response.data.deliveryStatus;
+
+      // 自動發送送達訊息
+      if (targetStatus === 'delivered') {
+        try {
+          await $fetch(`/api/orders/${orderId}/chats`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${userStore.token}`,
+              'Content-Type': 'application/json',
+            },
+            body: {
+              content: '餐點已送達，感謝您的訂購！',
+              role: 'delivery'
+            }
+          });
+        } catch (e) {
+          console.error('Failed to send auto delivery message', e);
+        }
+      }
     } else {
       console.error("Failed to update status", response);
     }
