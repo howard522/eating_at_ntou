@@ -123,7 +123,8 @@ const deliveryDistance = ref<number | null>(null);
 let deliveryUpdateTimer: ReturnType<typeof setTimeout> | null = null;
 
 const finalTotal = computed(() => cartStore.totalPrice + deliveryFee.value);
-const isDeliveryFeePending = computed(() => deliveryFee.value === 30);
+const deliveryFeePending = ref(false);
+const isDeliveryFeePending = computed(() => deliveryFeePending.value );
 const groupedCart = computed(() => {
   return cartStore.items.reduce((groups, item) => {
     const restaurantName = item.restaurantName;
@@ -141,12 +142,18 @@ const removeRestaurant = (restaurantName: string) => {
 };
 const fetchDeliveryInfo = async () => {
   const address = cartStore.deliveryAddress?.trim();
-  if (!address || cartStore.items.length === 0) return;
+  if (!address || cartStore.items.length === 0) {
+    deliveryFeePending.value = true;
+    return;
+  }
 
   const restaurantIds = Array.from(
     new Set(cartStore.items.map((item) => item.restaurantId).filter(Boolean))
   );
-  if (restaurantIds.length === 0) return;
+   if (restaurantIds.length === 0) {
+    deliveryFeePending.value = true;
+    return;
+  }
 
   try {
     const response = await $fetch<{
@@ -167,7 +174,7 @@ const fetchDeliveryInfo = async () => {
       deliveryDistance.value = response.data.distance;
     }
   } catch (error) {
-    cartStore.setDeliveryFee(30);
+    deliveryFeePending.value = true;
     deliveryDistance.value = null;
   }
 };
