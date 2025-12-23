@@ -93,12 +93,12 @@ interface store { _id: string; name: string; address: string; phone: string; ima
 interface PresetLocation { title: string; value: string; }
 
 const presetLocations = [
-  { title: '電資暨綜合教學大樓', value: '202基隆市中正區北寧路2號' },
-  { title: '資工及電機二館', value: '202基隆市中正區北寧路67號' },
-  { title: '男一宿舍', value: '202基隆市中正區北寧路2號' },
-  { title: '男二宿舍', value: '202基隆市中正區北寧路2號' },
-  { title: '女一宿舍', value: '202基隆市中正區北寧路2號' },
-  { title: '男三女二宿舍', value: '202基隆市中正區北寧路2號' },
+  { title: '電資暨綜合教學大樓', value: '202基隆市中正區北寧路2號(電資暨綜合教學大樓)' },
+  { title: '資工及電機二館', value: '202基隆市中正區北寧路67號(資工及電機二館)' },
+  { title: '男一宿舍', value: '202基隆市中正區北寧路2號(男一宿舍)' },
+  { title: '男二宿舍', value: '202基隆市中正區北寧路2號(男二宿舍)' },
+  { title: '女一宿舍', value: '202基隆市中正區北寧路2號(女一宿舍)' },
+  { title: '男三女二宿舍', value: '202基隆市中正區北寧路2號(男三女二宿舍)' },
 ];
 const limit = 28;
 const tags = ref<string[]>(['咖哩', '中式', '日式', '義式', '美式', '甜點', '飲料', '速食', '火鍋', '燒烤', '素食', '燒肉', '漢堡', '海鮮', '涼麵', '小吃', '手搖', '下午茶']);
@@ -149,14 +149,24 @@ watch(searchTerm, debounce((newValue: string) => {
   debouncedSearchTerm.value = newValue;
 }, 800));
 
-// 同步配送資訊 watcher
-watch(deliveryAddress, (newVal) => {
-  cartStore.setDeliveryDetails({
-    address: newVal,
-    phone: userStore.info?.phone || '0912345678',
-    receiveName: userStore.info?.name || '劉俊麟',
-    note: cartStore.note,
-  });
+// 監聽地址輸入，立即儲存至 Store
+watch(addressInput, (newVal) => {
+  let finalAddress = '';
+  if (typeof newVal === 'object' && newVal !== null && 'value' in newVal) {
+    finalAddress = newVal.value;
+  } else {
+    const foundLocation = presetLocations.find(loc => loc.title === newVal);
+    finalAddress = foundLocation ? foundLocation.value : (newVal as string);
+  }
+
+  if (finalAddress) {
+    cartStore.setDeliveryDetails({
+      address: finalAddress,
+      phone: cartStore.phoneNumber || userStore.info?.phone || '0912345678',
+      receiveName: cartStore.receiveName || userStore.info?.name || '劉俊麟',
+      note: cartStore.note,
+    });
+  }
 });
 
 onMounted(() => {
