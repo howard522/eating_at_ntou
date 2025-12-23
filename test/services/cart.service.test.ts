@@ -3,8 +3,6 @@
 import { cartMocks as mocks } from "@mocks/models/cart.model.mock";
 import { createChainedQueryMock } from "@mocks/query.mock";
 import { calcPriceUtilMocks, mockCalcPriceUtils } from "@mocks/utils/calcPrice.mock";
-import { distanceUtilMocks, mockDistanceUtils } from "@mocks/utils/distance.mock";
-import { mockNominatimUtils, nominatimUtilMocks } from "@mocks/utils/nominatim.mock";
 import { beforeEach, describe, expect, it } from "vitest";
 
 // ---------------------------------------------------------------------
@@ -13,11 +11,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 mockCalcPriceUtils();
 mockDistanceUtils();
-mockNominatimUtils();
 
 const calculateDeliveryFeeMock = calcPriceUtilMocks.calculateDeliveryFeeByDistance;
 const haversineDistanceMock = distanceUtilMocks.haversineDistance;
-const getGeocodeFromAddressMock = nominatimUtilMocks.getGeocodeFromAddress;
 
 beforeEach(() => {
     mocks.cartInstances.length = 0;
@@ -202,53 +198,25 @@ describe("cart.service", () => {
     });
 
     describe("calculateDeliveryFee - 計算配送費用", () => {
-        it("當使用者沒有購物車時，會返回 0 元", async () => {
-            mocks.findOne.mockReturnValue(createChainedQueryMock(null, ["populate"]));
-
-            const result = await calculateDeliveryFee("u6", "some address");
-
-            expect(mocks.findOne).toHaveBeenCalledWith({ user: "u6" });
-            expect(result).toBe(0);
+        it("當沒有餐廳座標時，應該拋出錯誤", () => {
+            const result = () => calculateDeliveryFee([121, 25], []);
+            expect(result).toThrowError(expect.objectContaining({ statusCode: 400 }));
         });
 
-        it("當取得地址的地理編碼失敗時，應該拋出錯誤", async () => {
-            const cart = new Cart({ user: "u8", items: [{ restaurantId: "r1", menuItemId: "m1" }] });
-            mocks.findOne.mockReturnValue(createChainedQueryMock(cart, ["populate"]));
-            getGeocodeFromAddressMock.mockResolvedValue(null);
-
-            const result = calculateDeliveryFee("u8", "addr");
-
-            expect(mocks.findOne).toHaveBeenCalledWith({ user: "u8" });
-            expect(result).rejects.toHaveProperty("statusCode", 400);
-        });
-
-        it("當計算平均距離和配送費用時，應該正確計算並返回結果", async () => {
-            const cart = new Cart({
-                user: "u9",
-                items: [
-                    {
-                        restaurantId: "r1",
-                        menuItemId: "m1",
-                        restaurant: { locationGeo: { coordinates: [120, 24] } },
-                    },
-                    {
-                        restaurantId: "r2",
-                        menuItemId: "m2",
-                        restaurant: { locationGeo: { coordinates: [122, 26] } },
-                    },
-                ],
-            });
-            mocks.findOne.mockReturnValue(createChainedQueryMock(cart, ["populate"]));
-            getGeocodeFromAddressMock.mockResolvedValue({ coordinates: [121, 25] });
+        it("當計算平均距離和配送費用時，應該正確計算並返回結果", () => {
+            
             haversineDistanceMock.mockReturnValueOnce(1000).mockReturnValueOnce(3000);
             calculateDeliveryFeeMock.mockReturnValue(50);
 
-            const result = await calculateDeliveryFee("u9", "addr");
-
-            expect(mocks.findOne).toHaveBeenCalledWith({ user: "u9" });
-            expect(getGeocodeFromAddressMock).toHaveBeenCalledWith("addr");
+            const result = calculateDeliveryFee(
+                [121, 25],
+                [
+                    [120, 24],
+                    [122, 26],
+                ],
+            );
             expect(haversineDistanceMock).toHaveBeenCalledTimes(2);
-            expect(calculateDeliveryFeeMock).toHaveBeenCalledWith(2); // (1 km + 3 km) / 2
+            expect(calculateDeliveryFeeMock).toHaveBeenCalledWith(4); // (1 km + 3 km) / 2
             expect(result).toEqual({ distance: 2, fee: 50 });
         });
     });
