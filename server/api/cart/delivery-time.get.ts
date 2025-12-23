@@ -86,7 +86,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const route = await getOsrmRoute([originLongitude, originLatitude], [destinationLongitude, destinationLatitude]);
-    const durationSeconds = Math.round(route.duration);
+    const durationSeconds = Math.round(route.duration)+600;
     const durationMinutes = Math.round(durationSeconds / 60);
 
     return {
