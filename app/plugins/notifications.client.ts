@@ -9,14 +9,25 @@ export default defineNuxtPlugin((nuxtApp) => {
     const router = useRouter()
 
     const connections = new Map<string, WebSocket>()
+    const reconnectTimers = new Map<string, any>()
 
     const connectToOrder = (orderId: string) => {
+        // 清除該訂單的重連計時器（如果有的話）
+        if (reconnectTimers.has(orderId)) {
+            clearTimeout(reconnectTimers.get(orderId))
+            reconnectTimers.delete(orderId)
+        }
+
         if (connections.has(orderId)) return
 
         const protocol = window.location.protocol === "https:" ? "wss" : "ws"
         const ws = new WebSocket(`${protocol}://${location.host}/ws/${orderId}`)
 
+        // 心跳計時器
+        let pingInterval: any
+
         ws.onopen = () => {
+            console.log(`[WS] Connected to order: ${orderId}`)
             if (userStore.token && userStore.info?.id) {
                 ws.send(JSON.stringify({
                     type: "auth",
@@ -27,11 +38,22 @@ export default defineNuxtPlugin((nuxtApp) => {
                     }
                 }))
             }
+
+            // 啟動心跳機制，每 30 秒發送一次 ping，防止連線因閒置被斷開
+            pingInterval = setInterval(() => {
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'ping' }))
+                }
+            }, 30000)
         }
 
         ws.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data)
+
+                // 忽略 pong 或非關鍵訊息
+                if (msg.type === 'pong') return
+
                 const currentRoute = router.currentRoute.value
                 // 寬鬆檢查是否在當前聊天室
                 const isCurrentChat = currentRoute.path.includes(`/chat/${orderId}`)
@@ -65,8 +87,24 @@ export default defineNuxtPlugin((nuxtApp) => {
             }
         }
 
-        ws.onclose = () => {
+        ws.onclose = (e) => {
+            console.log(`[WS] Closed for order ${orderId}:`, e.code, e.reason)
             connections.delete(orderId)
+            clearInterval(pingInterval)
+
+            // 如果使用者仍登入，嘗試重連
+            if (userStore.token) {
+                const timer = setTimeout(() => {
+                    console.log(`[WS] Reconnecting to order ${orderId}...`)
+                    connectToOrder(orderId)
+                }, 3000) // 3秒後重連
+                reconnectTimers.set(orderId, timer)
+            }
+        }
+
+        ws.onerror = (err) => {
+            console.error(`[WS] Error for order ${orderId}:`, err)
+            ws.close() // 觸發 onclose 進行重連
         }
 
         connections.set(orderId, ws)
@@ -92,6 +130,8 @@ export default defineNuxtPlugin((nuxtApp) => {
         } else {
             connections.forEach(ws => ws.close())
             connections.clear()
+            reconnectTimers.forEach(timer => clearTimeout(timer))
+            reconnectTimers.clear()
         }
     }, { immediate: true })
 })
