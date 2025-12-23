@@ -14,3 +14,10 @@ export interface IKeelongAddressMap extends WithTimestamps {
     lat: number;
     lon: number;
 }
+
+export interface INTOULocation extends WithTimestamps {
+    code: string;
+    name: string;
+    lat: number;
+    lon: number;
+}

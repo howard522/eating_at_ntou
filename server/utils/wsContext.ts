@@ -4,7 +4,7 @@ export interface PeerContext {
     peer: Peer<AdapterInternal>;
     peerId: string;
     userId: string;
-    role: "customer" | "delivery";
+    role: "customer" | "delivery"| "admin";
 }
 
 export interface Payload {

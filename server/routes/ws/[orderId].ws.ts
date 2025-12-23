@@ -18,7 +18,7 @@ import type { AdapterInternal, Peer } from "crossws";
 interface Message {
     _id?: string;
     sender: string; // 使用者 ID
-    senderRole: "customer" | "delivery"; // 角色
+    senderRole: "customer" | "delivery" | "admin"; // 角色
     content: string; // 訊息內容
     timestamp?: Date; // 時間戳記
 }
@@ -118,13 +118,16 @@ async function authorizeClient(peer: Peer<AdapterInternal>, data: Message) {
         return;
     }
 
-    if (
-        (data.senderRole === "customer" && order.user.toString() !== data.sender) ||
-        (data.senderRole === "delivery" && order.deliveryPerson?.toString() !== data.sender)
-    ) {
-        peer.send(shortMessage("error", "Unauthorized access to this order chat."));
-        peer.close();
-        return;
+    const isAdmin = data.senderRole === "admin" && payload.role === "admin";
+    if (!isAdmin) {
+        if (
+            (data.senderRole === "customer" && order.user.toString() !== data.sender) ||
+            (data.senderRole === "delivery" && order.deliveryPerson?.toString() !== data.sender)
+        ) {
+            peer.send(shortMessage("error", "Unauthorized access to this order chat."));
+            peer.close();
+            return;
+        }
     }
 
     if (order.customerStatus === "completed" && order.deliveryStatus === "completed") {

@@ -34,6 +34,7 @@ export default defineNuxtConfig({
         "@app": path.resolve(__dirname, "./app"),
         "@composable": path.resolve(__dirname, "./app/composable"),
         "@components": path.resolve(__dirname, "./app/components"),
+        "@data": path.resolve(__dirname, "./app/data"),
         "@stores": path.resolve(__dirname, "./app/stores"),
         "@types": path.resolve(__dirname, "./app/types"),
         "@utils": path.resolve(__dirname, "./app/utils"),
