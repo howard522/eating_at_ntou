@@ -85,7 +85,10 @@
 
             <div class="d-flex justify-space-between text-medium-emphasis">
               <span class="text-body-1">外送費</span>
-              <span class="text-body-1">$ {{ deliveryFee }}</span>
+              <span class="text-body-1">
+                <template v-if="isDeliveryFeePending">將於下個頁面計算</template>
+                <template v-else>$ {{ deliveryFee }}</template>
+              </span>
             </div>
 
             <v-divider class="my-5"></v-divider>
@@ -119,7 +122,7 @@ const deliveryDistance = ref<number | null>(null);
 let deliveryUpdateTimer: ReturnType<typeof setTimeout> | null = null;
 
 const finalTotal = computed(() => cartStore.totalPrice + deliveryFee.value);
-
+const isDeliveryFeePending = computed(() => deliveryFee.value === 30);
 const groupedCart = computed(() => {
   return cartStore.items.reduce((groups, item) => {
     const restaurantName = item.restaurantName;
