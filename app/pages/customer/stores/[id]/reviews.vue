@@ -137,31 +137,18 @@
     <div v-if="loadingMore" class="py-6 text-center">
       <v-progress-circular indeterminate color="primary" size="32"></v-progress-circular>
     </div>
-
-    <!-- Snackbar -->
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      location="bottom center"
-      timeout="3000"
-      rounded="pill"
-      content-class="text-center font-weight-medium"
-    >
-      <div class="d-flex align-center justify-center">
-        <v-icon :icon="snackbar.color === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle'" class="mr-2"></v-icon>
-        {{ snackbar.text }}
-      </div>
-    </v-snackbar>
   </v-container>
 </template>
 
 <script setup lang="ts">
 import { useInfiniteFetch } from '@composable/useInfiniteFetch';
 import { useUserStore } from '@stores/user';
+import { useSnackbarStore } from '@utils/snackbar';
 import type { Review } from "@types/review";
 
 const route = useRoute();
 const userStore = useUserStore();
+const snackbarStore = useSnackbarStore();
 const storeId = route.params.id as string;
 
 const submitting = ref(false);
@@ -170,11 +157,6 @@ const newReview = reactive({
   content: ''
 });
 const sortBy = ref('newest');
-const snackbar = ref({
-  show: false,
-  text: '',
-  color: 'success'
-});
 const sortOptions = [
   { title: '最新發布', value: 'newest' },
   { title: '最高評分', value: 'highest' },
@@ -204,11 +186,11 @@ watch(sortBy, () => {
 
 const submitReview = async () => {
   if (!userStore.token) {
-    snackbar.value = { show: true, text: '請先登入才能評價', color: 'error' };
+    snackbarStore.showSnackbar('請先登入才能評價', 'error');
     return;
   }
   if (newReview.rating === 0) {
-    snackbar.value = { show: true, text: '請選擇評分星數', color: 'warning' };
+    snackbarStore.showSnackbar('請選擇評分星數', 'warning');
     return;
   }
   submitting.value = true;
@@ -225,7 +207,7 @@ const submitReview = async () => {
         content: newReview.content,
       }
     });
-    snackbar.value = { show: true, text: '評價送出成功！', color: 'success' };
+    snackbarStore.showSnackbar('評價送出成功！', 'success');
     newReview.rating = 5;
     newReview.content = '';
     if (sortBy.value !== 'newest') {
@@ -235,11 +217,7 @@ const submitReview = async () => {
     }
   } catch (error: any) {
     console.error('Submit review error:', error);
-    snackbar.value = {
-      show: true,
-      text: error?.data?.message || '評價送出失敗，請稍後再試',
-      color: 'error'
-    };
+    snackbarStore.showSnackbar(error?.data?.message || '評價送出失敗，請稍後再試', 'error');
   } finally {
     submitting.value = false;
   }

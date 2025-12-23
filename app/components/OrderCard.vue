@@ -3,13 +3,13 @@
     <v-card-text class="pa-3 pa-sm-5">
 
       <div v-if="role === 'customer'">
-        <div class="d-flex justify-space-between align-start mb-2">
-          <h3 class="text-h6 font-weight-bold">{{ order.restaurantNames }}</h3>
+        <div class="d-flex justify-space-between align-center mb-2">
+          <h3 class="text-h6 font-weight-bold mr-2">{{ order.restaurantNames }}</h3>
           <v-chip
               :color="statusInfo.color"
               variant="flat"
               size="small"
-              class="font-weight-bold"
+              class="font-weight-bold flex-shrink-0"
           >
             {{ statusInfo.text }}
           </v-chip>
@@ -32,15 +32,15 @@
       </div>
 
       <div v-else-if="role === 'delivery'">
-        <div class="d-flex justify-space-between align-start mb-2">
-          <h3 class="text-h6 font-weight-bold" :class="deliveryTitle.color">
+        <div class="d-flex justify-space-between align-center mb-2">
+          <h3 class="text-h6 font-weight-bold mr-2" :class="deliveryTitle.color">
             {{ deliveryTitle.text }}
           </h3>
           <v-chip
               :color="statusInfo.color"
               variant="flat"
               size="small"
-              class="font-weight-bold"
+              class="font-weight-bold flex-shrink-0"
           >
             {{ statusInfo.text }}
           </v-chip>
