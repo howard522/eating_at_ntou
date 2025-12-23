@@ -95,7 +95,8 @@
 
             <div class="d-flex justify-space-between align-center">
               <span class="text-h6 font-weight-bold">訂單總金額</span>
-              <span class="text-h5 font-weight-bold text-primary">$ {{ finalTotal }}</span>
+              <template v-if="isDeliveryFeePending">$ {{ cartStore.totalPrice }}</template>
+                <template v-else>$ {{ finalTotal }}</template>
             </div>
           </v-card-text>
 
