@@ -21,7 +21,7 @@
 - **系統設計文件（SDD）**  
   https://hackmd.io/Uu6rbeMKRqiTpVWxje312A
 
-- **測試文件 (STD)）**  
+- **測試文件（STD）**  
   [https://hackmd.io/Uu6rbeMKRqiTpVWxje312A](https://hackmd.io/Uu6rbeMKRqiTpVWxje312A)
   
 ---
