@@ -65,7 +65,6 @@ export async function geocodeAddress(address: string) {
     if (!address) return null;
 
     // 1. 先查是否為校內樓館
-    console.log(await NTOULocation.countDocuments());
     const ntouLocation = await NTOULocation.findOne({ name: address });
     if (ntouLocation) {
         let lat = parseFloat(ntouLocation.lat);

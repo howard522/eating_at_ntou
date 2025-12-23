@@ -6,6 +6,7 @@
             "@app/*": ["./app/*"],
             "@composable/*": ["./app/composable/*"],
             "@components/*": ["./app/components/*"],
+            "@data/*": ["./app/data/*"],
             "@stores/*": ["./app/stores/*"],
             "@types/*": ["./app/types/*"],
             "@utils/*": ["./app/utils/*"],
