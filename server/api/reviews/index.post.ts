@@ -1,8 +1,8 @@
-import { defineEventHandler, readBody, createError, type H3Event } from 'h3'
-import connectDB from '@server/utils/db'
-import Review from '@server/models/review.model'
-import Restaurant from '@server/models/restaurant.model'
-import { verifyJwtFromEvent } from '@server/utils/auth'
+// server/api/reviews/index.post.ts
+
+import { getRestaurantById } from "$services/restaurants.service";
+import { createReview } from "$services/reviews.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi
@@ -54,49 +54,50 @@ import { verifyJwtFromEvent } from '@server/utils/auth'
  *         description: 未授權
  *       404:
  *         description: 找不到餐廳
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
  */
+export default defineEventHandler(async (event) => {
+    const userId = getCurrentUser(event).id;
 
-export default defineEventHandler(async (event: H3Event) => {
-    await connectDB()
-    const body = await readBody(event)
-    const payload = await verifyJwtFromEvent(event)
-    const userId = payload.id
+    const body = await readBody(event);
 
-    const { restaurantId, rating, content } = body
+    const { restaurantId, rating, content } = body;
 
     if (!restaurantId || !rating || !content) {
         throw createError({
             statusCode: 400,
-            statusMessage: 'Missing required fields: restaurantId, rating, content'
-        })
+            statusMessage: "Bad Request",
+            message: "Missing required fields: restaurantId, rating, content.",
+        });
     }
 
     if (rating < 1 || rating > 5) {
         throw createError({
-            statusCode: 400,
-            statusMessage: 'Rating must be between 1 and 5'
-        })
+            statusCode: 422,
+            statusMessage: "Unprocessable Entity",
+            message: "Rating must be between 1 and 5.",
+        });
     }
 
-    const restaurant = await (Restaurant as any).findById(restaurantId)
+    const restaurant = await getRestaurantById(restaurantId);
     if (!restaurant) {
         throw createError({
             statusCode: 404,
-            statusMessage: 'Restaurant not found'
-        })
+            statusMessage: "Not Found",
+            message: "Restaurant not found.",
+        });
     }
 
-    const review = new Review({
-        user: userId,
+    const review = await createReview({
         restaurant: restaurantId,
+        user: userId,
         rating,
-        content
-    })
-
-    await review.save()
+        content,
+    });
 
     return {
         success: true,
-        data: review
-    }
-})
+        data: review,
+    };
+});

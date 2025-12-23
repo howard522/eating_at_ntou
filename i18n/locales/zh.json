@@ -1,0 +1,59 @@
+{
+    "common": {
+        "nickname": "暱稱",
+        "email": "電子郵件",
+        "password": "密碼",
+        "customer": "顧客",
+        "delivery": "外送員",
+        "close": "關閉",
+        "cancel": "取消",
+        "submit": "提交"
+    },
+    "avatarCropper": {
+        "dialogTitle": "裁切頭像",
+        "title": "頭像裁切工具",
+        "selectImage": "選擇頭像圖片",
+        "centerCrop": "中心圓形裁切",
+        "customCrop": "自訂位置裁切",
+        "cropRadius": "裁切圓半徑",
+        "hint": "提示：拖曳預覽中的圓形即可移動裁切位置",
+        "saveButton": "儲存裁切結果"
+    },
+    "login": {
+        "headTitle": "登入",
+        "title": "Login to Your Account",
+        "subtitle": "Enter your account & password to login",
+        "switchRoleInfo": "可在\"我的帳戶\"切換身份",
+        "forgotPassword": "忘記密碼？",
+        "loginButton": "登入",
+        "registerPrompt": "還沒有帳號？",
+        "registerLink": "建立帳號",
+        "successMessage": "成功登入！",
+        "errorMessage": "登入失敗，請檢查帳號或密碼",
+        "missingFields": "電子郵件和密碼不可為空",
+        "temporarilyLocked": "由於多次嘗試失敗，您的帳戶已被暫時鎖定，請稍後再試。",
+        "temporarilyLockedUntil": "您的帳戶已被暫時鎖定，請於 {time} 後再試。",
+        "banned": "您的帳戶已被封禁，請聯繫客服了解詳情。"
+    },
+    "register": {
+        "headTitle": "註冊",
+        "title": "建立新帳戶",
+        "defaultDeliveryAddress": "預設外送地址（選填）",
+        "contactPhone": "聯絡電話（選填）",
+        "loginPrompt": "已有帳號？前往登入",
+        "termsOfService": "使用者條款",
+        "privacyPolicy": "隱私政策",
+        "agreeMessage": "若您同意註冊本平台，即表示您已閱讀並同意我們的 {termsOfService} 及 {privacyPolicy}。",
+        "registerButton": "立即註冊",
+        "pleaseEnter": "請輸入{field}",
+        "invalidEmailFormat": "電子郵件格式不正確",
+        "passwordTooShort": "密碼長度至少 6 個字元",
+        "passwordMismatch": "密碼和確認密碼不匹配",
+        "successMessage": "註冊成功！請登入",
+        "errorMessage": "註冊失敗，請稍後再試",
+        "emailExists": "註冊失敗，該電子郵件已被註冊",
+        "missingFields": "輸入資料有誤，請檢查後再試",
+        "networkError": "網路連線失敗，請檢查網路後再試",
+        "serverError": "伺服器錯誤，請稍後再試"
+    }
+}

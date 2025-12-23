@@ -1,7 +1,7 @@
 <template>
-  <v-card variant="flat" class="rounded-lg d-flex align-center pa-3 border-b menu-item-card" @click="onAddClick">
+  <v-card variant="flat" class="rounded-lg d-flex align-center pa-3 border-b menu-item-card" @click="onAddClick" :style="{ '--hover-bg': hoverBgColor }">
 
-    <v-avatar size="80" rounded="lg" class="mr-4 image-container">
+    <v-avatar :size="xs ? 60 : 80" rounded="lg" class="mr-3 mr-sm-4 image-container">
       <v-img :src="item.image" cover class="menu-item-image">
         <template #error>
           <v-sheet
@@ -14,7 +14,7 @@
       </v-img>
     </v-avatar>
 
-    <div class="flex-grow-1">
+    <div class="flex-grow-1" style="min-width: 0;">
       <h3 class="font-weight-bold text-subtitle-1 mb-1 item-name">{{ item.name }}</h3>
       <p class="text-medium-emphasis text-body-2 mb-2 item-info">{{ item.info }}</p>
       <div class="d-flex align-center">
@@ -32,8 +32,9 @@
       </div>
     </div>
 
-    <div class="ml-4">
+    <div class="ml-2 ml-sm-4">
       <v-btn
+          :size="xs ? 'small' : 'default'"
           icon="mdi-plus"
           color="primary"
           variant="flat"
@@ -46,6 +47,8 @@
 </template>
 
 <script setup lang="ts">
+import { useDisplay } from 'vuetify';
+import { useImageHoverColor } from '@composable/useImageHoverColor';
 import { useCartStore } from '@stores/cart';
 
 interface MenuItem {
@@ -64,6 +67,9 @@ const emit = defineEmits<{
   (e: 'open-add-dialog', item: MenuItem): void
 }>();
 
+const { hoverBgColor } = useImageHoverColor(computed(() => props.item.image));
+const { xs } = useDisplay();
+
 const onAddClick = () => {
   emit('open-add-dialog', props.item);
 };
@@ -78,7 +84,7 @@ const isInCart = computed(() => cartStore.items?.some(i => i.menuItemId === prop
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
+  width: 100%;
 }
 
 .item-info {
@@ -86,7 +92,7 @@ const isInCart = computed(() => cartStore.items?.some(i => i.menuItemId === prop
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
+  width: 100%;
 }
 
 .menu-item-card {
@@ -95,7 +101,7 @@ const isInCart = computed(() => cartStore.items?.some(i => i.menuItemId === prop
 }
 
 .menu-item-card:hover {
-  background-color: #FFFFFF !important;
+  background-color: var(--hover-bg, #FFFFFF) !important;
 }
 
 .image-container {

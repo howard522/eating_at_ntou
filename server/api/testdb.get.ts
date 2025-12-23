@@ -1,6 +1,11 @@
-import connectDB from '@server/utils/db'
+// server/api/testdb.get.ts
+
+import connectDB from "$utils/db";
 
 export default defineEventHandler(async () => {
-    await connectDB()
-    return { message: '資料庫連線成功' }
-})
+    await connectDB();
+    return {
+        success: true,
+        message: "Connected to test database successfully.",
+    };
+});

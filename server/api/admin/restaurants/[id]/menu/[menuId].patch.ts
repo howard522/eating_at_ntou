@@ -1,35 +1,36 @@
-// api/admin/restaurants/[id]/menu/[menuId].patch.ts
-import { defineEventHandler, readMultipartFormData } from 'h3'
-import Restaurant from '@server/models/restaurant.model'
+// server/api/admin/restaurants/[id]/menu/[menuId].patch.ts
+
+import type { IUpdateMenuItem } from "$interfaces/restaurant.interface";
+import { updateMenuItemById } from "$services/restaurants.service";
+import { parseForm } from "$utils/parseForm";
 
 /**
  * @openapi
  * /api/admin/restaurants/{id}/menu/{menuId}:
  *   patch:
- *     summary: 更新餐廳菜單項目（支援圖片上傳）
- *     description: >
- *       僅限管理員使用。  
- *       允許部分欄位更新，未提供的欄位將保持不變。  
- *       若上傳圖片檔案，系統會自動上傳至 Imgbb 並更新該項目的 `image` URL。
+ *     summary: 管理員 - 更新菜單項目（支援圖片上傳）
+ *     description: |
+ *       僅限管理員使用。
+ *
+ *       允許部分欄位更新，未提供的欄位將保持不變。
+ *       若傳入圖片，系統會自動上傳至 ImgBB 並回傳圖片 URL。
  *     tags:
- *       - Admin
+ *       - Admin - Restaurants
  *     security:
- *       - BearerAuth: []   # JWT 驗證
+ *       - BearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: 餐廳的唯一 MongoDB ObjectId
+ *         description: 餐廳 ID
  *         schema:
  *           type: string
- *           example: "6731e8adfb75b5f214ecb321"
  *       - name: menuId
  *         in: path
  *         required: true
- *         description: 菜單項目的 MongoDB ObjectId
+ *         description: 菜單項目 ID
  *         schema:
  *           type: string
- *           example: "6750b9fc97d3a11504e1d9a5"
  *     requestBody:
  *       required: true
  *       content:
@@ -46,10 +47,14 @@ import Restaurant from '@server/models/restaurant.model'
  *               info:
  *                 type: string
  *                 example: "附湯與小菜，限午餐供應"
+ *               imageURL:
+ *                 type: string
+ *                 format: uri
+ *                 description: 直接使用圖片的 URL
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: 新圖片檔案，會自動上傳至 Imgbb 並更新 URL
+ *                 description: 菜單項目圖片（由後端自動上傳至 ImgBB）
  *     responses:
  *       200:
  *         description: 成功更新菜單項目
@@ -64,49 +69,41 @@ import Restaurant from '@server/models/restaurant.model'
  *                 menu:
  *                   $ref: '#/components/schemas/MenuItem'
  *       400:
- *         description: 無效請求或圖片上傳失敗
+ *         $ref: '#/components/responses/BadRequest'
  *       401:
- *         description: 未登入或 Token 無效
+ *         $ref: '#/components/responses/Unauthorized'
  *       403:
- *         description: 權限不足（非管理員）
+ *         $ref: '#/components/responses/Forbidden'
  *       404:
- *         description: 找不到餐廳或菜單項目
+ *         $ref: '#/components/responses/NotFound'
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
  *       500:
- *         description: 伺服器內部錯誤
+ *         $ref: '#/components/responses/InternalServerError'
  */
-
-
 export default defineEventHandler(async (event) => {
-    const restaurantId = event.context.params?.id as string
-    const menuId = event.context.params?.menuId
-    const form = await readMultipartFormData(event)
-    const data: any = {}
+    const restaurantId = getRouterParam(event, "id") as string;
+    const menuId = getRouterParam(event, "menuId") as string;
+    const form = await readMultipartFormData(event);
+    const data = await parseForm<IUpdateMenuItem>(form);
 
-    for (const field of form || []) {
-        if (field.name === 'image' && field.type?.startsWith('image/')) {
-            const blob = new Blob([new Uint8Array(field.data)], { type: field.type })
-            const fd = new FormData()
-            fd.append('image', blob, field.filename)
-            const res = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.IMAGEBB_API_KEY}`, {
-                method: 'POST',
-                body: fd
-            })
-            const json = await res.json()
-            if (json.success) data.image = json.data.url
-        } else {
-            const val = field.data.toString().trim()
-            if (val !== '') data[field.name] = val
-        }
+    if (!restaurantId || !menuId) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: "Bad Request",
+            message: "Missing required parameters: id, menuId.",
+        });
     }
 
-    const restaurant = await Restaurant.findById(restaurantId)
-    if (!restaurant) throw createError({ statusCode: 404, message: 'Restaurant not found' })
+    if (data.imageURL) {
+        data.image = data.imageURL;
+        delete data.imageURL;
+    }
 
-    const item = restaurant.menu.id(menuId)
-    if (!item) throw createError({ statusCode: 404, message: 'Menu item not found' })
+    const menu = await updateMenuItemById(restaurantId, menuId, data);
 
-    Object.assign(item, data)
-    await restaurant.save()
-
-    return { success: true, menu: item }
-})
+    return {
+        success: true,
+        menu,
+    };
+});

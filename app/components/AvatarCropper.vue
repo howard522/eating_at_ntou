@@ -1,19 +1,19 @@
 <template>
   <v-container>
-    <h2 class="text-h5 font-weight-bold mb-4">頭像裁切工具</h2>
+    <h2 class="text-h5 font-weight-bold mb-4">{{ $t('avatarCropper.title') }}</h2>
     <v-row>
       <!-- 控制區 -->
       <v-col cols="12" md="5">
         <v-file-input
           v-model="imageFile"
-          label="選擇頭像圖片"
+          :label="$t('avatarCropper.selectImage')"
           accept="image/*"
           prepend-icon="mdi-camera"
           @update:modelValue="previewImage"
         />
         <v-radio-group v-model="cropType" class="mt-2" :disabled="!imageObj">
-          <v-radio label="中心圓形裁切" value="center" />
-          <v-radio label="自訂位置裁切" value="custom" />
+          <v-radio :label="$t('avatarCropper.centerCrop')" value="center" />
+          <v-radio :label="$t('avatarCropper.customCrop')" value="custom" />
         </v-radio-group>
         <v-slider
           v-model="cropRadius"
@@ -21,20 +21,15 @@
           :min="30"
           :max="sliderMaxRadius"
           step="1"
-          label="裁切圓半徑"
+          :label="$t('avatarCropper.cropRadius')"
           thumb-label
           :disabled="!imageObj"
         />
         <div class="text-caption text-medium-emphasis mt-1">
-          提示：拖曳預覽中的圓形即可移動裁切位置
+          {{ $t('avatarCropper.hint') }}
         </div>
-        <v-btn
-          color="primary"
-          class="mt-4"
-          :disabled="!imageObj"
-          @click="emitCropped"
-        >
-          儲存裁切結果
+        <v-btn color="primary" class="mt-4" :disabled="!imageObj" @click="emitCropped">
+          {{ $t('avatarCropper.saveButton') }}
         </v-btn>
       </v-col>
 
@@ -55,8 +50,12 @@
 </template>
 
 <script setup lang="ts">
+const props = defineProps<{
+  imageFile?: File | null // 可選的初始圖片檔案
+}>()
+
 const emit = defineEmits<{ (e: 'cropped', blob: Blob): void }>()
-const imageFile = ref<File | null>(null)
+const imageFile = ref<File | null>(props.imageFile ?? null)
 const imageObj = ref<HTMLImageElement | null>(null)
 const cropType = ref<'center' | 'custom'>('center')
 const canvasSize = 400
@@ -168,9 +167,17 @@ function clampCenterToImageBounds() {
 }
 
 function getPointerPos(e: PointerEvent) {
-  const rect = canvasRef.value?.getBoundingClientRect()
-  if (!rect) return { x: 0, y: 0 }
-  return { x: e.clientX - rect.left, y: e.clientY - rect.top }
+  const canvas = canvasRef.value
+  const rect = canvas?.getBoundingClientRect()
+  if (!rect || !canvas) return { x: 0, y: 0 }
+
+  const scaleX = canvas.width / rect.width
+  const scaleY = canvas.height / rect.height
+
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY
+  }
 }
 
 function startDrag(e: PointerEvent) {
@@ -290,6 +297,7 @@ watch([imageFile, cropType], () => {
 onMounted(() => {
   // 防止預設觸控行為
   canvasRef.value?.setAttribute('touch-action', 'none')
+  if (imageFile.value) previewImage() // 初始有圖片的話傳入預覽
 })
 
 onUnmounted(() => {

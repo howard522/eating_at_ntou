@@ -80,4 +80,13 @@ const goBack = () => {
 }
 .back-button:active { transform: translateY(1px); }
 .back-button:focus { outline: 2px solid rgba(26,115,232,0.25); outline-offset: 2px; }
+
+@media (max-width: 600px) {
+  .container {
+    padding: 1rem;
+  }
+  .big-text {
+    font-size: clamp(2rem, 8vw, 4rem);
+  }
+}
 </style>

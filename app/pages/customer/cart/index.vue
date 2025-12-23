@@ -75,7 +75,7 @@
             v-if="cartStore.items.length > 0"
             elevation="2"
             rounded="lg"
-            style="position: sticky; top: 0px; margin-top: 37px;">
+            class="summary-card">
 
           <v-card-text class="pa-5">
             <div class="d-flex justify-space-between mb-4">
@@ -85,14 +85,18 @@
 
             <div class="d-flex justify-space-between text-medium-emphasis">
               <span class="text-body-1">外送費</span>
-              <span class="text-body-1">$ {{ deliveryFee }}</span>
+              <span class="text-body-1">
+                <template v-if="isDeliveryFeePending">將於下個頁面計算</template>
+                <template v-else>$ {{ deliveryFee }}</template>
+              </span>
             </div>
 
             <v-divider class="my-5"></v-divider>
 
             <div class="d-flex justify-space-between align-center">
               <span class="text-h6 font-weight-bold">訂單總金額</span>
-              <span class="text-h5 font-weight-bold text-primary">$ {{ finalTotal }}</span>
+              <template v-if="isDeliveryFeePending">$ {{ cartStore.totalPrice }}</template>
+                <template v-else>$ {{ finalTotal }}</template>
             </div>
           </v-card-text>
 
@@ -109,15 +113,17 @@
 
 <script setup lang="ts">
 import { useCartStore, type CartItem } from '@stores/cart';
+import { useUserStore } from '@stores/user';
 
 const cartStore = useCartStore();
+const userStore = useUserStore(); 
 
-// 外送費計算方式可能要改
-const deliveryFee = ref(30);
-cartStore.setDeliveryFee(deliveryFee.value);
+const deliveryFee = computed(() => cartStore.deliveryFee);
+const deliveryDistance = ref<number | null>(null);
+let deliveryUpdateTimer: ReturnType<typeof setTimeout> | null = null;
 
 const finalTotal = computed(() => cartStore.totalPrice + deliveryFee.value);
-
+const isDeliveryFeePending = computed(() => deliveryFee.value === 30);
 const groupedCart = computed(() => {
   return cartStore.items.reduce((groups, item) => {
     const restaurantName = item.restaurantName;
@@ -133,7 +139,47 @@ const groupedCart = computed(() => {
 const removeRestaurant = (restaurantName: string) => {
   cartStore.removeRestaurantItems(restaurantName);
 };
+const fetchDeliveryInfo = async () => {
+  const address = cartStore.deliveryAddress?.trim();
+  if (!address || cartStore.items.length === 0) return;
 
+  const restaurantIds = Array.from(
+    new Set(cartStore.items.map((item) => item.restaurantId).filter(Boolean))
+  );
+  if (restaurantIds.length === 0) return;
+
+  try {
+    const response = await $fetch<{
+      data: { distance: number; deliveryFee: number };
+    }>("/api/cart/delivery-fee", {
+      headers: {
+        Authorization: `Bearer ${userStore.token}`,
+        Accept: "application/json",
+      },
+      params: {
+        customerAddress: address,
+        restaurants: JSON.stringify(restaurantIds),
+      },
+    });
+
+    if (response?.data) {
+      cartStore.setDeliveryFee(response.data.deliveryFee);
+      deliveryDistance.value = response.data.distance;
+    }
+  } catch (error) {
+    cartStore.setDeliveryFee(30);
+    deliveryDistance.value = null;
+  }
+};
+
+const scheduleDeliveryInfoUpdate = () => {
+  if (deliveryUpdateTimer) {
+    clearTimeout(deliveryUpdateTimer);
+  }
+  deliveryUpdateTimer = setTimeout(() => {
+    fetchDeliveryInfo();
+  }, 400);
+};
 useHead({
   title: '您的購物冰箱',
 });
@@ -142,7 +188,19 @@ onMounted(() => {
   if (cartStore.items.length === 0) {
     cartStore.fetchCart();
   }
+  fetchDeliveryInfo();
 });
+onUnmounted(() => {
+  if (deliveryUpdateTimer) {
+    clearTimeout(deliveryUpdateTimer);
+  }
+});
+
+watch(
+  [() => cartStore.deliveryAddress, () => cartStore.items],
+  scheduleDeliveryInfoUpdate,
+  { deep: true }
+);
 </script>
 
 <style scoped>
@@ -150,5 +208,22 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.summary-card {
+  position: sticky;
+  top: 80px;
+  margin-top: 37px;
+}
+
+@media (max-width: 960px) {
+  .summary-card {
+    position: static;
+    margin-top: 0;
+  }
+  
+  .text-h4 {
+    font-size: 1.75rem !important;
+  }
 }
 </style>

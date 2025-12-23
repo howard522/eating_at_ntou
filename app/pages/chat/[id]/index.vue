@@ -1,9 +1,9 @@
 <template>
-    <v-container>
-        <v-row justify="center">
-            <v-col cols="12" md="8">
-                <v-btn @click="goBack" color="secondary" class="mb-4">返回上一頁</v-btn>
-                <div class="messages" ref="messagesContainer">
+    <v-container class="chat-container">
+        <v-row justify="center" class="fill-height">
+            <v-col cols="12" md="8" class="d-flex flex-column h-100">
+                <v-btn @click="goBack" color="secondary" class="mb-4 align-self-start">返回上一頁</v-btn>
+                <div class="messages flex-grow-1" ref="messagesContainer">
                     <div
                         v-for="msg in messages"
                         :key="msg.id"
@@ -28,7 +28,7 @@
                         variant="solo"
                         prepend-inner-icon="mdi-message-text-outline"
                         clearable
-                        style="max-width: 700px;"
+                        style="max-width: 100%;"
                         @keydown.enter.prevent="handleSend"
                         @compositionstart="isComposing = true"
                         @compositionend="isComposing = false"
@@ -41,11 +41,14 @@
 </template>
 
 <style scoped>
+.chat-container {
+    height: calc(100vh - 64px);
+}
+
 .messages {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    max-height: 550px;
     overflow-y: auto;
     padding: 1rem;
     background-color: #ffffff;
@@ -152,16 +155,53 @@
 .send-button:hover {
     background-color: #1565c0;
 }
+
+@media (max-width: 600px) {
+    .chat-container {
+        padding: 0.5rem;
+    }
+    .messages {
+        padding: 0.5rem;
+    }
+    .message {
+        max-width: 85%;
+        padding: 0.5rem;
+    }
+    .send-button {
+        width: 60px;
+        min-width: 60px;
+        padding: 0;
+    }
+}
 </style>
 
 <script setup lang="ts">
+import { useChat } from "@composable/useChat";
+import { useNotificationStore } from "@stores/notification";
 import { useUserStore } from "@stores/user";
-import { useChat } from "@app/composable/useChat";
 
 const router = useRouter();
 const route = useRoute();
 const orderId = route.params.id as string;
 const userStore = useUserStore();
+const notificationStore = useNotificationStore();
+
+// 清除該訂單的所有通知（訊息與狀態）
+const clearNotification = () => {
+    notificationStore.clearAll(orderId);
+};
+
+onMounted(() => {
+    clearNotification();
+});
+
+// 監聽通知狀態，若在頁面中收到通知（訊息或狀態更新）則立即清除
+watch(() => notificationStore.getNotification(orderId), (n) => {
+    // 增加路由判斷，避免 keep-alive 導致在其他頁面時誤清除通知
+    if ((n.hasMessage || n.hasStatusUpdate) && router.currentRoute.value.path.includes(`/chat/${orderId}`)) {
+        clearNotification();
+    }
+}, { deep: true });
 
 const { data: orderData } = await useFetch(`/api/orders/${orderId}`, {
     transform: (response: any) => response.data,
@@ -238,8 +278,9 @@ onMounted(() => {
     scrollToBottom();
 });
 
-// 若頁面被 keep-alive，啟用時也捲到底
+// 若頁面被 keep-alive，啟用時也捲到底，並清除通知
 onActivated(() => {
+    clearNotification();
     scrollToBottom();
 });
 

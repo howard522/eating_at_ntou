@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 type LatLng = [number, number]
 
@@ -211,6 +211,12 @@ onBeforeUnmount(() => {
   height: 400px;
   border-radius: 12px;
   overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .delivery-map {
+    height: 300px;
+  }
 }
 
 /* 簡單陰影，提升白底可讀性 */

@@ -3,15 +3,24 @@
     <v-row justify="center">
       <v-col cols="12" lg="10" xl="8">
 
-        <div class="mb-6 px-2">
-          <h1 class="text-h4 font-weight-bold text-grey-darken-3">訂單管理</h1>
-          <p class="text-body-1 text-grey-darken-1 mt-1">檢視所有歷史與進行中的訂單詳情</p>
-        </div>
+        <!-- 頂部標題與操作區 -->
+        <v-row align="center" justify="space-between" class="mb-8 mt-2 px-2">
+          <v-col cols="12">
+            <h1 class="text-h4 font-weight-bold text-primary d-flex align-center">
+              <v-icon start color="primary" class="mr-3">mdi-clipboard-list-outline</v-icon>
+              訂單管理
+            </h1>
+            <p class="text-subtitle-1 text-medium-emphasis mt-1">
+              檢視所有歷史與進行中的訂單詳情
+            </p>
+          </v-col>
+        </v-row>
 
-        <v-card class="mb-6 rounded-lg border-none" elevation="1">
-          <v-card-text class="pt-5 pb-5">
+        <!-- 搜尋與篩選區 -->
+        <v-card elevation="0" border rounded="lg" class="mb-8 bg-white">
+          <v-card-text class="py-4 py-md-6 px-4 px-md-6">
             <v-row dense align="center">
-              <v-col cols="12" sm="4" md="3">
+              <v-col cols="12" sm="6" md="3">
                 <v-menu v-model="menuFrom" :close-on-content-click="false" location="bottom start">
                   <template v-slot:activator="{ props }">
                     <v-text-field
@@ -40,7 +49,7 @@
                 </v-menu>
               </v-col>
 
-              <v-col cols="12" sm="4" md="3">
+              <v-col cols="12" sm="6" md="3">
                 <v-menu v-model="menuTo" :close-on-content-click="false" location="bottom start">
                   <template v-slot:activator="{ props }">
                     <v-text-field
@@ -69,7 +78,7 @@
                 </v-menu>
               </v-col>
 
-              <v-col cols="12" sm="4" md="3">
+              <v-col cols="12" sm="6" md="3">
                 <v-select
                     v-model="filters.sortOption"
                     :items="sortItems"
@@ -85,7 +94,7 @@
                 ></v-select>
               </v-col>
 
-              <v-col cols="12" sm="12" md="3" class="d-flex align-center justify-end pl-4">
+              <v-col cols="12" sm="6" md="3" class="d-flex align-center justify-end pl-4">
                 <v-btn
                     icon="mdi-refresh"
                     variant="tonal"
@@ -167,63 +176,9 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '@stores/user'
+import { useInfiniteFetch } from '@composable/useInfiniteFetch';
 
-interface ApiOrderItem {
-  name: string;
-  quantity: number;
-  restaurant: {
-    name: string;
-  };
-}
-
-interface ApiOrder {
-  _id: string;
-  user: {
-    name: string;
-  };
-  deliveryPerson: {
-    name: string;
-    phone: string;
-  } | null;
-  items: ApiOrderItem[];
-  total: number;
-  deliveryFee: number;
-  customerStatus: string;
-  createdAt: string;
-  arriveTime: string;
-  deliveryInfo: {
-    contactName: string;
-    contactPhone: string;
-    address: string;
-  };
-}
-
-interface ApiResponse {
-  success: boolean;
-  count: number;
-  data: ApiOrder[];
-}
-
-interface DisplayOrder {
-  id: string;
-  restaurantNames: string;
-  userName: string;
-  userPhone: string;
-  deliveryPersonName: string | null;
-  deliveryPersonPhone: string | null;
-  items: { name: string; quantity: number }[];
-  total: number;
-  deliveryFee: number;
-  customerStatus: string;
-  createdAtFormatted: string;
-}
-
-const userStore = useUserStore();
 const tab = ref('inProgress');
-const pending = ref(false);
-const error = ref<Error | null>(null);
-const orders = ref<DisplayOrder[]>([]);
 const rawDateFrom = ref<Date | null>(null);
 const rawDateTo = ref<Date | null>(null);
 const menuFrom = ref(false);
@@ -244,7 +199,7 @@ const sortItems = [
 ];
 
 const handleTabChange = () => {
-  fetchOrders();
+  fetchItems({ reset: true });
 };
 
 const updateDate = (type: 'from' | 'to', date: any) => {
@@ -262,7 +217,7 @@ const updateDate = (type: 'from' | 'to', date: any) => {
     filters.value.to = formattedDate;
     menuTo.value = false;
   }
-  fetchOrders();
+  fetchItems({ reset: true });
 };
 
 const clearDate = (type: 'from' | 'to') => {
@@ -273,82 +228,59 @@ const clearDate = (type: 'from' | 'to') => {
     filters.value.to = '';
     rawDateTo.value = null;
   }
-  fetchOrders();
+  fetchItems({ reset: true });
 };
 
-const fetchOrders = async () => {
-  if (!userStore.token) {
-    error.value = new Error('請先登入管理員帳號');
-    return;
-  }
-
-  pending.value = true;
-  error.value = null;
-
-  try {
+const { items: rawOrders, pending, loadingMore, error, fetchItems } = useInfiniteFetch<ApiOrder>({
+  api: '/api/admin/orders',
+  limit: 20,
+  buildQuery: (skip) => {
     const [sortBy, order] = filters.value.sortOption.split('_');
     const isCompleted = tab.value === 'completed';
-
     const queryParams: any = {
       completed: isCompleted,
-      sortBy: sortBy,
-      order: order,
+      sortBy,
+      order,
+      skip,
+      limit: 20,
     };
-
     if (filters.value.from) queryParams.from = filters.value.from;
     if (filters.value.to) queryParams.to = filters.value.to;
+    return queryParams;
+  },
+  immediate: true
+});
 
-    const response = await $fetch<ApiResponse>('/api/admin/orders', {
-      method: 'GET',
-      query: queryParams,
-      headers: {
-        'Authorization': `Bearer ${userStore.token}`,
-        'Accept': 'application/json',
-      }
-    });
+const orders = computed(() => rawOrders.value.map(order => {
+  const restaurantNames = Array.from(
+      new Set(order.items.map(item => item.restaurant.name))
+  ).join(', ');
 
-    if (response && response.success) {
-      orders.value = response.data.map(order => {
-        const restaurantNames = Array.from(
-            new Set(order.items.map(item => item.restaurant.name))
-        ).join(', ');
+  const d = new Date(order.createdAt);
+  const dateStr = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 
-        const d = new Date(order.createdAt);
-        const dateStr = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  return {
+    id: order._id,
+    restaurantNames: restaurantNames,
+    userName: order.deliveryInfo.contactName || order.user.name,
+    userPhone: order.deliveryInfo.contactPhone,
+    deliveryPersonName: order.deliveryPerson ? order.deliveryPerson.name : null,
+    deliveryPersonPhone: order.deliveryPerson ? order.deliveryPerson.phone : null,
+    items: order.items.map(i => ({ name: i.name, quantity: i.quantity })),
+    total: order.total,
+    deliveryFee: order.deliveryFee,
+    customerStatus: order.customerStatus,
+    deliveryStatus: order.deliveryStatus,
+    createdAtFormatted: dateStr,
+  };
+}));
 
-        return {
-          id: order._id,
-          restaurantNames: restaurantNames,
-          userName: order.deliveryInfo.contactName || order.user.name,
-          userPhone: order.deliveryInfo.contactPhone,
-          deliveryPersonName: order.deliveryPerson ? order.deliveryPerson.name : null,
-          deliveryPersonPhone: order.deliveryPerson ? order.deliveryPerson.phone : null,
-          items: order.items.map(i => ({ name: i.name, quantity: i.quantity })),
-          total: order.total,
-          deliveryFee: order.deliveryFee,
-          customerStatus: order.customerStatus,
-          createdAtFormatted: dateStr,
-        };
-      });
-    } else {
-      throw new Error('API 回傳資料異常');
-    }
-
-  } catch (err: any) {
-    console.error('Fetch error:', err);
-    error.value = err;
-    orders.value = [];
-  } finally {
-    pending.value = false;
-  }
-};
-
-onMounted(() => {
-  fetchOrders();
+watch([() => filters.value.sortOption, () => filters.value.from, () => filters.value.to, tab], () => {
+  fetchItems({ reset: true });
 });
 
 onActivated(() => {
-  fetchOrders();
+  fetchItems({ reset: true });
 });
 
 useHead({

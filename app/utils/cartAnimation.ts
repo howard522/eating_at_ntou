@@ -1,4 +1,4 @@
-import { ref, onBeforeUnmount, type Ref } from 'vue';
+import { onBeforeUnmount, ref, type Ref } from 'vue';
 
 export function createCartImageAnimator(cartIconEl: Ref<HTMLElement | null>) {
     const floatingImages = ref<HTMLImageElement[]>([]);

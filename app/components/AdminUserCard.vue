@@ -1,18 +1,20 @@
 <template>
   <v-card
-    class="h-100"
+    class="h-100 admin-user-card"
     elevation="2"
     hover
     :to="`/admin/users/${user.id}`"
+    :style="{ '--hover-bg': hoverBgColor }"
   >
     <v-card-item>
       <template v-slot:prepend>
-        <v-avatar size="60" color="grey-lighten-2">
+        <v-avatar size="60" color="grey-lighten-2" class="image-container">
           <v-img
             v-if="user.img"
             :src="user.img"
             alt="Avatar"
             cover
+            class="user-image"
           >
             <template v-slot:placeholder>
               <v-row class="fill-height ma-0" align="center" justify="center">
@@ -38,12 +40,12 @@
     </v-card-item>
 
     <v-card-text class="pt-2">
-      <div class="d-flex align-center justify-space-between">
+      <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-sm-space-between">
         <v-chip
           :color="roleColor"
           size="small"
           label
-          class="font-weight-medium"
+          class="font-weight-medium mb-2 mb-sm-0"
         >
           {{ roleDisplay }}
         </v-chip>
@@ -58,11 +60,14 @@
 </template>
 
 <script setup lang="ts">
+import { useImageHoverColor } from '@composable/useImageHoverColor';
 import type { User } from '@types/user';
 
 const props = defineProps<{
   user: User
 }>();
+
+const { hoverBgColor } = useImageHoverColor(computed(() => props.user.img));
 
 const roleColor = computed(() => {
   switch (props.user.role) {
@@ -87,3 +92,21 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('zh-TW');
 };
 </script>
+
+<style scoped>
+.admin-user-card {
+  transition: background-color 0.3s ease;
+}
+.admin-user-card:hover {
+  background-color: var(--hover-bg, #FFFFFF) !important;
+}
+.image-container {
+  overflow: hidden;
+}
+.user-image {
+  transition: transform 0.3s ease;
+}
+.admin-user-card:hover .user-image {
+  transform: scale(1.05);
+}
+</style>

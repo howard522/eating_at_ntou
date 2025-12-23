@@ -1,19 +1,53 @@
 <template>
   <AdLayout>
     <v-app>
+    <v-navigation-drawer
+      v-model="drawer"
+      temporary
+      location="left"
+      v-if="mobile"
+    >
+      <v-list>
+        <v-list-item
+          v-for="link in links"
+          :key="link.value"
+          :to="link.to"
+          :value="link.value"
+          color="primary"
+        >
+          <v-list-item-title>
+            {{ link.title }}
+            <v-badge
+              v-if="(link.value === 'customer-orders' || link.value === 'delivery-orders') && notificationStore.notificationCount > 0"
+              color="error"
+              :content="notificationStore.notificationCount"
+              inline
+              class="ml-1 notification-badge"
+            ></v-badge>
+          </v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
     <v-app-bar app color="white" flat border>
+      <v-app-bar-nav-icon
+        variant="text"
+        @click.stop="drawer = !drawer"
+        class="d-md-none"
+      ></v-app-bar-nav-icon>
+
       <v-btn
           to="/introduction"
           variant="tonal"
           color="#27187E"
           class="font-weight-bold ml-2"
           rounded="lg"
-          size="large"
+          :size="mobile ? 'default' : 'large'"
       >
         海大
       </v-btn>
 
-      <div class="ml-4">
+      <div class="ml-4 d-none d-md-block">
         <v-btn-toggle
           v-model="activeNav"
           mandatory
@@ -32,6 +66,13 @@
             variant="text"
           >
             {{ link.title }}
+            <v-badge
+              v-if="(link.value === 'customer-orders' || link.value === 'delivery-orders') && notificationStore.notificationCount > 0"
+              color="error"
+              :content="notificationStore.notificationCount"
+              inline
+              class="ml-1 notification-badge"
+            ></v-badge>
           </v-btn>
         </v-btn-toggle>
       </div>
@@ -59,7 +100,7 @@
 
       <v-tooltip v-if="role !== 'admin'" text="我的帳戶" location="bottom">
         <template #activator="{ props }">
-          <v-btn icon to="/profile" v-bind="props" class="md-4 mr-8">
+          <v-btn icon to="/profile" v-bind="props" class="ml-2 mr-2 mr-md-8">
             <v-icon>mdi-account-outline</v-icon>
           </v-btn>
         </template>
@@ -70,7 +111,7 @@
           location="bottom"
       >
         <template #activator="{ props }">
-          <v-btn icon v-bind="props" class="md-4 mr-8" @click="userStore.logout()" to="/login">
+          <v-btn icon v-bind="props" class="ml-2 mr-2 mr-md-8" @click="userStore.logout()" to="/login">
             <v-icon>mdi-logout</v-icon>
           </v-btn>
         </template>
@@ -92,13 +133,17 @@
 </template>
 
 <script setup lang="ts">
-import AdLayout from './AdLayout.vue'
+import { useAdPopup } from '@composable/useAdPopup';
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
+import { useNotificationStore } from '@stores/notification';
 import { useSnackbarStore } from '@utils/snackbar';
-import { useAdPopup } from '@composable/useAdPopup'
+import { useDisplay } from 'vuetify';
+import AdLayout from './AdLayout.vue';
 
 const { showAd, closeAd } = useAdPopup()
+const { mobile } = useDisplay();
+const drawer = ref(false);
 
 interface link {
   title: string;
@@ -116,6 +161,7 @@ provide('cartIconEl', fridgeIconEl);
 
 const cartStore = useCartStore();
 const userStore = useUserStore();
+const notificationStore = useNotificationStore();
 const snackbarStore = useSnackbarStore();
 
 const role = computed(() => {
@@ -157,7 +203,7 @@ const links = computed<link[]>(() => {
 watch(links, (newLinks) => {
   if (newLinks.length > 0)
   {
-    activeNav.value = newLinks[0]?.value || '';
+    activeNav.value = newLinks[0?.value] || '';
   } else
   {
     activeNav.value = '';
@@ -188,6 +234,22 @@ onMounted(async () => {
 
 .v-btn--active {
   background-color: #e0e0e0 !important;
+}
+
+.notification-badge :deep(.v-badge__badge) {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(255, 82, 82, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+  }
 }
 
 .cart-shake {

@@ -1,9 +1,8 @@
-import { defineEventHandler, readBody, createError } from 'h3'
-import connectDB from '@server/utils/db'
-import Cart from '@server/models/cart.model'
-import { verifyJwtFromEvent } from '@server/utils/auth'
-import { clearUserCart } from '@server/utils/cart'
+// server/api/cart/items.post.ts
 
+import type { ICartUpdate } from "$interfaces/cart.interface";
+import { updateCartByUserId } from "$services/cart.service";
+import { getCurrentUser } from "$utils/getCurrentUser";
 
 /**
  * @openapi
@@ -76,39 +75,27 @@ import { clearUserCart } from '@server/utils/cart'
  *                       辣度: "小辣"
  *                 currency: "TWD"
  *                 total: 420
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       423:
+ *         $ref: '#/components/responses/Locked'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
-
 export default defineEventHandler(async (event) => {
-    await connectDB()
-    const body = await readBody(event)
+    const userId = getCurrentUser(event).id;
 
-    // Auth
-    const payload = await verifyJwtFromEvent(event)
-    const userId = payload.id
+    const body = await readBody<ICartUpdate>(event);
 
     // Expect body.items: array of { name, price, quantity, restaurantId?, menuItemId?, options? }
-    const items = Array.isArray(body.items) ? body.items : []
-    if (!items.length) {
-        //return { success: false, message: 'items array required' }
-        //允許清空購物車 好耶(2025/11/02)
-        await clearUserCart(userId)
-        return { success: true, data: { items: [], total: 0, currency: 'TWD' } }
-    }
+    const items = Array.isArray(body.items) ? body.items : [];
 
-    // Upsert cart for user
-    let cart = await Cart.findOne({ user: userId })
-    if (!cart) {
-        // create new cart
-        cart = new Cart({ user: userId, items })
-    } else {
-        // if cart is locked, disallow modifications
-        if (cart.status === 'locked') {
-            throw createError({ statusCode: 409, statusMessage: 'cart is locked and cannot be modified' })
-        }
-        // naive merge: replace items with provided
-        cart.items = items
-    }
+    const cart = await updateCartByUserId(userId, items);
 
-    await cart.save()
-    return { success: true, data: cart }
-})
+    return {
+        success: true,
+        data: cart,
+    };
+});

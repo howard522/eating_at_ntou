@@ -3,19 +3,18 @@
     <v-row justify="center">
       <v-col cols="12" md="8" lg="6">
         <v-card flat border rounded="lg">
-          <v-card-text class="pa-4">
+          <v-card-text class="pa-4 position-relative">
             <v-btn
                 color="primary"
                 variant="flat"
-                class="font-weight-bold"
-                style="position: absolute; top: 16px; right: 16px"
+                class="font-weight-bold logout-btn"
                 @click="userStore.logout()"
                 to="/login"
             >
               登出
             </v-btn>
 
-            <div class="text-center mt-2 mb-6">
+            <div class="text-center mt-8 mb-6">
               <!-- 點擊頭像觸發裁切對話框 -->
               <v-avatar color="primary" size="80" class="cursor-pointer" @click="showCropper = true">
                 <v-img
@@ -179,6 +178,15 @@ function onAvatarCropped(blob: Blob) {
 }
 
 async function saveChanges() {
+  // 地址格式檢查
+  if (formData.value.address.trim()) {
+    const regex = /(?<zipcode>(^\d{5}|^\d{3})?)(?<city>\D+[縣市])(?<district>\D+?(市區|鎮區|鎮市|[鄉鎮市區]))(?<others>.+)/;
+    if (!regex.test(formData.value.address)) {
+      snackbarStore.showSnackbar('地址格式不正確，請輸入完整地址。', 'error');
+      return;
+    }
+  }
+
   // 密碼一致性檢查
   if (formData.value.password) {
     if (formData.value.password.length < 6) {
@@ -301,5 +309,23 @@ useHead({title: '我的帳戶',});
   padding-bottom: 1rem !important;
   padding-left: 1rem !important;
   padding-right: 1rem !important;
+}
+
+.logout-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+@media (max-width: 600px) {
+  .logout-btn {
+    position: static;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .text-center.mt-8 {
+    margin-top: 0 !important;
+  }
 }
 </style>

@@ -17,22 +17,17 @@
         </div>
       </div>
       <v-card class="pa-6 login-card" elevation="4">
-        <v-card-title class="text-h5 font-weight-bold text-center">Login to Your Account</v-card-title>
-        <v-card-subtitle class="mb-4 text-center">Enter your account & password to login</v-card-subtitle>
+        <v-card-title class="text-h5 font-weight-bold text-center">{{ $t('login.title') }}</v-card-title>
+        <v-card-subtitle class="mb-4 text-center">{{ $t('login.subtitle') }}</v-card-subtitle>
 
         <v-card-text class="pt-4">
-          <v-alert
-            v-if="errorMessage"
-            type="error"
-            variant="tonal"
-            class="mb-4"
-          >
+          <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-4">
             {{ errorMessage }}
           </v-alert>
 
           <v-form ref="formRef" v-model="formValid" @submit.prevent="onSubmit">
             <!-- 電子郵件欄位 -->
-            <label for="login-email" class="form-label mb-1">電子郵件</label>
+            <label for="login-email" class="form-label mb-1">{{ $t('common.email') }}</label>
             <v-text-field
               id="login-email"
               v-model="email"
@@ -46,7 +41,7 @@
             />
 
             <!-- 密碼欄位 -->
-            <label for="login-password" class="form-label mb-1">密碼</label>
+            <label for="login-password" class="form-label mb-1">{{ $t('common.password') }}</label>
             <v-text-field
               id="login-password"
               v-model="password"
@@ -62,40 +57,45 @@
             />
 
             <!-- 身份選擇 -->
-            <v-radio-group
-              v-model="loginRole"
-              class="mb-1 login-role-group"
-            >
+            <v-radio-group v-model="loginRole" class="mb-1 login-role-group">
               <div class="d-flex gap-4 justify-space-between">
-                <v-radio label="顧客" value="customer"></v-radio>
-                <v-radio label="外送員" value="delivery"></v-radio>
+                <v-radio :label="$t('common.customer')" value="customer"></v-radio>
+                <v-radio :label="$t('common.delivery')" value="delivery"></v-radio>
               </div>
             </v-radio-group>
-            <div>可在"我的帳戶"切換身份</div>
-
+            <div>{{ $t('login.switchRoleInfo') }}</div>
             <div class="d-flex justify-end mb-4">
-              <NuxtLink to="/forgot-password" class="text-caption">忘記密碼？</NuxtLink>
+              <NuxtLink to="/forgot-password" class="text-caption">{{ $t('login.forgotPassword') }}</NuxtLink>
             </div>
 
-            <v-btn
-              type="submit"
-              color="primary"
-              :loading="loading"
-              :disabled="!formValid || loading"
-              block
-            >
-              登入
+            <v-btn type="submit" color="primary" :loading="loading" :disabled="!formValid || loading" block>
+              {{ $t('login.loginButton') }}
             </v-btn>
           </v-form>
         </v-card-text>
 
         <v-card-actions class="justify-center">
-          <span class="text-caption">還沒有帳號？</span>
-          <NuxtLink to="/register" class="text-caption ml-1">建立帳號</NuxtLink>
+          <span class="text-caption">{{ $t('login.registerPrompt') }}</span>
+          <NuxtLink to="/register" class="text-caption ml-1">{{ $t('login.registerLink') }}</NuxtLink>
         </v-card-actions>
       </v-card>
     </v-col>
   </v-container>
+
+  <v-snackbar
+    v-model="snackbarStore.show"
+    :color="snackbarStore.color"
+    :timeout="snackbarStore.timeout"
+    location="top"
+  >
+    {{ snackbarStore.text }}
+    <template v-slot:actions>
+      <v-btn variant="text" @click="snackbarStore.show = false">{{ $t('common.close') }}</v-btn>
+    </template>
+  </v-snackbar>
+
+  <!-- 🌐 語言切換按鈕 -->
+  <LanguageSwitch class="language-switch" />
 </template>
 
 <script setup lang="ts">
@@ -116,6 +116,12 @@ const snackbarStore = useSnackbarStore()
 
 const userStore = useUserStore()
 
+const formatTime = (date: Date) => {
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${hours}:${minutes}`
+}
+
 const onSubmit = async () => {
   errorMessage.value = ''
   const result = await formRef.value?.validate()
@@ -126,54 +132,76 @@ const onSubmit = async () => {
     await userStore.loginPost(email.value, password.value)
     userStore.setRole(loginRole.value)
 
-    snackbarStore.showSnackbar('登入成功', 'success')
+    snackbarStore.showSnackbar($t('login.successMessage'), 'success')
 
     if (userStore.token) {
-      if (userStore?.info?.role === 'admin')
-        router.push('/admin/stores')
-      else if (loginRole.value === 'delivery')
-        router.push('/delivery/customer-orders')
-      else
-        router.push('/customer/stores')
+      if (userStore?.info?.role === 'admin') router.push('/admin/stores')
+      else if (loginRole.value === 'delivery') router.push('/delivery/customer-orders')
+      else router.push('/customer/stores')
     } else {
-      errorMessage.value = '登入失敗，請檢查帳號或密碼'
+      errorMessage.value = $t('login.errorMessage')
       snackbarStore.showSnackbar(errorMessage.value, 'error')
     }
   } catch (e: any) {
-    errorMessage.value =
-      e?.message || e?.data?.message || '登入失敗，請檢查帳號或密碼'
+    const message = e?.message || e?.data?.message || undefined
+
+    if (message === 'Missing required fields: email, password.') {
+      // 空 email 或密碼
+      errorMessage.value = $t('login.missingFields')
+    } else if (message === 'Account has been banned.') {
+      // 帳號被封鎖
+      errorMessage.value = $t('login.banned')
+    } else if (message.startsWith('Account is temporarily locked. Please try again later.')) {
+      // 帳號暫時鎖定 (嘗試登入次數過多)
+      const lockUntil = message.split('\n')[1]
+      if (lockUntil) {
+        // 有提供解鎖時間
+        const lockTime = formatTime(new Date(lockUntil))
+        errorMessage.value = $t('login.temporarilyLockedUntil', { time: lockTime })
+      } else {
+        // 沒有提供解鎖時間
+        errorMessage.value = $t('login.temporarilyLocked')
+      }
+    } else {
+      // 其他錯誤 (包含帳號或密碼錯誤)
+      errorMessage.value = $t('login.errorMessage')
+    }
+
     snackbarStore.showSnackbar(errorMessage.value, 'error')
   } finally {
     loading.value = false
   }
 }
 
-definePageMeta({layout: false,})
+definePageMeta({ layout: false })
 
-useHead({title: '登入', });
-
+useHead({ title: '登入' })
 </script>
 
 <style scoped>
 .login-container {
   min-height: 100vh;
+  min-width: 100vw;
   background: linear-gradient(180deg, #f5f9ff 0%, #ffffff 100%);
+  padding: 1rem;
 }
 
 .login-card {
   width: 420px;
-  max-width: 92vw;
+  max-width: 100%;
   border-radius: 12px;
   box-shadow: 0 12px 28px rgba(21, 62, 110, 0.12) !important;
 }
 
 .ais-logo {
   text-align: center;
+  max-width: 100%;
 }
 .ais-logo .logo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
 }
 .ais-logo .school-name .name-ch {
   font-size: 18px;
@@ -186,6 +214,18 @@ useHead({title: '登入', });
   color: #6b7280;
 }
 
+@media (max-width: 400px) {
+  .ais-logo .school-name .name-ch {
+    font-size: 16px;
+  }
+  .ais-logo .school-name .name-en {
+    font-size: 10px;
+  }
+  .ntou-logo-img {
+    width: 40px;
+    height: 40px;
+  }
+}
 
 .ntou-logo-img {
   border-radius: 12px;
@@ -204,6 +244,13 @@ useHead({title: '登入', });
 
 .login-role-group {
   width: 100%;
+}
+
+.language-switch {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 1000;
 }
 
 :deep(.login-role-group .v-radio) {

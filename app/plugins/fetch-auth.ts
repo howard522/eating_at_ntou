@@ -1,5 +1,5 @@
-import { useUserStore } from '@stores/user'
 import { addRouteMiddleware, navigateTo } from '#app'
+import { useUserStore } from '@stores/user'
 
 export default defineNuxtPlugin((nuxtApp: any) => {
     const userStore = useUserStore()
@@ -9,7 +9,7 @@ export default defineNuxtPlugin((nuxtApp: any) => {
 
     // 公開路徑
     const publicPaths = new Set([
-        '/login', '/forgot-password', '/register', '/favicon.ico', '/robots.txt', '/introduction'
+        '/login', '/forgot-password', '/register', '/favicon.ico', '/robots.txt', '/introduction', '/terms-of-service', '/privacy-policy',
     ])
     const roleHome: Record<string, string> = {
         admin: '/admin/stores',

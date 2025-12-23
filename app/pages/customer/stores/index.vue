@@ -21,7 +21,7 @@
     </v-row>
 
     <v-row class="mt-n4">
-      <div style="width: 1200px; height: 60px;">
+      <div class="search-container">
         <v-text-field
           v-model="searchTerm"
           label="搜尋餐廳、美食"
@@ -63,7 +63,7 @@
           md="4"
           lg="3"
       >
-        <StoreCard :id="store._id" :name="store.name" :image="store.image" :info="store.info" />
+        <StoreCard :id="store._id" :name="store.name" :image="store.image" :rating="store.rating" />
       </v-col>
     </v-row>
 
@@ -83,23 +83,17 @@
 </template>
 
 <script setup lang="ts">
-import debounce from 'lodash-es/debounce';
+import { useInfiniteFetch } from '@composable/useInfiniteFetch';
 import { useCartStore } from '@stores/cart';
 import { useUserStore } from '@stores/user';
-import { useInfiniteFetch } from '@composable/useInfiniteFetch';
+import locationsInNTOU from '@data/locationsInNTOU.json';
+import debounce from 'lodash-es/debounce';
 
 interface menuItem { _id: string; name: string; price: number; image: string; info: string; }
-interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; menu: menuItem[]; }
+interface store { _id: string; name: string; address: string; phone: string; image: string; info: string; menu: menuItem[]; rating: number; }
 interface PresetLocation { title: string; value: string; }
 
-const presetLocations = [
-  { title: '電資暨綜合教學大樓', value: '202基隆市中正區北寧路2號' },
-  { title: '資工及電機二館', value: '202基隆市中正區北寧路67號' },
-  { title: '男一宿舍', value: '202基隆市中正區北寧路2號' },
-  { title: '男二宿舍', value: '202基隆市中正區北寧路2號' },
-  { title: '女一宿舍', value: '202基隆市中正區北寧路2號' },
-  { title: '男三女二宿舍', value: '202基隆市中正區北寧路2號' },
-];
+const presetLocations = locationsInNTOU;
 const limit = 28;
 const tags = ref<string[]>(['咖哩', '中式', '日式', '義式', '美式', '甜點', '飲料', '速食', '火鍋', '燒烤', '素食', '燒肉', '漢堡', '海鮮', '涼麵', '小吃', '手搖', '下午茶']);
 
@@ -110,7 +104,7 @@ const searchTerm = ref('');               // 即時輸入
 const debouncedSearchTerm = ref('');      // 防抖後的搜尋詞
 const selectedTags = ref<string[]>([]);
 
-const addressInput = ref<PresetLocation | string>('電資暨綜合教學大樓');
+const addressInput = ref<PresetLocation | string>(cartStore.deliveryAddress || '電資暨綜合教學大樓');
 const debouncedAddressInput = ref<PresetLocation | string>(addressInput.value);
 
 // 計算送貨地址
@@ -149,15 +143,42 @@ watch(searchTerm, debounce((newValue: string) => {
   debouncedSearchTerm.value = newValue;
 }, 800));
 
-// 同步配送資訊 watcher
-watch(deliveryAddress, (newVal) => {
-  cartStore.setDeliveryDetails({
-    address: newVal,
-    phone: userStore.info?.phone || '0912345678',
-    receiveName: userStore.info?.name || '劉俊麟',
-    note: cartStore.note,
-  });
-}, { immediate: true });
+// 監聽地址輸入，立即儲存至 Store
+watch(addressInput, (newVal) => {
+  let finalAddress = '';
+  if (typeof newVal === 'object' && newVal !== null && 'value' in newVal) {
+    finalAddress = newVal.value;
+  } else {
+    const foundLocation = presetLocations.find(loc => loc.title === newVal);
+    finalAddress = foundLocation ? foundLocation.value : (newVal as string);
+  }
+
+  if (finalAddress) {
+    cartStore.setDeliveryDetails({
+      address: finalAddress,
+      phone: cartStore.phoneNumber || userStore.info?.phone || '0912345678',
+      receiveName: cartStore.receiveName || userStore.info?.name || '劉俊麟',
+      note: cartStore.note,
+    });
+  }
+});
+
+onMounted(() => {
+  cartStore.loadFromStorage();
+  if (cartStore.deliveryAddress) {
+    if (addressInput.value !== cartStore.deliveryAddress) {
+      addressInput.value = cartStore.deliveryAddress;
+      debouncedAddressInput.value = cartStore.deliveryAddress;
+    }
+  } else {
+    cartStore.setDeliveryDetails({
+      address: deliveryAddress.value,
+      phone: userStore.info?.phone || '0912345678',
+      receiveName: userStore.info?.name || '劉俊麟',
+      note: cartStore.note,
+    });
+  }
+});
 
 const { items: stores, pending, loadingMore, fetchItems } = useInfiniteFetch<store>({
   api: '/api/restaurants/near',
@@ -187,5 +208,9 @@ useHead({ title: '瀏覽店家' });
 </script>
 
 <style scoped>
-
+.search-container {
+  width: 100%;
+  max-width: 1200px;
+  height: 60px;
+}
 </style>

@@ -30,7 +30,7 @@
               v-model="currentStep"
               alt-labels
               flat
-              class="my-10"
+              class="my-10 order-stepper"
           >
             <v-stepper-header>
               <template v-for="(step, index) in steps" :key="step.id">
@@ -182,27 +182,34 @@
             </v-card-text>
           </v-card>
 
-          <v-btn
-              color="primary"
-              block
-              size="large"
-              class="mt-4"
-              @click="navigateTo(`/chat/${orderId}`)"
+          <v-badge
+              :model-value="notificationStore.hasMessage(orderId)"
+              color="error"
+              dot
+              class="w-100 mt-4 notification-badge"
           >
-            <span class="text-h6 font-weight-bold">聯絡外送員</span>
-          </v-btn>
+            <v-btn
+                color="primary"
+                block
+                size="large"
+                @click="navigateTo(`/chat/${orderId}`)"
+            >
+                <span class="text-h6 font-weight-bold">聯絡外送員</span>
+            </v-btn>
+          </v-badge>
 
           <v-btn
-              :color="currentStep === 1 ? 'error' : 'success'"
+              v-if="currentStep > 1"
+              color="success"
               block
               size="x-large"
               class="mt-4"
               :disabled="currentStep >= 3 || isUpdating"
               :loading="isUpdating"
-              @click="currentStep === 1 ? cancelOrder() : openConfirmDialog()"
+              @click="openConfirmDialog()"
           >
             <span class="text-h6 font-weight-bold">
-              {{ currentStep === 1 ? '取消訂單' : (currentStep < 3 ? '我已收到餐點' : '已接收') }}
+              {{ currentStep < 3 ? '我已收到餐點' : '已接收' }}
             </span>
           </v-btn>
 
@@ -237,8 +244,10 @@
 </template>
 
 <script setup lang="ts">
+import { useDeliveryEta } from '@composable/useDeliveryEta';
+import { useOrderTracking } from '@composable/useOrderTracking';
 import { useUserStore } from '@stores/user';
-import { useOrderTracking } from '@app/composable/useOrderTracking';
+import { useNotificationStore } from '@stores/notification';
 
 type LatLng = [number, number]
 const steps = ref([
@@ -258,6 +267,16 @@ const statusToStepMap: Record<string, number> = {
 const route = useRoute();
 const orderId = route.params.id as string;
 const userStore = useUserStore();
+const notificationStore = useNotificationStore();
+
+// 進入頁面時清除狀態更新通知
+onMounted(() => {
+    notificationStore.clearStatus(orderId);
+});
+
+onActivated(() => {
+    notificationStore.clearStatus(orderId);
+});
 
 const isUpdating = ref(false);
 
@@ -306,6 +325,17 @@ const restaurantPositions = computed<LatLng[]>(() => {
   return positions
 })
 const { driverPosition: courierPosition } = useOrderTracking(orderId)
+const isEtaActive = computed(
+  () =>
+    Boolean(courierPosition.value && customerPosition.value) &&
+    orderData.value?.deliveryStatus === 'on_the_way'
+);
+const { etaTimeString, isLoading: isEtaLoading } = useDeliveryEta({
+  origin: courierPosition,
+  destination: customerPosition,
+  enabled: isEtaActive,
+  refreshIntervalMs: 60000,
+});
 if (orderData.value && orderData.value.deliveryPerson && orderData.value.customerStatus === 'preparing') {
   isUpdating.value = true;
   try {
@@ -337,13 +367,22 @@ if (orderData.value && orderData.value.deliveryPerson && orderData.value.custome
 const currentStep = computed(() => {
   return statusToStepMap[orderData.value.customerStatus];
 });
+const formatArriveTime = (arriveTime?: string) => {
+  if (!arriveTime) return "";
+  const date = new Date(arriveTime);
+  return date.toLocaleString();
+};
 
 const deliver = computed(() => {
   if (orderData.value?.deliveryPerson) {
     const deliveryStatus = orderData.value.deliveryStatus;
     let statusText = '外送員正在處理您的訂單';
     if (deliveryStatus === 'on_the_way') {
-      statusText = '預計送達時間：' + new Date(orderData.value.arriveTime).toLocaleString();
+      // statusText = '預計送達時間：' + new Date(orderData.value.arriveTime).toLocaleString();
+      const etaDisplay =
+        etaTimeString.value ||
+        (isEtaLoading.value ? '計算中...' : formatArriveTime(orderData.value.arriveTime));
+      statusText = `預計送達時間：${etaDisplay || '無法取得'}`;
     } else if (deliveryStatus === 'delivered') {
       statusText = '已送達指定地點';
     } else if (deliveryStatus === 'completed') {
@@ -367,38 +406,6 @@ const deliver = computed(() => {
 
 const openConfirmDialog = () => {
   isConfirmDialogVisible.value = true;
-};
-
-const cancelOrder = async () => {
-  if (currentStep.value !== 1) return;
-  isUpdating.value = true;
-  try {
-    const response: any = await $fetch(
-      `/api/orders/${orderId}/status`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${userStore.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: {
-          customerStatus: 'received',
-          deliveryStatus: 'delivered',
-        },
-      }
-    );
-
-    if (response.success && orderData.value) {
-      orderData.value.customerStatus = response.data.customerStatus;
-      orderData.value.deliveryStatus = response.data.deliveryStatus;
-    } else {
-      console.error('Failed to cancel order', response);
-    }
-  } catch (err) {
-    console.error('Error cancelling order', err);
-  } finally {
-    isUpdating.value = false;
-  }
 };
 
 const markAsReceived = async () => {
@@ -438,3 +445,40 @@ useHead({
   title: '訂單狀態',
 });
 </script>
+
+<style scoped>
+.notification-badge :deep(.v-badge__badge) {
+  animation: pulse 1.5s infinite;
+  border: 2px solid white;
+  width: 12px;
+  height: 12px;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 82, 82, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+  }
+}
+
+@media (max-width: 600px) {
+  .order-stepper {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  :deep(.v-stepper-item__title) {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  
+  .text-h3 {
+    font-size: 2rem !important;
+  }
+}
+</style>

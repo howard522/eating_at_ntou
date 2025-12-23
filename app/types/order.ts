@@ -52,7 +52,18 @@ export interface DisplayOrder {
     status: string
     restaurantNames: string
     date?: string
-    items?: { name: string; quantity: number }[]
+    items?: {
+        menuItemId: string
+        name: string
+        quantity: number
+        price: number
+        image: string
+        info: string
+        restaurant: {
+            id: string
+            name: string
+        }
+    }[]
     total?: number
     deliveryAddress?: string
     deliveryFee?: number

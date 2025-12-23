@@ -1,11 +1,14 @@
-// FILE: server/api/auth/me.get.ts 
-// ============================================================================
+// server/api/auth/me.get.ts
+
+import { getCurrentUser } from "$utils/getCurrentUser";
+
 /**
  * @openapi
  * /api/auth/me:
  *   get:
  *     summary: 取得已登入使用者資料
- *     tags: [Auth]
+ *     tags:
+ *       - Users
  *     security:
  *       - BearerAuth: []
  *     responses:
@@ -20,12 +23,17 @@
  *                 user:
  *                   $ref: '#/components/schemas/UserPublic'
  *       401:
- *         description: 未授權
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
-import { defineEventHandler } from 'h3'
-import { getUserFromEvent, toPublicUser } from '@server/utils/auth'
-
 export default defineEventHandler(async (event) => {
-  const user = await getUserFromEvent(event)
-  return { success: true, user: toPublicUser(user) }
-})
+    const user = getCurrentUser(event);
+
+    return {
+        success: true,
+        user,
+    };
+});
