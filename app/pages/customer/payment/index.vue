@@ -207,7 +207,7 @@ const updateArriveTime = (distanceKm?: number | null) => {
     return;
   }
   const futureDate = new Date();
-  const estimatedMinutes = Math.max(Math.round((distanceKm / 20) * 60), 1);
+  const estimatedMinutes = 25+Math.max(Math.round((distanceKm / 10) * 60), 1);
   futureDate.setMinutes(futureDate.getMinutes() + estimatedMinutes);
   cartStore.arriveTime = futureDate;
 };
@@ -312,7 +312,7 @@ const form = ref();
 onMounted(() => {
   fetchDeliveryInfo();
   timer = setInterval(
-    () => updateArriveTime(deliveryDistance.value+1000),
+    () => updateArriveTime(deliveryDistance.value),
     60 * 1000
   );
   if (cartStore.items.length === 0) {
