@@ -3,6 +3,8 @@
 import { vi } from "vitest";
 
 const userServiceMocks = vi.hoisted(() => ({
+    verifyUserCanLogin: vi.fn(),
+    incrementUserLoginFailureCount: vi.fn(),
     getUserByEmail: vi.fn(),
     createUser: vi.fn(),
     verifyUserPasswordById: vi.fn(),
@@ -13,6 +15,8 @@ const userServiceMocks = vi.hoisted(() => ({
 
 export const mockUserService = () => {
     vi.mock("$services/user.service", () => ({
+        verifyUserCanLogin: userServiceMocks.verifyUserCanLogin,
+        incrementUserLoginFailureCount: userServiceMocks.incrementUserLoginFailureCount,
         getUserByEmail: userServiceMocks.getUserByEmail,
         createUser: userServiceMocks.createUser,
         verifyUserPasswordById: userServiceMocks.verifyUserPasswordById,

@@ -74,6 +74,7 @@ describe("auth.service - 使用者驗證相關", () => {
         it("當密碼不匹配時，應該拋出未授權錯誤", async () => {
             const user = { _id: "u3", role: "multi" };
             mocks.getUserByEmail.mockResolvedValue(user);
+            mocks.verifyUserCanLogin.mockResolvedValue({ result: true });
             mocks.verifyUserPasswordById.mockResolvedValue(false);
 
             const result = loginUser("a@test", "wrong_password");
@@ -84,6 +85,7 @@ describe("auth.service - 使用者驗證相關", () => {
         it("當使用者被封鎖時，應該拋出禁止存取錯誤", async () => {
             const user = { _id: "u4", role: "banned" };
             mocks.getUserByEmail.mockResolvedValue(user);
+            mocks.verifyUserCanLogin.mockResolvedValue({ result: true });
             mocks.verifyUserPasswordById.mockResolvedValue(true);
 
             const result = loginUser("a@test", "password");
@@ -96,7 +98,9 @@ describe("auth.service - 使用者驗證相關", () => {
             const user = { _id: "u5", role: "multi" },
                 token = "token-xyz";
             mocks.getUserByEmail.mockResolvedValue(user);
+            mocks.verifyUserCanLogin.mockResolvedValue({ result: true });
             mocks.verifyUserPasswordById.mockResolvedValue(true);
+            mocks.incrementUserLoginFailureCount.mockResolvedValue(undefined);
             signJwtMock.mockReturnValue(token);
 
             const result = await loginUser("a@test", "password");

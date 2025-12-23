@@ -2,6 +2,7 @@
 
 import { createDocumentMock } from "@mocks/document.mock";
 import { reviewMocks as mocks } from "@mocks/models/review.model.mock";
+import { restaurantMocks } from "@test/__mocks__/models/restaurant.model.mock";
 import { createChainedQueryMock } from "@mocks/query.mock";
 import { describe, expect, it } from "vitest";
 
@@ -52,16 +53,18 @@ describe("reviews.service", () => {
         // 建立完整 document mock
         const reviewDoc = {
             _id: "rev2",
-            restaurant: "rest1",
+            restaurant: "507f1f77bcf86cd799439011",
             user: { _id: "u1", name: "A", img: "img" },
             rating: 4,
             content: "Nice",
         };
         mocks.create.mockReturnValue(createDocumentMock(reviewDoc));
+        mocks.aggregate.mockReturnValueOnce([{ _id: "507f1f77bcf86cd799439011", averageRating: 4 }]);
+        restaurantMocks.findByIdAndUpdate.mockResolvedValue(null);
 
-        const result = await createReview({ restaurant: "rest1", user: "u1", rating: 4, content: "Nice" });
+        const result = await createReview({ restaurant: "507f1f77bcf86cd799439011", user: "u1", rating: 4, content: "Nice" });
 
-        expect(mocks.create).toHaveBeenCalledWith({ restaurant: "rest1", user: "u1", rating: 4, content: "Nice" });
+        expect(mocks.create).toHaveBeenCalledWith({ restaurant: "507f1f77bcf86cd799439011", user: "u1", rating: 4, content: "Nice" });
         expect(result).toStrictEqual(reviewDoc);
     });
 });
