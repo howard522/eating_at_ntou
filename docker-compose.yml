@@ -2,7 +2,8 @@ version: "3.9"
 
 services:
     web:
-        build: .
-        dockerfile: backup/Dockerfile
+        build:
+            context: .
+            dockerfile: backup/Dockerfile
         ports:
             - "3000:3000"
