@@ -55,6 +55,56 @@
 
 ---
 
+## Git Flow 工作流程 (Branching Strategy)
+
+本專案採用明確的 Git Flow 分支策略，以維持多人協作時的程式碼品質、穩定度與可追蹤性。
+
+| 分支類型                             | 命名   | 功能描述                               |
+| -------------------------------- | ---- | ---------------------------------- |
+| `main`                           | 固定   | 部署與正式版本所在分支，僅接受從 `dev` 合併          |
+| `dev`                            | 固定   | 主開發分支，用於整合所有功能與修正                  |
+| `feature/<memberID>-<short-desc>` | 依需建立 | 開發新功能的分支，每個功能獨立開發、測試後再 PR 回 `dev`  |
+
+### 開發流程 (Contributing Steps)
+
+1. 從 `dev` 建立 feature 分支
+   `git checkout -b feature/<memberID>-<short-desc>`
+2. 開發並提交 Commit（需使用一致 Commit Message 標準）(見下方)
+3. 開發完成後推送並建立 PR 回 `dev`
+4. 通過 Code Review 後由看過的組員合併 PR 或得到lgtm 後自行合併
+5. 不推薦直接 push 至 `main` 或 `dev` 分支
+
+### Commit Message 規範
+
+```
+<type>: <short description>
+```
+
+常見 type：
+
+* `feat`: 新功能
+* `fix`: 修復 bug
+* `docs`: 文件變更
+* `refactor`: 重構但無功能變動
+* `style`: 程式碼格式、排版
+* `test`: 測試新增或調整
+
+範例：
+
+```
+feat: 新增使用者登入功能 (#42)
+fix: 修正地址轉經緯度快取錯誤 (#95)
+```
+
+### Pull Request 規範
+
+PR 需包含以下內容：
+
+* 變更摘要
+* 心情小故事（選填）
+
+---
+
 ## 部署狀態（Deployment）
 
 本系統採用 **全站式 Nuxt 應用部署架構**，前後端整合於單一部署環境，  
