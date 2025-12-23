@@ -3,6 +3,7 @@
 import { vi } from "vitest";
 
 const reviewMocks = vi.hoisted(() => ({
+    aggregate: vi.fn(),
     countDocuments: vi.fn(),
     create: vi.fn(),
     find: vi.fn(),
@@ -15,6 +16,7 @@ export const mockReviewModel = () => {
                 Object.assign(this, data);
             }
 
+            static aggregate = reviewMocks.aggregate;
             static countDocuments = reviewMocks.countDocuments;
             static create = reviewMocks.create;
             static find = reviewMocks.find;

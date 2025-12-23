@@ -127,7 +127,6 @@
     <v-snackbar v-model="snackbarStore.show" :color="snackbarStore.color" :timeout="snackbarStore.timeout">
       {{ snackbarStore.text }}
     </v-snackbar>
-
     </v-app>
   </AdLayout>
 </template>

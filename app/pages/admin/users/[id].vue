@@ -139,23 +139,12 @@
         </v-card>
       </v-col>
     </v-row>
-
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      location="top"
-      timeout="3000"
-    >
-      {{ snackbar.text }}
-      <template v-slot:actions>
-        <v-btn variant="text" @click="snackbar.show = false">關閉</v-btn>
-      </template>
-    </v-snackbar>
   </v-container>
 </template>
 
 <script setup lang="ts">
 import { useUserStore } from '@stores/user';
+import { useSnackbarStore } from '@utils/snackbar';
 import type { User } from '@types/user';
 
 const route = useRoute();
@@ -169,11 +158,7 @@ interface ApiResponse {
 
 const processing = ref(false);
 const userInfo = ref<User | null>(null);
-const snackbar = ref({
-  show: false,
-  text: '',
-  color: 'success'
-});
+const snackbarStore = useSnackbarStore();
 
 const { data: response, pending, error } = await useFetch<ApiResponse>(`/api/admin/users/${userId}`, {
   headers: {
@@ -236,20 +221,12 @@ const toggleBanStatus = async () => {
       }
     );
     if (res.success) {
-      snackbar.value = {
-        show: true,
-        text: isBanned.value ? '已成功恢復帳號' : '已成功停用帳號',
-        color: 'success'
-      };
+      snackbarStore.showSnackbar(isBanned.value ? '已成功恢復帳號' : '已成功停用帳號', 'success');
       userInfo.value.role = res.role;
     }
   } catch (err) {
     console.error(err);
-    snackbar.value = {
-      show: true,
-      text: '操作失敗，請確認權限或稍後再試',
-      color: 'error'
-    };
+    snackbarStore.showSnackbar('操作失敗，請確認權限或稍後再試', 'error');
   } finally {
     processing.value = false;
   }

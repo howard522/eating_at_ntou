@@ -99,20 +99,6 @@
       <v-progress-circular indeterminate color="primary" size="32"></v-progress-circular>
     </div>
 
-    <!-- Snackbar -->
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      location="bottom center"
-      timeout="3000"
-      rounded="pill"
-      content-class="text-center font-weight-medium"
-    >
-      <div class="d-flex align-center justify-center">
-        <v-icon :icon="snackbar.color === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle'" class="mr-2"></v-icon>
-        {{ snackbar.text }}
-      </div>
-    </v-snackbar>
   </v-container>
 </template>
 
@@ -120,8 +106,10 @@
 import { useInfiniteFetch } from '@composable/useInfiniteFetch'
 import type { Review } from '@types/review'
 import { useUserStore } from "@stores/user"
+import { useSnackbarStore } from '@utils/snackbar'
 
 const userStore = useUserStore()
+const snackbarStore = useSnackbarStore()
 const route = useRoute()
 const storeId = route.params.id as string
 
@@ -154,11 +142,6 @@ watch(sortBy, () => {
 })
 
 const deleting = ref<string | null>(null)
-const snackbar = ref({
-  show: false,
-  text: '',
-  color: 'success'
-})
 
 const deleteReview = async (id: string) => {
   if (!id) return
@@ -178,10 +161,10 @@ const deleteReview = async (id: string) => {
       reviews.value.splice(index, 1)
     }
 
-    snackbar.value = { show: true, text: '評論已成功刪除', color: 'success' }
+    snackbarStore.showSnackbar('評論已成功刪除', 'success')
   } catch (e: any) {
     const errorMsg = e.response?._data?.message || '刪除失敗，請稍後再試'
-    snackbar.value = { show: true, text: errorMsg, color: 'error' }
+    snackbarStore.showSnackbar(errorMsg, 'error')
   } finally {
     deleting.value = null
   }
