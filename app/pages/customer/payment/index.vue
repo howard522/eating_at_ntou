@@ -168,6 +168,14 @@ let timer: ReturnType<typeof setInterval> | null = null;
 const paymentMethod = ref('現場付款');
 const paymentOptions = ['現場付款'];
 
+function syncLocalFromStore() {
+  cartStore.loadFromStorage();
+  localDeliveryAddress.value = cartStore.deliveryAddress;
+  localPhoneNumber.value = cartStore.phoneNumber;
+  localReceiveName.value = cartStore.receiveName;
+  localNote.value = cartStore.note;
+}
+
 function updateDetailsInStore() {
   cartStore.setDeliveryDetails({
     address: localDeliveryAddress.value,
@@ -256,19 +264,25 @@ const submitOrder = async () => {
 const form = ref();
 
 onMounted(() => {
-  cartStore.loadFromStorage();
-  localDeliveryAddress.value = cartStore.deliveryAddress;
-  localPhoneNumber.value = cartStore.phoneNumber;
-  localReceiveName.value = cartStore.receiveName;
-  localNote.value = cartStore.note;
-
+  syncLocalFromStore();
   updateArriveTime();
   timer = setInterval(updateArriveTime, 60 * 1000);
   if (cartStore.items.length === 0) {
     cartStore.fetchCart();
   }
-  form.value.validate();
+  nextTick(() => {
+    form.value?.validate();
+  });
 });
+
+onActivated(() => {
+  syncLocalFromStore();
+  updateArriveTime();
+  nextTick(() => {
+    form.value?.validate();
+  });
+});
+
 onUnmounted(() => {
   if (timer) {
     clearInterval(timer);
