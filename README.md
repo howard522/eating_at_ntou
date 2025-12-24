@@ -1,7 +1,7 @@
 # Bing2Go
 
 > 國立海洋大學校園餐飲外送平台  
-> NTOU Bing2Go
+> [NTOU Bing2Go](https://ntoubing2go.zeabur.app/)
 
 本專案為國立臺灣海洋大學校園餐飲外送系統，提供校內使用者進行餐廳瀏覽、下單、訂單追蹤與外送互動等功能。
 
@@ -10,6 +10,7 @@
 
 若需查看最新開發中功能與詳細 commit 紀錄，請參考  
 [dev 分支](https://github.com/howard522/eating_at_ntou/tree/dev)
+
 
 ---
 
@@ -22,7 +23,7 @@
   https://hackmd.io/Uu6rbeMKRqiTpVWxje312A
 
 - **測試文件（STD）**  
-  [https://hackmd.io/Uu6rbeMKRqiTpVWxje312A](https://hackmd.io/Uu6rbeMKRqiTpVWxje312A)
+  https://hackmd.io/08TcJXmpRTOIYLg6Cs3rvA
   
 ---
 
